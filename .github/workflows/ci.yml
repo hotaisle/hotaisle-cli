@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: 1.25
+
+      - uses: extractions/setup-just@v3
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Run go vet
+        run: just vet
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+
+      - name: Run tests
+        run: just test
+
+      - name: Build
+        run: just ci
+
+      - name: Run basic integration test
+        run: just run -h

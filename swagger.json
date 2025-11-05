@@ -1,0 +1,4257 @@
+{
+  "host": "admin.hotaisle.app",
+  "schemes": ["https"],
+  "basePath": "/api/",
+  "definitions": {
+    "APIKeyTeam": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Team"
+        },
+        {
+          "properties": {
+            "roles": {
+              "description": "The complete list of roles this API Key has on the team",
+              "example": [
+                "owner",
+                "purchaser",
+                "operator"
+              ],
+              "items": {
+                "enum": [
+                  "owner",
+                  "purchaser",
+                  "operator",
+                  "user"
+                ],
+                "type": "string"
+              },
+              "type": "array",
+              "x-go-name": "Roles",
+              "x-order": "2"
+            }
+          },
+          "required": [
+            "roles"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "UserAPIKeyTeam represents a team that the API Key has access to",
+      "x-go-name": "UserAPIKeyTeam",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "AvailableBareMetalTypes": {
+      "description": "AvailableBareMetalTypes is how many bare metal servers of a given type are available to be reserved",
+      "properties": {
+        "MinimumReservationMinutes": {
+          "description": "Minimum reservation time in minutes",
+          "example": 480,
+          "format": "int64",
+          "type": "integer"
+        },
+        "OnDemandPrice": {
+          "description": "Price per hour for on-demand usage in US Cents",
+          "format": "int64",
+          "type": "integer"
+        },
+        "Quantity": {
+          "description": "Quantity of this server type available for reservation",
+          "example": 4,
+          "format": "int64",
+          "type": "integer"
+        },
+        "Specs": {
+          "$ref": "#/definitions/BareMetalServerSpecs"
+        }
+      },
+      "required": [
+        "Quantity",
+        "MinimumReservationMinutes"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "AvailableVirtualMachineTypes": {
+      "description": "AvailableVirtualTypes is how many virtual machines of a given type are available to be deployed",
+      "properties": {
+        "MinimumReservationMinutes": {
+          "description": "Minimum reservation time in minutes",
+          "example": 30,
+          "format": "int64",
+          "type": "integer"
+        },
+        "OnDemandPrice": {
+          "description": "Price per hour for on-demand usage in US Cents",
+          "format": "int64",
+          "type": "integer"
+        },
+        "Quantity": {
+          "description": "Quantity of this VM Type available for deployment",
+          "example": 4,
+          "format": "int64",
+          "type": "integer"
+        },
+        "Specs": {
+          "$ref": "#/definitions/VirtualMachineSpecs"
+        }
+      },
+      "required": [
+        "Quantity",
+        "MinimumReservationMinutes"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BalanceInfo": {
+      "description": "BalanceInfo contains balance and estimated time until depletion",
+      "properties": {
+        "available_balance": {
+          "description": "Available balance in US cents (100 = $1.00)",
+          "example": 50000,
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "AvailableBalance"
+        },
+        "estimated_runout_time": {
+          "description": "Estimated time when balance will be completely depleted based on current resource usage",
+          "example": "2025-05-20T10:30:00Z",
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "EstimatedRunoutTime"
+        },
+        "hourly_rate": {
+          "description": "Total hourly cost of all active resources in US cents (100 = $1.00/hour)",
+          "example": 1250,
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "HourlyRate"
+        },
+        "minimum_balance": {
+          "description": "Minimum balance threshold in US cents (100 = $1.00). Only included when non-zero.",
+          "example": 1000,
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "MinimumBalance"
+        }
+      },
+      "required": [
+        "available_balance",
+        "hourly_rate"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BareMetalServer": {
+      "description": "BareMetalServer represents a bare metal server",
+      "properties": {
+        "description": {
+          "description": "Server description",
+          "example": "Production database server",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "ip_address": {
+          "description": "Server's primary IP address",
+          "example": "192.168.1.100",
+          "type": "string",
+          "x-go-name": "IPAddress"
+        },
+        "manufacturer": {
+          "description": "Server manufacturer",
+          "example": "Dell",
+          "type": "string",
+          "x-go-name": "Manufacturer"
+        },
+        "model": {
+          "description": "Server model",
+          "example": "PowerEdge XE9680",
+          "type": "string",
+          "x-go-name": "Model"
+        },
+        "name": {
+          "description": "Server Name",
+          "example": "server-01",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "ssh_access": {
+          "$ref": "#/definitions/ExternalService"
+        },
+        "support_access_enabled": {
+          "description": "Indicates if Hot Aisle Support is permitted to login to this server",
+          "type": "boolean",
+          "x-go-name": "SupportAccessEnabled"
+        }
+      },
+      "required": [
+        "name",
+        "ip_address",
+        "manufacturer",
+        "model"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BareMetalServerConsoleURL": {
+      "description": "BareMetalServerConsoleURL has a temporary URL that can be used to access a local console",
+      "properties": {
+        "url": {
+          "description": "URL for console access",
+          "type": "string",
+          "x-go-name": "URL"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BareMetalServerDetails": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BareMetalServer"
+        },
+        {
+          "$ref": "#/definitions/BareMetalServerSpecs"
+        },
+        {
+          "properties": {
+            "os_status": {
+              "$ref": "#/definitions/BareMetalServerlOSStatus"
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "description": "BareMetalServerDetails represents a bare metal server with detailed hardware specifications",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BareMetalServerPowerState": {
+      "description": "BareMetalServerPowerState represents the current power status of a server",
+      "properties": {
+        "state": {
+          "description": "The current power state of the server reported by iDrac.\nValues can be \"On\" or \"Off\".",
+          "enum": [
+            "On",
+            "Off"
+          ],
+          "example": "On",
+          "type": "string",
+          "x-go-name": "State"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BareMetalServerReservation": {
+      "description": "BareMetalServerReservation represents a request to reserve a bare metal server",
+      "properties": {
+        "description": {
+          "description": "Server description",
+          "example": "Production GPU server for machine learning workloads",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "specs": {
+          "$ref": "#/definitions/BareMetalServerSpecs"
+        }
+      },
+      "required": [
+        "specs"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BareMetalServerReservationResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BareMetalServer"
+        },
+        {
+          "properties": {
+            "cpu_cores": {
+              "description": "Total CPU Cores",
+              "example": 64,
+              "format": "uint64",
+              "type": "integer",
+              "x-go-name": "CPUCores"
+            },
+            "cpus": {
+              "description": "Detailed CPU information",
+              "items": {
+                "$ref": "#/definitions/CPUs"
+              },
+              "type": "array",
+              "x-go-name": "CPUs"
+            },
+            "disk_capacity": {
+              "description": "Total Disk in bytes",
+              "example": 4398046511104,
+              "format": "uint64",
+              "type": "integer",
+              "x-go-name": "DiskCapacity"
+            },
+            "disks": {
+              "description": "Detailed disk information",
+              "items": {
+                "$ref": "#/definitions/Disks"
+              },
+              "type": "array",
+              "x-go-name": "Disks"
+            },
+            "gpus": {
+              "description": "Detailed GPU information if present",
+              "items": {
+                "$ref": "#/definitions/GPUs"
+              },
+              "type": "array",
+              "x-go-name": "GPUs"
+            },
+            "memory_modules": {
+              "description": "Detailed memory module information",
+              "items": {
+                "$ref": "#/definitions/MemoryModules"
+              },
+              "type": "array",
+              "x-go-name": "MemoryModules"
+            },
+            "os_status": {
+              "$ref": "#/definitions/BareMetalServerlOSStatus"
+            },
+            "ram_capacity": {
+              "description": "Total RAM in bytes",
+              "example": 549755813888,
+              "format": "uint64",
+              "type": "integer",
+              "x-go-name": "RAMCapacity"
+            }
+          },
+          "required": [
+            "cpu_cores",
+            "ram_capacity",
+            "disk_capacity"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "BareMetalServerReservationResponse represents the response after successfully reserving a server",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BareMetalServerSpecs": {
+      "description": "BareMetalServerSpecs contains the hardware specifications of a server",
+      "properties": {
+        "cpu_cores": {
+          "description": "Total CPU Cores",
+          "example": 64,
+          "format": "uint64",
+          "type": "integer",
+          "x-go-name": "CPUCores"
+        },
+        "cpus": {
+          "description": "Detailed CPU information",
+          "items": {
+            "$ref": "#/definitions/CPUs"
+          },
+          "type": "array",
+          "x-go-name": "CPUs"
+        },
+        "disk_capacity": {
+          "description": "Total Disk in bytes",
+          "example": 4398046511104,
+          "format": "uint64",
+          "type": "integer",
+          "x-go-name": "DiskCapacity"
+        },
+        "disks": {
+          "description": "Detailed disk information",
+          "items": {
+            "$ref": "#/definitions/Disks"
+          },
+          "type": "array",
+          "x-go-name": "Disks"
+        },
+        "gpus": {
+          "description": "Detailed GPU information if present",
+          "items": {
+            "$ref": "#/definitions/GPUs"
+          },
+          "type": "array",
+          "x-go-name": "GPUs"
+        },
+        "memory_modules": {
+          "description": "Detailed memory module information",
+          "items": {
+            "$ref": "#/definitions/MemoryModules"
+          },
+          "type": "array",
+          "x-go-name": "MemoryModules"
+        },
+        "ram_capacity": {
+          "description": "Total RAM in bytes",
+          "example": 549755813888,
+          "format": "uint64",
+          "type": "integer",
+          "x-go-name": "RAMCapacity"
+        }
+      },
+      "required": [
+        "cpu_cores",
+        "ram_capacity",
+        "disk_capacity"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BareMetalServerUpdate": {
+      "description": "BareMetalServerUpdate represents a bare metal server",
+      "properties": {
+        "description": {
+          "description": "Bare Metal Server description",
+          "type": "string",
+          "x-go-name": "Description"
+        }
+      },
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "BareMetalServerlOSStatus": {
+      "description": "BareMetalServerlOSStatus represents the current state of OS installation on a server",
+      "properties": {
+        "last_imaging_update": {
+          "description": "Last Imaging Update Timestamp\n\nThe date and time when the OS installation status was last updated\nCan be used to track progress and determine if the installation process is active",
+          "example": "2024-12-10T19:20:04.825Z",
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "LastImagingUpdate"
+        },
+        "os_install_status": {
+          "description": "OS Install Status\n\nThe current stage in the OS installation process.\nProgresses through various states from \"shutting_down\" through \"installing_os\" to \"installed\" or \"failed\" if an error occurs",
+          "enum": [
+            "shutting_down",
+            "ac_reset",
+            "bios_reset",
+            "booting_installer",
+            "installing_os",
+            "finalizing_os",
+            "first_boot",
+            "first_boot_tasks",
+            "installed",
+            "failed"
+          ],
+          "example": "installed",
+          "type": "string",
+          "x-go-name": "OSStatus"
+        },
+        "os_selection": {
+          "description": "OS Selection",
+          "enum": [
+            "ubuntu-2204.5",
+            "ubuntu-2404.1"
+          ],
+          "example": "ubuntu-2204.5",
+          "type": "string",
+          "x-go-name": "OSSelection"
+        }
+      },
+      "required": [
+        "os_selection",
+        "os_install_status",
+        "last_imaging_update"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "CPUs": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Components"
+        },
+        {
+          "properties": {
+            "cores": {
+              "description": "Cores per processor",
+              "example": 32,
+              "format": "uint64",
+              "type": "integer",
+              "x-go-name": "Cores"
+            },
+            "frequency": {
+              "description": "CPU Frequency in Hertz",
+              "example": 2600000000,
+              "format": "uint64",
+              "type": "integer",
+              "x-go-name": "Frequency"
+            }
+          },
+          "required": [
+            "cores",
+            "frequency"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "CPUs represents processor information",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "Components": {
+      "description": "Components represents common attributes for hardware components",
+      "properties": {
+        "count": {
+          "description": "Number of components of this type",
+          "example": 4,
+          "format": "uint64",
+          "type": "integer",
+          "x-go-name": "Count"
+        },
+        "manufacturer": {
+          "description": "Component manufacturer",
+          "example": "Intel",
+          "type": "string",
+          "x-go-name": "Manufacturer"
+        },
+        "model": {
+          "description": "Component model",
+          "example": "Xeon Platinum 8470",
+          "type": "string",
+          "x-go-name": "Model"
+        }
+      },
+      "required": [
+        "count",
+        "manufacturer",
+        "model"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "Disks": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Components"
+        },
+        {
+          "properties": {
+            "capacity": {
+              "description": "Capacity in bytes per disk",
+              "example": 1099511627776,
+              "format": "uint64",
+              "type": "integer",
+              "x-go-name": "Capacity"
+            },
+            "type": {
+              "description": "Disk type, NVMe or SATA-SSD",
+              "enum": [
+                "NVMe",
+                "SATA SSD"
+              ],
+              "example": "NVMe",
+              "type": "string",
+              "x-go-name": "Type"
+            }
+          },
+          "required": [
+            "type",
+            "capacity"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Disks represents storage device information",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "EmailCodeRequest": {
+      "description": "EmailCodeRequest contains the email address for requesting a sign-in code",
+      "properties": {
+        "email": {
+          "description": "User's email address",
+          "example": "john.doe@example.com",
+          "type": "string",
+          "x-go-name": "Email"
+        }
+      },
+      "required": [
+        "email"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "ExternalService": {
+      "description": "ExternalService represents information about an externally accessible service",
+      "properties": {
+        "dns_name": {
+          "description": "DNS hostname for the service if available",
+          "example": "server1.example.com",
+          "type": "string",
+          "x-go-name": "DNSName"
+        },
+        "ip_address": {
+          "description": "Public IP address for service access",
+          "example": "203.0.113.10",
+          "type": "string",
+          "x-go-name": "IPAddress"
+        },
+        "port": {
+          "description": "Service port number",
+          "example": 22,
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "Port"
+        }
+      },
+      "required": [
+        "ip_address",
+        "port"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "GPUs": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Components"
+        }
+      ],
+      "description": "GPUs represents graphics processing unit information",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "GetUserResponse": {
+      "description": "GetUserResponse represents information about the authenticated user and their teams",
+      "properties": {
+        "teams": {
+          "description": "Teams the user belongs to",
+          "items": {
+            "$ref": "#/definitions/UserTeam"
+          },
+          "type": "array",
+          "x-go-name": "Teams"
+        },
+        "user": {
+          "$ref": "#/definitions/User"
+        }
+      },
+      "required": [
+        "user",
+        "teams"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "MemoryModules": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Components"
+        },
+        {
+          "properties": {
+            "capacity": {
+              "description": "Capacity in bytes per module",
+              "example": 34359738368,
+              "format": "uint64",
+              "type": "integer",
+              "x-go-name": "Capacity"
+            }
+          },
+          "required": [
+            "capacity"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "MemoryModules represents memory module information",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "PurchaseTeamCreditsRequest": {
+      "description": "PurchaseTeamCreditsRequest represents a request to purchase credits for a team",
+      "properties": {
+        "cents": {
+          "description": "The amount to purchase in US cents (100 = $1.00)",
+          "example": 10000,
+          "format": "int64",
+          "minimum": 100,
+          "type": "integer",
+          "x-go-name": "Cents"
+        }
+      },
+      "required": [
+        "cents"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "PurchaseTeamCreditsResponse": {
+      "description": "PurchaseTeamCreditsResponse represents the response to a credits purchase request",
+      "properties": {
+        "checkout_url": {
+          "description": "URL to the Stripe Checkout page where the customer can complete payment",
+          "example": "https://checkout.stripe.com/c/pay/cs_test_a1b2c3...",
+          "type": "string",
+          "x-go-name": "CheckoutURL"
+        },
+        "expires_at": {
+          "description": "Expiration time of the checkout session",
+          "example": "2025-05-16T15:30:00Z",
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "ExpiresAt"
+        }
+      },
+      "required": [
+        "checkout_url",
+        "expires_at"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "RegistrationRequest": {
+      "description": "RegistrationRequest contains the information needed to register a new user",
+      "properties": {
+        "email": {
+          "description": "User's email address",
+          "example": "john.doe@example.com",
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "name": {
+          "description": "User's full name",
+          "example": "John Doe",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "required": [
+        "name",
+        "email"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "RequestPaymentApprovalRequest": {
+      "description": "RequestPaymentApprovalRequest represents a request for self-service payment approval",
+      "properties": {
+        "message": {
+          "description": "Message from the requesting team explaining what they're building",
+          "example": "We're building a machine learning platform and need GPU resources for training models.",
+          "type": "string",
+          "x-go-name": "Message"
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "SSHKey": {
+      "description": "SSHKey represents an SSH public key associated with a user",
+      "properties": {
+        "comment": {
+          "description": "A descriptive comment or label for the key",
+          "example": "user@example.com",
+          "type": "string",
+          "x-go-name": "Comment"
+        },
+        "fingerprint": {
+          "description": "The unique fingerprint of the SSH key",
+          "example": "SHA256:AbCdEfGhIjKlMnOpQrStUvWxYz12345678901234",
+          "type": "string",
+          "x-go-name": "Fingerprint"
+        },
+        "public_key": {
+          "description": "The base64-encoded public key portion",
+          "example": "AAAAB3NzaC1yc2EAAAADAQABAAABgQC...",
+          "type": "string",
+          "x-go-name": "PublicKey"
+        },
+        "type": {
+          "description": "The type of SSH key (e.g., ssh-rsa, ssh-ed25519)",
+          "example": "ssh-rsa",
+          "type": "string",
+          "x-go-name": "Type"
+        }
+      },
+      "required": [
+        "type",
+        "public_key",
+        "fingerprint"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "SSHKeyRequest": {
+      "description": "SSHKeyRequest represents the data needed to add a new SSH key",
+      "properties": {
+        "authorized_key": {
+          "description": "SSH public key in the authorized key format of \u003ctype\u003e \u003cpublic_key\u003e \u003ccomment\u003e",
+          "example": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC... user@example.com",
+          "type": "string",
+          "x-go-name": "AuthorizedKey"
+        }
+      },
+      "required": [
+        "authorized_key"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "Session": {
+      "description": "Session represents an active session with its associated API key information",
+      "properties": {
+        "api_key_prefix": {
+          "description": "The associated API key prefix, if one exists",
+          "example": "b2c3d4e5f6g7h8i9j0k1l2m3n4",
+          "type": "string",
+          "x-go-name": "APIKeyPrefix"
+        },
+        "created": {
+          "description": "When this session was created",
+          "example": "2025-04-10T14:30:00Z",
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "Created"
+        },
+        "expires_at": {
+          "description": "When this session will expire",
+          "example": "2025-04-17T14:30:00Z",
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "ExpiresAt"
+        },
+        "prefix": {
+          "description": "The unique prefix identifier for this session",
+          "example": "a1b2c3d4e5f6g7h8i9j0k1l2m3",
+          "type": "string",
+          "x-go-name": "Prefix"
+        }
+      },
+      "required": [
+        "prefix",
+        "expires_at",
+        "created"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "Team": {
+      "description": "Team represents a team",
+      "properties": {
+        "description": {
+          "description": "Team description",
+          "type": "string",
+          "x-go-name": "Description",
+          "x-order": "2"
+        },
+        "handle": {
+          "description": "Team's unique identifier handle",
+          "example": "acme-corporation",
+          "type": "string",
+          "x-go-name": "Handle",
+          "x-order": "0"
+        },
+        "maximum_bare_metal_servers": {
+          "description": "Maximum number of bare metal servers this team can create",
+          "example": 5,
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "MaximumBareMetalServers",
+          "x-order": "5"
+        },
+        "maximum_virtual_machines": {
+          "description": "Maximum number of virtual machines this team can create",
+          "example": 10,
+          "format": "int64",
+          "type": "integer",
+          "x-go-name": "MaximumVirtualMachines",
+          "x-order": "4"
+        },
+        "name": {
+          "description": "Team's display name",
+          "example": "Acme Corporation",
+          "type": "string",
+          "x-go-name": "Name",
+          "x-order": "1"
+        },
+        "self_service_payment_enabled": {
+          "description": "Whether self-service payment is enabled for this team",
+          "example": true,
+          "type": "boolean",
+          "x-go-name": "SelfServicePaymentEnabled",
+          "x-order": "3"
+        }
+      },
+      "required": [
+        "handle",
+        "name"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "TeamInvitationRequest": {
+      "description": "TeamInvitationRequest contains the information needed to invite a user to a team",
+      "properties": {
+        "email": {
+          "description": "Invitee's email address",
+          "example": "john.doe@example.com",
+          "maxLength": 254,
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "name": {
+          "description": "Invitee's full name",
+          "example": "John Doe",
+          "maxLength": 100,
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "roles": {
+          "description": "Roles to assign to the invitee",
+          "example": [
+            "operator",
+            "user"
+          ],
+          "items": {
+            "enum": [
+              "owner",
+              "purchaser",
+              "operator",
+              "user"
+            ],
+            "type": "string"
+          },
+          "type": "array",
+          "x-go-name": "Roles"
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "roles"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "TeamMember": {
+      "description": "TeamMember represents a team member or pending invitation",
+      "properties": {
+        "created": {
+          "description": "When the user account was created",
+          "example": "2025-04-10T14:30:00Z",
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "Created"
+        },
+        "email": {
+          "description": "User's email address",
+          "example": "john.doe@example.com",
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "invitation": {
+          "description": "This team membership is a invite that has not yet been accepted",
+          "example": true,
+          "type": "boolean",
+          "x-go-name": "Invitation"
+        },
+        "name": {
+          "description": "User's full name",
+          "example": "John Doe",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "roles": {
+          "description": "The complete list of roles this user has on the team",
+          "example": [
+            "owner",
+            "purchaser",
+            "operator"
+          ],
+          "items": {
+            "enum": [
+              "owner",
+              "purchaser",
+              "operator",
+              "user"
+            ],
+            "type": "string"
+          },
+          "type": "array",
+          "x-go-name": "Roles"
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "created",
+        "roles"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "TeamMemberUpdate": {
+      "description": "TeamMemberUpdate represents the data needed to update a team member's roles",
+      "properties": {
+        "roles": {
+          "description": "Updated roles for the team member",
+          "example": [
+            "operator",
+            "user"
+          ],
+          "items": {
+            "enum": [
+              "owner",
+              "purchaser",
+              "operator",
+              "user"
+            ],
+            "type": "string"
+          },
+          "type": "array",
+          "x-go-name": "Roles"
+        }
+      },
+      "required": [
+        "roles"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "TeamUpdate": {
+      "description": "TeamUpdate represents a team",
+      "properties": {
+        "description": {
+          "description": "Team description",
+          "type": "string",
+          "x-go-name": "Description",
+          "x-order": "2"
+        },
+        "handle": {
+          "description": "Team's unique identifier handle",
+          "example": "acme-corporation",
+          "type": "string",
+          "x-go-name": "Handle",
+          "x-order": "0"
+        },
+        "name": {
+          "description": "Team's display name",
+          "example": "Acme Corporation",
+          "type": "string",
+          "x-go-name": "Name",
+          "x-order": "1"
+        }
+      },
+      "required": [
+        "handle",
+        "name"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "User": {
+      "description": "User represents a registered user in the system",
+      "properties": {
+        "created": {
+          "description": "When the user account was created",
+          "example": "2025-04-10T14:30:00Z",
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "Created"
+        },
+        "email": {
+          "description": "User's email address",
+          "example": "john.doe@example.com",
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "name": {
+          "description": "User's full name",
+          "example": "John Doe",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "created"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserAPIKey": {
+      "description": "UserAPIKey represents a user's API key",
+      "properties": {
+        "label": {
+          "description": "A descriptive label for the API key",
+          "example": "Development key",
+          "type": "string",
+          "x-go-name": "Label",
+          "x-order": "2"
+        },
+        "prefix": {
+          "description": "The unique prefix of this API key (used for identification)",
+          "example": "6ddfaa4539b4c7e046fe4b94",
+          "type": "string",
+          "x-go-name": "Prefix",
+          "x-order": "0"
+        },
+        "teams": {
+          "description": "Teams that this API key has access to and the roles on each team",
+          "items": {
+            "$ref": "#/definitions/APIKeyTeam"
+          },
+          "type": "array",
+          "x-go-name": "Teams",
+          "x-order": "4"
+        },
+        "user_role": {
+          "description": "The role this API Key has on the user\nKeys with a user role of 'owner' can modify the user, including changing name, leaving or accepting invites to teams, and creating api keys",
+          "enum": [
+            "owner",
+            "user"
+          ],
+          "example": "owner",
+          "type": "string",
+          "x-go-name": "UserRole",
+          "x-order": "3"
+        }
+      },
+      "required": [
+        "user_role"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserAPIKeyRequest": {
+      "description": "UserAPIKeyRequest represents the data needed to create or update an API key",
+      "properties": {
+        "label": {
+          "description": "A descriptive label for the API key",
+          "example": "Development key",
+          "type": "string",
+          "x-go-name": "Label",
+          "x-order": "0"
+        },
+        "teams": {
+          "description": "Teams and their associated permissions for this API key",
+          "items": {
+            "$ref": "#/definitions/UserAPIKeyTeamRoles"
+          },
+          "type": "array",
+          "x-go-name": "Teams",
+          "x-order": "2"
+        },
+        "user_role": {
+          "description": "The role this API key has on the user",
+          "enum": [
+            "owner",
+            "user"
+          ],
+          "example": "user",
+          "type": "string",
+          "x-go-name": "UserRole",
+          "x-order": "1"
+        }
+      },
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserAPIKeyTeamRoles": {
+      "description": "UserAPIKeyTeamRoles defines the permissions for an API key on a specific team",
+      "properties": {
+        "roles": {
+          "description": "The roles assigned to this API key for the team wtf man",
+          "example": [
+            "operator",
+            "user"
+          ],
+          "items": {
+            "enum": [
+              "owner",
+              "purchaser",
+              "operator",
+              "user"
+            ],
+            "type": "string"
+          },
+          "type": "array",
+          "x-go-name": "Roles"
+        },
+        "team": {
+          "description": "Team slug identifier",
+          "example": "hotaisle-development",
+          "type": "string",
+          "x-go-name": "Team"
+        }
+      },
+      "required": [
+        "team",
+        "roles"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserAPIKeyWithToken": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/UserAPIKey"
+        },
+        {
+          "properties": {
+            "token": {
+              "description": "The full token value. This is the only time the full token will be returned, as it is not stored plaintext on the server and cannot be recovered.",
+              "example": "6ddfaa4539b4c7e046fe4b94.ee7003caf1bca1c01bb37b7a870af156d29bfdd5d86113eef99e2f476f91659c",
+              "type": "string",
+              "x-go-name": "Token"
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "description": "UserAPIKeyWithToken represents an API key with its full token value\nOnly returned when creating a new API key",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserEmailCodeResponse": {
+      "description": "UserEmailCodeResponse contains information about a sign-in code request",
+      "properties": {
+        "code_expires": {
+          "description": "When the sign-in code expires",
+          "example": "2025-04-10T15:30:00Z",
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "CodeExpires"
+        },
+        "email": {
+          "description": "User's email address",
+          "example": "john.doe@example.com",
+          "type": "string",
+          "x-go-name": "Email"
+        }
+      },
+      "required": [
+        "email",
+        "code_expires"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserRegistrationResponse": {
+      "description": "UserRegistrationResponse contains information about a registration attempt",
+      "properties": {
+        "code_expires": {
+          "description": "When the sign-in code expires",
+          "example": "2025-04-10T15:30:00Z",
+          "format": "date-time",
+          "type": "string",
+          "x-go-name": "CodeExpires"
+        },
+        "email": {
+          "description": "User's email address",
+          "example": "john.doe@example.com",
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "name": {
+          "description": "User's full name",
+          "example": "John Doe",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "code_expires"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserTeam": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Team"
+        },
+        {
+          "properties": {
+            "effective_roles": {
+              "description": "The list of effective roles that this authenticated request has, based on API Key restrictions",
+              "example": [
+                "operator",
+                "user"
+              ],
+              "items": {
+                "enum": [
+                  "owner",
+                  "purchaser",
+                  "operator",
+                  "user"
+                ],
+                "type": "string"
+              },
+              "type": "array",
+              "x-go-name": "EffectiveRoles",
+              "x-order": "4"
+            },
+            "invitation": {
+              "description": "This team membership is a invite that has not yet been accepted",
+              "example": true,
+              "type": "boolean",
+              "x-go-name": "Invitation",
+              "x-order": "5"
+            },
+            "roles": {
+              "description": "The complete list of roles this user has on the team",
+              "example": [
+                "owner",
+                "purchaser",
+                "operator"
+              ],
+              "items": {
+                "enum": [
+                  "owner",
+                  "purchaser",
+                  "operator",
+                  "user"
+                ],
+                "type": "string"
+              },
+              "type": "array",
+              "x-go-name": "Roles",
+              "x-order": "3"
+            }
+          },
+          "required": [
+            "roles",
+            "effective_roles"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "UserTeam represents a team that the user belongs to",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserTeamDetails": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/UserTeamWithMembers"
+        },
+        {
+          "properties": {
+            "bare_metal_servers": {
+              "description": "Bare metal servers",
+              "items": {
+                "$ref": "#/definitions/BareMetalServer"
+              },
+              "type": "array",
+              "x-go-name": "BareMetalServers",
+              "x-order": "7"
+            },
+            "virtual_machines": {
+              "description": "Virtual Machines",
+              "items": {
+                "$ref": "#/definitions/VirtualMachine"
+              },
+              "type": "array",
+              "x-go-name": "VirtualMachines",
+              "x-order": "8"
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "description": "UserTeamWithMembers represents a team with detailed information including members and resources",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserTeamWithMembers": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/UserTeam"
+        },
+        {
+          "properties": {
+            "members": {
+              "description": "Team members",
+              "items": {
+                "$ref": "#/definitions/TeamMember"
+              },
+              "type": "array",
+              "x-go-name": "Members",
+              "x-order": "6"
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "description": "UserTeamWithMembers represents a team with detailed member information",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "UserUpdate": {
+      "description": "UserUpdate represents the updateable fields for a user",
+      "properties": {
+        "name": {
+          "description": "User's full name",
+          "example": "Jane Smith",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "VirtualMachine": {
+      "description": "VirtualMachine represents a virtual machine instance",
+      "properties": {
+        "description": {
+          "description": "VM description",
+          "example": "Production web server",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "ip_address": {
+          "description": "VM's primary IP address",
+          "example": "192.168.1.200",
+          "type": "string",
+          "x-go-name": "IPAddress"
+        },
+        "name": {
+          "description": "VM Name",
+          "example": "vm-01",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "ssh_access": {
+          "$ref": "#/definitions/ExternalService"
+        }
+      },
+      "required": [
+        "name",
+        "ip_address"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "VirtualMachineDetails": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/VirtualMachine"
+        },
+        {
+          "$ref": "#/definitions/VirtualMachineSpecs"
+        }
+      ],
+      "description": "VirtualMachineDetails represents a virtual machine with detailed specifications",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "VirtualMachineSpecs": {
+      "description": "VirtualMachineSpecs contains the specifications of a virtual machine",
+      "properties": {
+        "cpu_cores": {
+          "description": "Total CPU Cores",
+          "example": 8,
+          "format": "uint64",
+          "type": "integer",
+          "x-go-name": "CPUCores"
+        },
+        "cpus": {
+          "$ref": "#/definitions/CPUs"
+        },
+        "disk_capacity": {
+          "description": "Total Disk in bytes",
+          "example": 107374182400,
+          "format": "uint64",
+          "type": "integer",
+          "x-go-name": "DiskCapacity"
+        },
+        "gpus": {
+          "description": "GPU information if any GPUs are assigned",
+          "items": {
+            "$ref": "#/definitions/GPUs"
+          },
+          "type": "array",
+          "x-go-name": "GPUs"
+        },
+        "ram_capacity": {
+          "description": "Total RAM in bytes",
+          "example": 34359738368,
+          "format": "uint64",
+          "type": "integer",
+          "x-go-name": "RAMCapacity"
+        }
+      },
+      "required": [
+        "cpu_cores",
+        "ram_capacity",
+        "disk_capacity"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "VirtualMachineState": {
+      "description": "VirtualMachineState represents the current state of a virtual machine",
+      "properties": {
+        "host": {
+          "description": "The host where the VM is running",
+          "example": "vm-host-01",
+          "type": "string",
+          "x-go-name": "Host"
+        },
+        "state": {
+          "description": "The current state of the virtual machine.\nValues can include \"running\", \"shut off\", \"paused\", etc.",
+          "example": "running",
+          "type": "string",
+          "x-go-name": "State"
+        }
+      },
+      "required": [
+        "state",
+        "host"
+      ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "VirtualMachineUpdate": {
+      "description": "VirtualMachineUpdate represents a bare metal server",
+      "properties": {
+        "description": {
+          "description": "Virtual Machine description",
+          "type": "string",
+          "x-go-name": "Description"
+        }
+      },
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    }
+  },
+  "info": {
+    "description": "Hot Aisle API\n",
+    "title": "hotaisle",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/teams/": {
+      "get": {
+        "description": "Returns information about the teams the user belongs to, including roles.\n\n---\n\nRequires team role: any (only returns teams for which this API key has a role)",
+        "operationId": "getUserTeamsReq",
+        "responses": {
+          "200": {
+            "description": "User information with teams",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/UserTeam"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get user team membership",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "team role: any (only returns teams for which this API key has a role)"
+      },
+      "post": {
+        "description": "Creates a new team with the authenticated user as the owner.\n\n\n---\n\nRequires user role: owner",
+        "operationId": "createTeamReq",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Team"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team created successfully",
+            "schema": {
+              "$ref": "#/definitions/UserTeamWithMembers"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Create a new team",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "user role: owner"
+      }
+    },
+    "/teams/invitations/": {
+      "get": {
+        "description": "Returns information about the team invitations that are pending for the user.\n\n---\n\nRequires user role: any",
+        "operationId": "getUserTeamsInvitationsReq",
+        "responses": {
+          "200": {
+            "description": "List of pending team invitations",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/UserTeam"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get user pending team invitations",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "user role: any"
+      }
+    },
+    "/teams/{team}/": {
+      "get": {
+        "description": "Returns detailed information about a specific team the user belongs to.\n\n---\n\nRequires team role: any",
+        "operationId": "getUserTeamDetailReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team details",
+            "schema": {
+              "$ref": "#/definitions/UserTeamDetails"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get specific team details",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "team role: any"
+      },
+      "patch": {
+        "description": "Updates a team's details.\n\n---\n\nRequires team role: owner",
+        "operationId": "updateTeamReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamUpdate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team updated successfully",
+            "schema": {
+              "$ref": "#/definitions/UserTeamWithMembers"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Update a team's information",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "team role: owner"
+      }
+    },
+    "/teams/{team}/accept-invitation/": {
+      "post": {
+        "description": "Accept a pending invitation to join a team.\n\n---\n\nRequires user role: owner",
+        "operationId": "acceptTeamInvitationReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation accepted, returns updated team details",
+            "schema": {
+              "$ref": "#/definitions/UserTeamWithMembers"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Accept team invitation",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "user role: owner"
+      }
+    },
+    "/teams/{team}/balance/": {
+      "get": {
+        "description": "Returns the current available balance, estimated runout time, and hourly rate for all active resources in the team.\n\n---\n\nRequires team role: any",
+        "operationId": "getTeamBalanceReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team balance information",
+            "schema": {
+              "$ref": "#/definitions/BalanceInfo"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get team balance information",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "team role: any"
+      }
+    },
+    "/teams/{team}/bare_metal/": {
+      "get": {
+        "description": "Returns a list of bare metal servers associated with the team.\n\n---\n\nRequires team role: any",
+        "operationId": "getBaremetalServersReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of bare metal servers with detailed specifications",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/BareMetalServerDetails"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get bare metal servers",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: any"
+      },
+      "post": {
+        "description": "Reserves a bare metal server for the team, including validation of tenant limits and balance, and submits 8-hour minimum usage to Stripe.\n\n---\n\nRequires team role: operator",
+        "operationId": "reserveBaremetalServerReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BareMetalServerReservation"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Server reserved successfully",
+            "schema": {
+              "$ref": "#/definitions/BareMetalServerReservationResponse"
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid specifications or insufficient resources"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "402": {
+            "description": "Payment required - insufficient balance"
+          },
+          "403": {
+            "description": "Forbidden - tenant limit exceeded or insufficient permissions"
+          },
+          "404": {
+            "description": "Not found - no available servers matching specifications"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Reserve a bare metal server",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/available/": {
+      "get": {
+        "description": "Returns a list of available bare metal server types that can be reserved, including pricing information.\n\n---\n\nRequires team role: any",
+        "operationId": "getAvailableBaremetalServersReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available bare metal server types with specifications and pricing",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/AvailableBareMetalTypes"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get available bare metal server types",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: any"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/": {
+      "delete": {
+        "description": "Releases a bare metal server back to the available pool. Enforces 8-hour minimum usage by checking the Stripe last submission time.\n\n---\n\nRequires team role: operator",
+        "operationId": "deleteBaremetalServerReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Server released successfully"
+          },
+          "400": {
+            "description": "Bad request - server cannot be released due to minimum usage requirement"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          },
+          "404": {
+            "description": "Not found - server not found or not assigned to team"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Release a bare metal server",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      },
+      "get": {
+        "description": "Returns detailed information about a specific bare metal server.\n\n---\n\nRequires team role: any",
+        "operationId": "getBaremetalServerReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed server specifications",
+            "schema": {
+              "$ref": "#/definitions/BareMetalServerDetails"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get bare metal server details",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: any"
+      },
+      "patch": {
+        "description": "Updates a bare metal server's description.\n\n---\n\nRequires team role: operator",
+        "operationId": "updateBaremetalServerReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BareMetalServerUpdate"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Server updated successfully"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Update a bare metal server",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/console/": {
+      "post": {
+        "description": "Returns a one time use URL for local console access\n\n---\n\nRequires team role: operator",
+        "operationId": "getBaremetalConsoleReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current power state",
+            "schema": {
+              "$ref": "#/definitions/BareMetalServerConsoleURL"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Generate URL for bare metal console access",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/power/": {
+      "get": {
+        "description": "Returns the current power state of the server.\n\n---\n\nRequires team role: any",
+        "operationId": "getServerPowerReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current power state",
+            "schema": {
+              "$ref": "#/definitions/BareMetalServerPowerState"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get server power state",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: any"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/power/ac_reset/": {
+      "post": {
+        "description": "Performs a complete AC reset of the server. The server must already be in the off state for this to succeed. BMC will also reset during an AC reset, so getting the power state or any other BMC operations will fail for several minutes while this is in progress.\n\n\n---\n\nRequires team role: operator",
+        "operationId": "serverACResetReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "AC reset request successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Perform AC power reset",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/power/cold_reboot/": {
+      "post": {
+        "description": "Turns off and then reboots the system.\n\n---\n\nRequires team role: operator",
+        "operationId": "serverColdRebootReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cold reboot request successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Cold reboot the server",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/power/force_shutdown/": {
+      "post": {
+        "description": "Immediately powers off the server without a clean shutdown. May cause data loss.\n\n---\n\nRequires team role: operator",
+        "operationId": "serverForceShutdownReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Force shutdown request successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Force shut down the server",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/power/graceful_shutdown/": {
+      "post": {
+        "description": "Sends an ACPI signal to the OS to initiate a clean shutdown.\n\n---\n\nRequires team role: operator",
+        "operationId": "serverGracefulShutdownReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Graceful shutdown request successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Gracefully shut down the server",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/power/power_on/": {
+      "post": {
+        "description": "Turns on the server if it is currently off.\n\n---\n\nRequires team role: operator",
+        "operationId": "serverPowerOnReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Power on request successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Power on the server",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/power/warm_reboot/": {
+      "post": {
+        "description": "Reboots the system without turning the power off completely.\n\n---\n\nRequires team role: operator",
+        "operationId": "serverWarmRebootReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Warm reboot request successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Warm reboot the server",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/reinstall/": {
+      "post": {
+        "description": "Resets BIOS settings, wipes all disks, and reinstalls the operating system. The reinstall process goes through several stages which can be monitored via the server details endpoint.\n1. A graceful shutdown of the server will be triggered and the status will be updated to `shutting_down`. If the server takes more than 5 minutes to shut down, a force shutdown will occur.\n2. The server will perform a full ac reset and put the server in the `ac_reset` state. This will take several minutes.\n3. When the server comes back, a reset of bios settings will be triggred and the server will be in `bios_reset` state. This will take several minutes.\n4. After the bios reset is complete, the server will boot into the installer environment and will be in the `booting_installer` state.\n5. When the installation starts the server will be in the `installing_os` state.\n6. Once the base install is complete, the server will install additional packges and will be in the `finalizing_os` state.\n7. When it completes these tasks and reboots from the installer environment the server will be in the `first_boot` state.\n8. Upon first boot, some final taks will run and the server will be in the `first_boot_tasks` state.\nIf everything completes successfully the server will be in the `installed` state.\nIf any action fails, the server will be in the `failed` state.\nThe `last_imaging_update` will indicate the timestamp of the last update to the install progress.\n\n\n---\n\nRequires team role: operator",
+        "operationId": "serverReinstallReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reinstall process initiated successfully",
+            "schema": {
+              "$ref": "#/definitions/BareMetalServerDetails"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Reinstall server OS",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/bare_metal/{server}/support_access_enable/": {
+      "delete": {
+        "description": "Revokes Hot Aisle support staff access to this server.\n\n---\n\nRequires team role: operator",
+        "operationId": "disableSupportAccessReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Support access disabled successfully"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Disable support access",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      },
+      "put": {
+        "description": "Enables Hot Aisle support staff to access this server for troubleshooting.\n\n---\n\nRequires team role: operator",
+        "operationId": "enableSupportAccessReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Server name",
+            "in": "path",
+            "name": "server",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Support access enabled successfully"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Enable support access",
+        "tags": [
+          "bare_metal"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/members/invitations/": {
+      "get": {
+        "description": "Returns a list of pending invitations for a team.\n\n---\n\nRequires team role: any",
+        "operationId": "getTeamInvitationsReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of team pending invitations",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/TeamMember"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get team's pending invitations",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "team role: any"
+      },
+      "post": {
+        "description": "Creates an invitation for a user to join a team.\n\n---\n\nRequires team role: owner",
+        "operationId": "createTeamInvitationReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamInvitationRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Invitation created successfully"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Invite a user to join the team",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "team role: owner"
+      }
+    },
+    "/teams/{team}/members/{email}/": {
+      "delete": {
+        "description": "Removes a member from a team. This can be: 1. Yourself (must be a contact owner) 2. Another member (must be a team owner) 3. A pending invitation (works as rejection)\n\n\n---\n\nRequires team role: owner (to delete another member) OR user role: owner (to delete self)",
+        "operationId": "removeTeamMemberReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Email address of the team member to remove",
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Team member removed successfully"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Remove a member from a team",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "team role: owner (to delete another member) OR user role: owner (to delete self)"
+      },
+      "patch": {
+        "description": "Updates a team member's roles.\n\n---\n\nRequires team role: owner",
+        "operationId": "updateTeamMemberReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Email address of the team member to update",
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TeamMemberUpdate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team details",
+            "schema": {
+              "$ref": "#/definitions/TeamMember"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Update team member roles",
+        "tags": [
+          "teams"
+        ],
+        "x-requires-permissions": "team role: owner"
+      }
+    },
+    "/teams/{team}/purchase-credits/": {
+      "post": {
+        "description": "Creates a Stripe checkout session for purchasing credits for the team",
+        "operationId": "purchaseTeamCredits",
+        "parameters": [
+          {
+            "description": "Team slug",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Purchase details",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PurchaseTeamCreditsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/PurchaseTeamCreditsResponse"
+            }
+          },
+          "202": {
+            "description": "Self-Service payment approval requested"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - user does not have purchaser role"
+          },
+          "404": {
+            "description": "Team not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Purchase credits for a team",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
+    "/teams/{team}/request-payment-approval/": {
+      "post": {
+        "description": "Auto-approves self-service payment and sends approval notification to customer (used by TUI)",
+        "operationId": "requestPaymentApproval",
+        "parameters": [
+          {
+            "description": "Team slug",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Approval request details",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RequestPaymentApprovalRequest"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Approval request submitted successfully"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - user does not have purchaser role"
+          },
+          "404": {
+            "description": "Team not found"
+          },
+          "409": {
+            "description": "Approval already requested or team already approved"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Request self-service payment approval for a team",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
+    "/teams/{team}/virtual_machines/": {
+      "get": {
+        "description": "Returns a list of virtual machines associated with the team.\n\n---\n\nRequires team role: any",
+        "operationId": "getVirtualMachinesReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of virtual machines with detailed specifications",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/VirtualMachineDetails"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get virtual machines",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: any"
+      },
+      "post": {
+        "description": "Assigns and provisions an available virtual machine matching the specified requirements.\n\n---\n\nRequires team role: operator",
+        "operationId": "assignAvailableVirtualMachineReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/VirtualMachineSpecs"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully provisioned virtual machine",
+            "schema": {
+              "$ref": "#/definitions/VirtualMachineDetails"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "description": "Maximum VMs already provisioned for this team"
+          },
+          "402": {
+            "description": "Insufficient balance to provision virtual machine"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "description": "No available virtual machine matching requested specifications"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Provision a virtual machine",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/virtual_machines/available/": {
+      "get": {
+        "description": "Returns a list of available virtual machine types that can be provisioned, including pricing information.\n\n---\n\nRequires team role: any",
+        "operationId": "getAvailableVirtualMachinesReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available virtual machine types with specifications and pricing",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/AvailableVirtualMachineTypes"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get available virtual machine types",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: any"
+      }
+    },
+    "/teams/{team}/virtual_machines/{vm}/": {
+      "delete": {
+        "description": "Completely deletes a virtual machine and all its resources.\nWARNING: This operation will DELETE the VM and ALL of its data. This operation cannot be undone.\nThis request will not return until the reset is complete, but the reset will continue if the request is canceled.\n\n\n---\n\nRequires team role: operator",
+        "operationId": "deleteVMReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "VM deletion was successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Delete a virtual machine",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      },
+      "get": {
+        "description": "Returns detailed information about a specific virtual machine.\n\n---\n\nRequires team role: any",
+        "operationId": "getVirtualMachineReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed virtual machine specifications",
+            "schema": {
+              "$ref": "#/definitions/VirtualMachineDetails"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get virtual machine details",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: any"
+      },
+      "patch": {
+        "description": "Updates a vrutal machine's description.\n\n---\n\nRequires team role: operator",
+        "operationId": "updateVirtualMachineReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/VirtualMachineUpdate"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Server updated successfully"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Update a virtual machine",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/virtual_machines/{vm}/console/": {
+      "get": {
+        "description": "Opens a WebSocket connection to the virtual machine's console\n\n---\n\nRequires team role: operator",
+        "operationId": "getVMConsoleReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "101": {
+            "description": "WebSocket connection established",
+            "schema": {
+              "format": "binary",
+              "type": "string"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Connect to virtual machine console",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/virtual_machines/{vm}/hard-reset/": {
+      "post": {
+        "description": "Forcefully resets a running virtual machine (equivalent to pressing the hardware reset button). This operation is abrupt and may result in data loss if the VM's filesystem is not properly synced. Use the graceful reboot endpoint when possible.\n\n\n---\n\nRequires team role: operator",
+        "operationId": "hardResetVMReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "VM hard reset operation was successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Forcefully reset a virtual machine",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/virtual_machines/{vm}/reboot/": {
+      "post": {
+        "description": "Gracefully reboots a running virtual machine by sending an ACPI reboot signal. This allows the guest OS to perform a clean shutdown and restart. This is the preferred way to restart a VM when possible.\n\n\n---\n\nRequires team role: operator",
+        "operationId": "rebootVMReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "VM reboot operation was successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Gracefully reboot a virtual machine",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/virtual_machines/{vm}/rebuild/": {
+      "post": {
+        "description": "Performs a complete rebuild of the virtual machine to its initial state.\nWARNING: This operation will DELETE ALL DATA on the virtual machine. The VM will be recreated from the original template, resulting in complete data loss. This operation cannot be undone.\nThis request will not return until the rebuild is complete, but the rebuild will continue if the request is canceled.\n\n\n---\n\nRequires team role: operator",
+        "operationId": "rebuildVMReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "VM rebuild operation was successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Rebuild a virtual machine in its initial state",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/virtual_machines/{vm}/shutdown/": {
+      "post": {
+        "description": "Sends a graceful shutdown signal to a running virtual machine.\n\n---\n\nRequires team role: operator",
+        "operationId": "shutdownVMReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "VM shutdown operation was successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Gracefully shutdown a virtual machine",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/virtual_machines/{vm}/start/": {
+      "post": {
+        "description": "Starts a virtual machine that is currently stopped.\n\n---\n\nRequires team role: operator",
+        "operationId": "startVMReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "VM start operation was successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Start a virtual machine",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/teams/{team}/virtual_machines/{vm}/state/": {
+      "get": {
+        "description": "Returns the current power state of the virtual machine.\n\n---\n\nRequires team role: any",
+        "operationId": "getVMStateReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current virtual machine state",
+            "schema": {
+              "$ref": "#/definitions/VirtualMachineState"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get virtual machine state",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: any"
+      }
+    },
+    "/teams/{team}/virtual_machines/{vm}/stop/": {
+      "post": {
+        "description": "Forcefully stops a running virtual machine (equivalent to pulling the power).\n\n---\n\nRequires team role: operator",
+        "operationId": "stopVMReq",
+        "parameters": [
+          {
+            "description": "Team handle",
+            "in": "path",
+            "name": "team",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Virtual machine name",
+            "in": "path",
+            "name": "vm",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "VM stop operation was successful"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Forcefully stop a virtual machine",
+        "tags": [
+          "virtual_machines"
+        ],
+        "x-requires-permissions": "team role: operator"
+      }
+    },
+    "/user/": {
+      "get": {
+        "description": "Returns user details including name, email, and account creation date for the authenticated user. Also includes information about the teams the user belongs to, including roles.\n\n\n---\n\nRequires user role: any",
+        "operationId": "getUserReq",
+        "responses": {
+          "200": {
+            "description": "User information with teams",
+            "schema": {
+              "$ref": "#/definitions/GetUserResponse"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get information about the currently authenticated user.",
+        "tags": [
+          "user"
+        ],
+        "x-requires-permissions": "user role: any"
+      },
+      "patch": {
+        "description": "Allows updating user profile information such as display name.\n\n\n---\n\nRequires user role: owner",
+        "operationId": "updateUserReq",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserUpdate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated user profile",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Update the currently authenticated user profile.",
+        "tags": [
+          "user"
+        ],
+        "x-requires-permissions": "user role: owner"
+      }
+    },
+    "/user/api_keys/": {
+      "get": {
+        "description": "Returns a list of all API keys belonging to the user.\n\n---\n\nRequires user role: any",
+        "operationId": "getUserAPIKeysReq",
+        "responses": {
+          "200": {
+            "description": "List of API keys",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/UserAPIKey"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get user API keys",
+        "tags": [
+          "user"
+        ],
+        "x-requires-permissions": "user role: any"
+      },
+      "post": {
+        "description": "Creates a new API key with specified permissions.\n\n---\n\nRequires user role: owner",
+        "operationId": "createAPIKeyReq",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserAPIKeyRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key created successfully, returns key details including one-time token",
+            "schema": {
+              "$ref": "#/definitions/UserAPIKeyWithToken"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Create a new API key",
+        "tags": [
+          "user"
+        ],
+        "x-requires-permissions": "user role: owner"
+      }
+    },
+    "/user/api_keys/{prefix}/": {
+      "delete": {
+        "description": "Permanently deletes an API key.\n\n---\n\nRequires user role: owner",
+        "operationId": "deleteAPIKeyReq",
+        "parameters": [
+          {
+            "description": "API key prefix identifier",
+            "in": "path",
+            "name": "prefix",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "API key successfully deleted"
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Delete an API key",
+        "tags": [
+          "user"
+        ],
+        "x-requires-permissions": "user role: owner"
+      },
+      "get": {
+        "description": "Returns detailed information about a specific API key.\n\n---\n\nRequires user role: any",
+        "operationId": "getUserAPIKeyDetailReq",
+        "parameters": [
+          {
+            "description": "API key prefix identifier",
+            "in": "path",
+            "name": "prefix",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key details",
+            "schema": {
+              "$ref": "#/definitions/UserAPIKey"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Get specific API key details",
+        "tags": [
+          "user"
+        ],
+        "x-requires-permissions": "user role: any"
+      },
+      "patch": {
+        "description": "Updates an existing API key with new permissions or label.\n\n---\n\nRequires user role: owner",
+        "operationId": "updateAPIKeyReq",
+        "parameters": [
+          {
+            "description": "API key prefix identifier",
+            "in": "path",
+            "name": "prefix",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserAPIKeyRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key updated successfully",
+            "schema": {
+              "$ref": "#/definitions/UserAPIKey"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        },
+        "summary": "Update an API key",
+        "tags": [
+          "user"
+        ],
+        "x-requires-permissions": "user role: owner"
+      }
+    },
+    "/user/ssh_keys/": {
+      "get": {
+        "description": "Returns a list of all SSH keys belonging to the user.\n\n---\n\nRequires user role: any",
+        "operationId": "getUserSSHKeysReq",
+        "responses": {
+          "200": {
+            "description": "List of SSH keys",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/SSHKey"
+              },
+              "type": "array"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get user SSH keys",
+        "tags": [
+          "user",
+          "ssh"
+        ],
+        "x-requires-permissions": "user role: any"
+      },
+      "post": {
+        "description": "Adds a new SSH public key to the user's account.\n\n---\n\nRequires user role: owner",
+        "operationId": "addSSHKeyReq",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SSHKeyRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSH key added successfully",
+            "schema": {
+              "$ref": "#/definitions/SSHKey"
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - not a contact owner"
+          },
+          "409": {
+            "description": "Conflict - key already registered"
+          },
+          "422": {
+            "description": "Unprocessable Entity - invalid SSH key format"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Add a new SSH key",
+        "tags": [
+          "user",
+          "ssh"
+        ],
+        "x-requires-permissions": "user role: owner"
+      }
+    },
+    "/user/ssh_keys/{fingerprint}/": {
+      "delete": {
+        "description": "Permanently deletes an SSH key from the user's account.\n\n---\n\nRequires user role: owner",
+        "operationId": "deleteSSHKeyReq",
+        "parameters": [
+          {
+            "description": "SSH key fingerprint value (the part after \"SHA256:\" in the full fingerprint)",
+            "in": "path",
+            "name": "fingerprint",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "SSH key successfully deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - not a contact owner"
+          },
+          "404": {
+            "description": "SSH key not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Delete an SSH key",
+        "tags": [
+          "user",
+          "ssh"
+        ],
+        "x-requires-permissions": "user role: owner"
+      }
+    }
+  },
+  "produces": [
+    "application/json"
+  ],
+  "responses": {
+    "BadRequest": {
+      "description": "Invalid request format or parameters",
+      "schema": {
+        "example": "Bad Request: Invalid input",
+        "type": "string"
+      }
+    },
+    "Error": {
+      "description": "Error response",
+      "schema": {
+        "example": "Error message",
+        "type": "string"
+      }
+    },
+    "Forbidden": {
+      "description": "Permission denied - the authenticated user doesn't have required permissions",
+      "schema": {
+        "example": "Forbidden: Permission denied",
+        "type": "string"
+      }
+    },
+    "InternalError": {
+      "description": "An unexpected error occurred on the server",
+      "schema": {
+        "example": "Internal Server Error",
+        "type": "string"
+      }
+    },
+    "NotFound": {
+      "description": "The requested resource was not found",
+      "schema": {
+        "example": "Not Found: Resource not found",
+        "type": "string"
+      }
+    },
+    "Unauthorized": {
+      "description": "Authentication information is missing or invalid",
+      "schema": {
+        "example": "Unauthorized",
+        "type": "string"
+      }
+    },
+    "UnprocessableEntity": {
+      "description": "Validation failed - request parameters are invalid",
+      "schema": {
+        "example": "Unprocessable Entity: Invalid data format",
+        "type": "string"
+      }
+    }
+  },
+  "security": [
+    {
+      "token": []
+    }
+  ],
+  "securityDefinitions": {
+    "token": {
+      "description": "Please enter in the word 'Token', a space, and then paste in your token.",
+      "in": "header",
+      "name": "Authorization",
+      "type": "apiKey"
+    }
+  },
+  "swagger": "2.0",
+  "tags": [
+    {
+      "name": "user"
+    },
+    {
+      "description": "Manage ssh key access to your servers.\n\nSSH Access is provided by the configuration in `/etc/ssh/sshd_config.d/70-hotaisle-auth-keys.conf` which dynamically fetches ssh keys from this API for your server on login. It caches these fetched keys to `~/.ssh/hotaisle_managed_keys`.\n\nIf you want to disable automatic key management, simply delete `/etc/ssh/sshd_config.d/70-hotaisle-auth-keys.conf`.\n\nSSH Keys associated with any member of a team with the `user` role will be permitted to login as the `hotaisle` user on a server.\n\nAdditionally if `support_access_enabled` is true, Hot Aisle support will also have access to the server.\n\nAutomatic key management does not touch the `~/.ssh/authorized_keys` file, so any changes you make there will not be reflected here. Additionally automatic key management does not affect any users except the `hotaisle` user.\n",
+      "name": "ssh"
+    },
+    {
+      "name": "teams"
+    },
+    {
+      "name": "bare_metal"
+    },
+    {
+      "name": "virtual_machines"
+    },
+    {
+      "name": "deprecated"
+    }
+  ]
+}
