@@ -28,11 +28,11 @@ jobs:
         with:
           version: latest
 
+      - name: Run build
+        run: just ci
+
       - name: Run tests
         run: just test
-
-      - name: Build
-        run: just ci
 
       - name: Run basic integration test
         run: just run -h
