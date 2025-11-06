@@ -31,12 +31,12 @@ type Client struct {
 // Option is a function that configures a Client
 type Option func(*Client)
 
-// WithHTTPClient sets a custom HTTP client
-//func WithHTTPClient(client *http.Client) Option {
-//	return func(c *Client) {
-//		c.httpClient = client
-//	}
-//}
+// WithHTTPClient sets a custom HTTP client (primarily for testing)
+func WithHTTPClient(client *http.Client) Option {
+	return func(c *Client) {
+		c.httpClient = client
+	}
+}
 
 // WithToken sets the authentication token
 func WithToken(token string) Option {
