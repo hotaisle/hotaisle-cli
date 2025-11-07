@@ -2,13 +2,13 @@ package test
 
 import "net/http"
 
-func MakeMockClient(rtf http.RoundTripper) *http.Client {
+func NewMockClient(rtf http.RoundTripper) *http.Client {
 	return &http.Client{
 		Transport: rtf,
 	}
 }
 
-func MakeOkResponse() *http.Response {
+func NewOkResponse() *http.Response {
 	return &http.Response{
 		StatusCode: 200,
 		Body:       http.NoBody,

@@ -123,9 +123,9 @@ func TestNewClient_UserAgentFormat(t *testing.T) {
 			var capturedUserAgent string
 
 			c := NewClient(token, tt.version, client.WithHTTPClient(
-				test.MakeMockClient(test.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
+				test.NewMockClient(test.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
 					capturedUserAgent = req.Header.Get("User-Agent")
-					return test.MakeOkResponse(), nil
+					return test.NewOkResponse(), nil
 				}))))
 
 			assert.NotNil(t, c, "expected client to be non-nil")
