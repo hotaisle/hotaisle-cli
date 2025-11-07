@@ -180,7 +180,7 @@ build-all:
 		just build-one "{{dist_dir}}" "$output" "$os" "$arch" "$arm"
 	done
 
-compress: build-all
+dist: build-all
 	@[ -n "$(find {{dist_dir}} -type f ! -name '*.gz')" ] && \
 	(find {{dist_dir}} -type f ! -name "*.gz" | xargs -P 0 -I {} gzip -f -9 {} && \
 	echo "✅ Compression complete") || echo "🛑 No files to compress"
@@ -189,7 +189,7 @@ compress: build-all
 run *args: build
 	{{bin_dir}}/{{project_name}} {{args}}
 
-ci:	build-all compress
+ci:	deps build-all vet lint dist
 
 clean:
 	@rm -rf {{dist_dir}} {{bin_dir}}

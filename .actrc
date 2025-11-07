@@ -1,4 +1,4 @@
 --platform ubuntu-latest=catthehacker/ubuntu:act-latest
--W .github/workflows/ci.yml
+-W .github/workflows/test.yml
 -e test/event.json
 --artifact-server-path $HOME/.cache/act-artifacts

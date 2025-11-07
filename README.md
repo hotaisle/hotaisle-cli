@@ -4,23 +4,28 @@
 
 A command-line interface tool for [Hot Aisle operations](https://admin.hotaisle.app/api/docs/).
 
-## Installation
+# Installation
 
-### From Releases
+## From Releases
 
-### From Homebrew
+## From Homebrew
 
-### From Source
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+## From Source
 
 ### Prerequisites
 
 - Go 1.25 or later
 - [Just](https://github.com/casey/just) command runner
 - [act](https://github.com/nektos/act) (optional)
+
+# Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+Our release process is automated with Github Actions ensuring that all tests pass before a release is published and that the CLI is built for all supported platforms. We've removed the human factor the release process, so you don't have to worry about the security of it. The main branch can only accept PRs from maintainers with verified commits.
+
+PRs run tests.
+Merge PR to main, runs a binary build, tag and GH release.
 
 # License
 

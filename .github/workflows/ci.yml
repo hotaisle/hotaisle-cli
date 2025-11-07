@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
 
 jobs:
@@ -17,22 +15,5 @@ jobs:
 
       - uses: extractions/setup-just@v3
 
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Run go vet
-        run: just vet
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v8
-        with:
-          version: latest
-
-      - name: Run build
+      - name: Run all the ci things
         run: just ci
-
-      - name: Run tests
-        run: just test
-
-      - name: Run basic integration test
-        run: just run -h

@@ -14,10 +14,9 @@ jobs:
     if: ${{ !github.event.act }} # skip during local actions testing
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Release to homebrew
+        run: echo "homebrew"
 
-      - uses: actions/setup-go@v4
-        with:
-          go-version: 1.25
 
-      - uses: extractions/setup-just@v3
+# TODO: add release steps to package managers
+
