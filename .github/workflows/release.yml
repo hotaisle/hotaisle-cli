@@ -41,8 +41,8 @@ jobs:
       - name: Checkout Homebrew tap
         uses: actions/checkout@v4
         with:
-          clean: false
           repository: ${{ github.repository_owner }}/homebrew-tap
+          path: homebrew-tap
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Generate Homebrew formula
