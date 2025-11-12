@@ -41,7 +41,7 @@ alias help := default
 
 # Project Settings
 # These can be overridden via environment variables or .env file
-project_name := env("PROJECT_NAME", "hotaisle")
+project_name := env("PROJECT_NAME", "hotaisle-cli")
 organization := env("ORGANIZATION", "hotaisle")
 description := "Hot Aisle CLI"
 maintainer := "hello@hotaisle.ai"
@@ -151,7 +151,9 @@ build-one out_dir output goos goarch goarm:
 	out_path="{{out_dir}}/{{output}}"
 	# Find any existing output file (prefer compressed for timestamp check)
 	newest_output=""
-	[ -e "${out_path}.gz" ] && newest_output="${out_path}.gz" || [ -e "${out_path}" ] && newest_output="${out_path}"
+	[ -e "${out_path}.tar.gz" ] && newest_output="${out_path}.tar.gz" || \
+	[ -e "${out_path}.zip" ] && newest_output="${out_path}.zip" || \
+	[ -e "${out_path}" ] && newest_output="${out_path}"
 
 	# Check if rebuild is needed (only if output exists)
 	if [ -n "$newest_output" ] && [ -z "$(find . -name "*.go" -type f -newer "$newest_output" -print -quit 2>/dev/null)" ]; then
@@ -171,19 +173,44 @@ build-one out_dir output goos goarch goarm:
 
 build-all:
 	#!/usr/bin/env bash
-	set -e
+	set -euo pipefail
 	platforms="{{build_platforms}}"
-	for platform in $platforms; do
+
+	build_platform() {
+		local platform="$1"
 		IFS='/' read -r os arch arm <<< "$platform"
 		ext=""; [ "$os" = "windows" ] && ext=".exe"
-		output="{{project_name}}-${os}-${arch}${ext}"
+		output="{{project_name}}-{{version}}-${os}-${arch}${ext}"
 		just build-one "{{dist_dir}}" "$output" "$os" "$arch" "$arm"
-	done
+	}
+	export -f build_platform
+
+	# Build all platforms concurrently
+	echo "$platforms" | xargs -P 0 -n 1 bash -c 'build_platform "$@"' _
 
 dist: build-all
-	@[ -n "$(find {{dist_dir}} -type f ! -name '*.gz')" ] && \
-	(find {{dist_dir}} -type f ! -name "*.gz" | xargs -P 0 -I {} gzip -f -9 {} && \
-	echo "✅ Compression complete") || echo "🛑 No files to compress"
+	#!/usr/bin/env bash
+	set -euo pipefail
+	cd {{dist_dir}}
+	files=$(find . -type f ! -name '*.gz' ! -name '*.tar' ! -name '*.zip' -exec basename {} \;)
+	if [ -z "$files" ]; then
+		echo "🛑 No files to compress"
+		exit 0
+	fi
+
+	compress_file() {
+		local file="$1"
+		if [[ "$file" == *.exe ]]; then
+			zip -q -9 "$file.zip" "$file" && rm "$file"
+		else
+			tar -cf "$file.tar" "$file" && gzip -f -9 "$file.tar" && rm "$file"
+		fi
+	}
+	export -f compress_file
+
+	# Run compression in parallel
+	echo "$files" | xargs -P 0 -I {} bash -c 'compress_file "$@"' _ {}
+	echo "✅ Compression complete"
 
 # Run the application
 run *args: build
@@ -253,3 +280,19 @@ version:
 	@echo "Build by:    {{build_by}}"
 	@echo "Build time:  {{build_time}}"
 	@echo "Go version:  {{go_version}}"
+
+# Update brew-formula.rb with version and SHA256 checksums
+update-brew-formula:
+	#!/usr/bin/env bash
+	set -euo pipefail
+
+	DARWIN_ARM64="{{dist_dir}}/hotaisle-cli-${VERSION}-darwin-arm64.tar.gz"
+	DARWIN_AMD64="{{dist_dir}}/hotaisle-cli-${VERSION}-darwin-amd64.tar.gz"
+
+	ARM64_SHA=$(sha256sum "$DARWIN_ARM64" | awk '{print $1}')
+	AMD64_SHA=$(sha256sum "$DARWIN_AMD64" | awk '{print $1}')
+
+	sed -e "s/VERSION/${VERSION}/g" \
+		-e "s/ARM64_SHA256/${ARM64_SHA}/g" \
+		-e "s/AMD64_SHA256/${AMD64_SHA}/g" \
+		brew-formula.rb
