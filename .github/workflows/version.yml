@@ -19,7 +19,7 @@ jobs:
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - uses: actions/checkout@v4
         with:
@@ -36,3 +36,25 @@ jobs:
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
           artifacts: "dist/*"
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }} # necessary to make the release.yml run
+
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/homebrew-tap
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Generate Homebrew formula
+        run: |
+          VERSION="${{ steps.tag_version.outputs.new_tag }}" just brew-formula > homebrew-tap/hotaisle.rb
+
+      - name: Push formula to Homebrew tap
+        run: |
+          cd homebrew-tap
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add hotaisle.rb
+          git commit -m "Update formula for ${{ steps.tag_version.outputs.new_tag }}"
+          git push origin main

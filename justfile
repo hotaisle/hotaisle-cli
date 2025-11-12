@@ -280,3 +280,19 @@ version:
 	@echo "Build by:    {{build_by}}"
 	@echo "Build time:  {{build_time}}"
 	@echo "Go version:  {{go_version}}"
+
+# Update brew-formula.rb with version and SHA256 checksums
+update-brew-formula:
+	#!/usr/bin/env bash
+	set -euo pipefail
+
+	DARWIN_ARM64="{{dist_dir}}/hotaisle-cli-${VERSION}-darwin-arm64.tar.gz"
+	DARWIN_AMD64="{{dist_dir}}/hotaisle-cli-${VERSION}-darwin-amd64.tar.gz"
+
+	ARM64_SHA=$(sha256sum "$DARWIN_ARM64" | awk '{print $1}')
+	AMD64_SHA=$(sha256sum "$DARWIN_AMD64" | awk '{print $1}')
+
+	sed -e "s/VERSION/${VERSION}/g" \
+		-e "s/ARM64_SHA256/${ARM64_SHA}/g" \
+		-e "s/AMD64_SHA256/${AMD64_SHA}/g" \
+		brew-formula.rb
