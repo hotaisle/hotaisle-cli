@@ -188,7 +188,7 @@ build-all:
 	# Build all platforms concurrently
 	echo "$platforms" | xargs -P 0 -n 1 bash -c 'build_platform "$@"' _
 
-dist:
+dist: build-all
 	#!/usr/bin/env bash
 	set -euo pipefail
 	cd {{dist_dir}}
