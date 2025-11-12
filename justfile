@@ -282,7 +282,7 @@ version:
 	@echo "Go version:  {{go_version}}"
 
 # Update brew-formula.rb with version and SHA256 checksums
-update-brew-formula:
+brew-formula:
 	#!/usr/bin/env bash
 	set -euo pipefail
 
