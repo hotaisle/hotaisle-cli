@@ -2,15 +2,20 @@
 
 > ⚠️ **Alpha Status**: This project is currently in early active development. APIs and functionality are subject to change. Features are incomplete and may change significantly.
 
-A command-line interface tool for [Hot Aisle operations](https://admin.hotaisle.app/api/docs/).
+A command-line interface tool for [Hot Aisle operations](https://admin.hotaisle.app/api/docs/). After installation, you can run `hotaisle` from the command line for list of commands.
 
 # Installation
 
-## From Releases
+## Binary Releases
 
-## From Homebrew
+Download the latest release for your platform from the [Releases page](https://github.com/hotaisle/hotaisle-cli/releases).
 
-## From Source
+## Homebrew
+
+* `brew tap hotaisle/tap`
+* `brew install hotaisle/tap/hotaisle`
+
+## Source
 
 ### Prerequisites
 
@@ -29,7 +34,7 @@ Merge PR to main, runs a binary build, tag and GH release.
 
 # License
 
-See LICENSE file for details.
+See the LICENSE file for details.
 
 # Maintainer
 
