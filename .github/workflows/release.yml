@@ -58,7 +58,7 @@ jobs:
 
       - name: Generate Homebrew formula
         run: |
-          VERSION="${{ steps.tag_version.outputs.new_tag }}" just brew-formula > homebrew-tap/hotaisle.rb
+          VERSION="${{ steps.tag_version.outputs.new_tag }}" just brew-formula > homebrew-tap/Formula/hotaisle.rb
 
       - name: Push formula to Homebrew tap
         run: |
