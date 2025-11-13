@@ -77,15 +77,8 @@ export CGO_ENABLED := env("CGO_ENABLED", "0")
 gobin := GOPATH + "/bin"
 go_version := shell(go + ' version')
 
-current_date := `date -u '+%Y%m%d-%H%M%S'`
-
-# Version control
 # Automatically detect version information from git
-version := if `git rev-parse --git-dir 2>/dev/null; echo $?` == "0" {
-	`git describe --tags --always --dirty 2>/dev/null || echo "dev"`
-} else {
-	"dev"
-}
+version := `git describe --tags --match 'v*' 2>/dev/null || echo "dev"`
 
 git_commit := trim(`git rev-parse --short HEAD 2>/dev/null || echo "unknown"`)
 git_branch := trim(shell('git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ""')) || "unknown"
@@ -144,11 +137,11 @@ deps-update:
 build:
 	just build-one "{{bin_dir}}" "{{project_name}}" {{GOOS}} {{GOARCH}} "-"
 
-build-one out_dir output goos goarch goarm:
+build-one out_dir out_filename goos goarch goarm:
 	#!/usr/bin/env bash
 	set -euo pipefail
 
-	out_path="{{out_dir}}/{{output}}"
+	out_path="{{out_dir}}/{{out_filename}}"
 	# Find any existing output file (prefer compressed for timestamp check)
 	newest_output=""
 	[ -e "${out_path}.tar.gz" ] && newest_output="${out_path}.tar.gz" || \
@@ -180,8 +173,8 @@ build-all:
 		local platform="$1"
 		IFS='/' read -r os arch arm <<< "$platform"
 		ext=""; [ "$os" = "windows" ] && ext=".exe"
-		output="{{project_name}}-{{version}}-${os}-${arch}${ext}"
-		just build-one "{{dist_dir}}" "$output" "$os" "$arch" "$arm"
+		out_filename="{{project_name}}-{{version}}-${os}-${arch}${ext}"
+		just build-one "{{dist_dir}}" "$out_filename" "$os" "$arch" "$arm"
 	}
 	export -f build_platform
 
