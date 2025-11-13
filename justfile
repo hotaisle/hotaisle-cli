@@ -288,4 +288,4 @@ brew-formula:
 	sed -e "s/VERSION/${VERSION}/g" \
 		-e "s/ARM64_SHA256/${ARM64_SHA}/g" \
 		-e "s/AMD64_SHA256/${AMD64_SHA}/g" \
-		brew-formula.rb
+		package/brew-formula.rb

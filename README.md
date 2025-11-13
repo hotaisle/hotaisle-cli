@@ -47,6 +47,7 @@ hotaisle-cli/
 ├── test/             # Test files and fixtures
 ├── bin/              # Built binaries (generated)
 ├── dist/             # Distribution builds (generated)
+├── package/          # OS packaging
 ├── swagger.json      # Copy of our swagger file. https://admin.hotaisle.app/api/docs/swagger.json
 └── main.go           # Application entry point
 ```
