@@ -47,7 +47,7 @@ jobs:
           makeLatest: true
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
-          artifacts: "dist/*.zip, dist/*.zip, dist-pkg/*"
+          artifacts: "dist/*.zip, dist/*.tar.gz, dist-pkg/*"
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Checkout Homebrew tap
