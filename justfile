@@ -135,6 +135,7 @@ deps:
 		"mvdan.cc/gofumpt@latest"
 		"golang.org/x/vuln/cmd/govulncheck@latest"
 		"github.com/golang/mock/mockgen@latest"
+		"github.com/goreleaser/nfpm/v2/cmd/nfpm@latest"
 	)
 
 	printf '%s\n' "${tools[@]}" | xargs -P 0 -I {} bash -c 'install_tool "$@"' _ {}
@@ -292,6 +293,7 @@ brew-formula:
 
 # CI/CD
 ci:	deps vet lint dist nfpm
+release: deps dist nfpm
 
 # Run the application
 run *args: build

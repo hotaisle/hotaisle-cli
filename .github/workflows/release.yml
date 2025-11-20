@@ -38,7 +38,7 @@ jobs:
             ${{ runner.os }}-go-bin-
 
       - name: Build distribution
-        run: just dist nfpm
+        run: just release
 
       - name: Create a GitHub release
         uses: ncipollo/release-action@v1
