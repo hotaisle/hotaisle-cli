@@ -53,16 +53,16 @@ func makeApp() *App {
 		DefaultCommand:        "help",
 		Before: func(ctx context.Context, command *cli.Command) (context.Context, error) {
 			if app.Config == nil {
-				if cfg, err := config.LoadDefault(); err != nil {
+				cfg, err := config.LoadDefault()
+				if err != nil {
 					if err := config.Save(cfg); err != nil {
 						return ctx, err
 					}
-				} else {
-					app.Config = cfg
 				}
+				app.Config = cfg
 
 				level := app.Config.LogLevel
-				err := setupLogging(level)
+				err = setupLogging(level)
 				if err != nil {
 					return ctx, err
 				}
