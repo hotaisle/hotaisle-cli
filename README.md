@@ -10,9 +10,26 @@ A command-line interface tool for [Hot Aisle operations](https://admin.hotaisle.
 
 Download the latest release for your platform from the [Releases page](https://github.com/hotaisle/hotaisle-cli/releases).
 
-## Homebrew
+### Debian/ubuntu apt
 
-* `brew tap hotaisle/tap`
+Download the appropriate deb package from the [Releases page](https://github.com/hotaisle/hotaisle-cli/releases) and install it with `dpkg -i`.
+
+> ⚠️ **Alpha Status**: Below isn't implemented yet. Will want to use something like this: https://github.com/morph027/apt-repo-action/
+
+```
+wget -qO - https://hotaisle.github.io/hotaisle-cli/public.key | sudo apt-key add -
+echo "deb https://hotaisle.github.io/hotaisle-cli/deb/ /" | sudo tee /etc/apt/sources.list.d/hotaisle.list
+sudo apt update && sudo apt install hotaisle
+```
+
+### RPM-based distros (Fedora, CentOS, RHEL)
+
+Download the appropriate rpm package from the [Releases page](https://github.com/hotaisle/hotaisle-cli/releases) and install it with  `dnf install`.
+
+> ⚠️ **Alpha Status**: This isn't implemented yet. Need some help with this.
+
+### Homebrew
+
 * `brew install hotaisle/tap/hotaisle`
 
 ## Source
@@ -32,14 +49,6 @@ Our release process is automated with Github Actions ensuring that all tests pas
 PRs run tests.
 Merge PR to main, runs a binary build, tag and GH release.
 
-# License
-
-See the LICENSE file for details.
-
-# Maintainer
-
-For questions or issues, contact: hello@hotaisle.ai
-
 ## Project Structure
 ```
 hotaisle-cli/
@@ -56,3 +65,11 @@ hotaisle-cli/
 ├── swagger.json      # Copy of our swagger file. https://admin.hotaisle.app/api/docs/swagger.json
 └── main.go           # Application entry point
 ```
+
+# License
+
+See the LICENSE file for details.
+
+# Maintainer
+
+For questions or issues, contact: hello@hotaisle.ai

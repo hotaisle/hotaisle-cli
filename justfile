@@ -90,6 +90,7 @@ build_by := `whoami`
 root_dir := justfile_directory()
 bin_dir := root_dir + "/bin"
 dist_dir := root_dir + "/dist"
+dist_pkg_dir := root_dir + "/dist-pkg"
 docs_dir := root_dir + "/docs"
 
 # Build flags
@@ -118,11 +119,25 @@ ld_flags := '-s -w' + \
 
 # Install all required development tools and dependencies
 deps:
+	#!/usr/bin/env bash
+	set -euo pipefail
+
 	{{go}} mod download
-	{{go}} install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	{{go}} install mvdan.cc/gofumpt@latest
-	{{go}} install golang.org/x/vuln/cmd/govulncheck@latest
-	{{go}} install github.com/golang/mock/mockgen@latest
+
+	# Install tools concurrently
+	install_tool() {
+		{{go}} install "$1"
+	}
+	export -f install_tool
+
+	tools=(
+		"github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+		"mvdan.cc/gofumpt@latest"
+		"golang.org/x/vuln/cmd/govulncheck@latest"
+		"github.com/golang/mock/mockgen@latest"
+	)
+
+	printf '%s\n' "${tools[@]}" | xargs -P 0 -I {} bash -c 'install_tool "$@"' _ {}
 
 # Update all project dependencies to their latest versions
 deps-update:
@@ -180,36 +195,107 @@ build-all:
 
 	# Build all platforms concurrently
 	echo "$platforms" | xargs -P 0 -n 1 bash -c 'build_platform "$@"' _
+	echo "✅ build-all complete"
 
 dist: build-all
 	#!/usr/bin/env bash
 	set -euo pipefail
 	cd {{dist_dir}}
-	files=$(find . -type f ! -name '*.gz' ! -name '*.tar' ! -name '*.zip' -exec basename {} \;)
-	if [ -z "$files" ]; then
-		echo "🛑 No files to compress"
-		exit 0
-	fi
+
+	# Find binaries (exclude already compressed files)
+	shopt -s nullglob
+	files=()
+	for file in *; do
+		[[ "$file" == *.gz || "$file" == *.zip ]] && continue
+		[[ -f "$file" ]] && files+=("$file")
+	done
 
 	compress_file() {
 		local file="$1"
+		local compressed cmd
+
+		# Determine compression method
 		if [[ "$file" == *.exe ]]; then
-			zip -q -9 "$file.zip" "$file" && rm "$file"
+			compressed="$file.zip"
+			cmd="zip -q -9 '$compressed' '$file'"
 		else
-			tar -cf "$file.tar" "$file" && gzip -f -9 "$file.tar" && rm "$file"
+			compressed="$file.tar.gz"
+			cmd="tar -czf '$compressed' '$file'"
 		fi
+
+		# Skip if compressed exists and is newer
+		if [ -e "$compressed" ] && [ "$compressed" -nt "$file" ]; then
+			echo "⏭️  Skipping $file (up to date)"
+			return 0
+		fi
+
+		# Compress
+		eval "$cmd" && echo "✅ Compressed $compressed"
 	}
 	export -f compress_file
 
 	# Run compression in parallel
-	echo "$files" | xargs -P 0 -I {} bash -c 'compress_file "$@"' _ {}
+	printf '%s\n' "${files[@]}" | xargs -P 0 -I {} bash -c 'compress_file "$@"' _ {}
 	echo "✅ Compression complete"
+
+# Create deb and rpm packages for Linux ARM and AMD64 architectures
+nfpm: build-all
+	#!/usr/bin/env bash
+	set -euo pipefail
+
+	ARCHS="arm arm64 amd64"
+	PACKAGERS="deb rpm"
+
+	build_package() {
+		local arch="$1"
+		local packager="$2"
+
+		local binary="{{dist_dir}}/hotaisle-cli-{{version}}-linux-${arch}"
+		local package="{{dist_pkg_dir}}/hotaisle-cli-{{version}}-linux-${arch}.${packager}"
+
+		if [ -e "$package" ] && [ "$package" -nt "$binary" ]; then
+			echo "⏭️  Skipping $package (up to date)"
+			return 0
+		fi
+
+		mkdir -p "{{dist_pkg_dir}}"
+		ARCH="$arch" VERSION="{{version}}" nfpm package \
+			--packager "$packager" \
+			--config package/nfpm.yaml \
+			--target "$package"
+		echo "✅ Created $package"
+	}
+	export -f build_package
+
+	for ARCH in $ARCHS; do
+		for PACKAGER in $PACKAGERS; do
+			echo "$ARCH $PACKAGER"
+		done
+	done | xargs -P 0 -n 2 bash -c 'build_package "$@"' _
+	echo "✅ nfpm complete"
+
+# Update brew-formula.rb with version and SHA256 checksums
+brew-formula:
+	#!/usr/bin/env bash
+	set -euo pipefail
+
+	DARWIN_ARM64="{{dist_dir}}/hotaisle-cli-${VERSION}-darwin-arm64.tar.gz"
+	DARWIN_AMD64="{{dist_dir}}/hotaisle-cli-${VERSION}-darwin-amd64.tar.gz"
+
+	ARM64_SHA=$(sha256sum "$DARWIN_ARM64" | awk '{print $1}')
+	AMD64_SHA=$(sha256sum "$DARWIN_AMD64" | awk '{print $1}')
+
+	sed -e "s/VERSION/${VERSION}/g" \
+		-e "s/ARM64_SHA256/${ARM64_SHA}/g" \
+		-e "s/AMD64_SHA256/${AMD64_SHA}/g" \
+		package/brew-formula.rb
+
+# CI/CD
+ci:	deps vet lint dist nfpm
 
 # Run the application
 run *args: build
 	{{bin_dir}}/{{project_name}} {{args}}
-
-ci:	deps build-all vet lint dist
 
 clean:
 	@rm -rf {{dist_dir}} {{bin_dir}}
@@ -274,18 +360,3 @@ version:
 	@echo "Build time:  {{build_time}}"
 	@echo "Go version:  {{go_version}}"
 
-# Update brew-formula.rb with version and SHA256 checksums
-brew-formula:
-	#!/usr/bin/env bash
-	set -euo pipefail
-
-	DARWIN_ARM64="{{dist_dir}}/hotaisle-cli-${VERSION}-darwin-arm64.tar.gz"
-	DARWIN_AMD64="{{dist_dir}}/hotaisle-cli-${VERSION}-darwin-amd64.tar.gz"
-
-	ARM64_SHA=$(sha256sum "$DARWIN_ARM64" | awk '{print $1}')
-	AMD64_SHA=$(sha256sum "$DARWIN_AMD64" | awk '{print $1}')
-
-	sed -e "s/VERSION/${VERSION}/g" \
-		-e "s/ARM64_SHA256/${ARM64_SHA}/g" \
-		-e "s/AMD64_SHA256/${AMD64_SHA}/g" \
-		package/brew-formula.rb
