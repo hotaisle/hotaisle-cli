@@ -5,7 +5,7 @@ go 1.25.3
 require (
 	github.com/phsym/console-slog v0.3.1
 	github.com/stretchr/testify v1.11.1
-	github.com/urfave/cli/v3 v3.5.0
+	github.com/urfave/cli/v3 v3.6.1
 )
 
 require (

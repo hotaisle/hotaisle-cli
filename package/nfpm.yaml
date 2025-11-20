@@ -1,0 +1,23 @@
+# Make sure to check the documentation at https://nfpm.goreleaser.com
+#
+# The lines below are called `modelines`. See `:help modeline`
+# yaml-language-server: $schema=https://nfpm.goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+name: "hotaisle"
+arch: "${ARCH}"
+version: "${VERSION}"
+platform: "linux"
+section: "default"
+maintainer: "Hot Aisle <hello@hotaisle.ai>"
+description: |
+  Hot Aisle CLI
+vendor: "Hot Aisle"
+homepage: "https://github.com/hotaisle/hotaisle-cli"
+license: "BSD-3-Clause"
+contents:
+   - src: ./dist/hotaisle-cli-${VERSION}-linux-${ARCH}
+     dst: /usr/bin/hotaisle
+     expand: true
+     file_info:
+       mode: 0755
