@@ -2,6 +2,9 @@
   "host": "admin.hotaisle.app",
   "schemes": ["https"],
   "basePath": "/api/",
+  "consumes": [
+    "application/json"
+  ],
   "definitions": {
     "APIKeyTeam": {
       "allOf": [
@@ -874,13 +877,6 @@
           "type": "string",
           "x-go-name": "Name",
           "x-order": "1"
-        },
-        "self_service_payment_enabled": {
-          "description": "Whether self-service payment is enabled for this team",
-          "example": true,
-          "type": "boolean",
-          "x-go-name": "SelfServicePaymentEnabled",
-          "x-order": "3"
         }
       },
       "required": [
@@ -1401,6 +1397,39 @@
       "required": [
         "name"
       ],
+      "type": "object",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "VMProvisionRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/VirtualMachineSpecs"
+        },
+        {
+          "properties": {
+            "user_data_url": {
+              "description": "Optional URL to custom cloud-init user-data\nWhen provided, the VM will be provisioned with this user-data applied\nNote: This will significantly increase provisioning time as the VM will be rebuilt",
+              "example": "https://example.com/my-user-data.yaml",
+              "type": "string",
+              "x-go-name": "UserDataURL"
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "description": "VMProvisionRequest represents a request to provision a virtual machine",
+      "x-go-package": "github.com/hotaisle/hotManager/api/types"
+    },
+    "VMResetRequest": {
+      "description": "VMResetRequest represents a request to reset/rebuild a virtual machine",
+      "properties": {
+        "user_data_url": {
+          "description": "Optional URL to custom cloud-init user-data\nWhen provided, the VM will be rebuilt with this user-data applied",
+          "example": "https://example.com/my-user-data.yaml",
+          "type": "string",
+          "x-go-name": "UserDataURL"
+        }
+      },
       "type": "object",
       "x-go-package": "github.com/hotaisle/hotManager/api/types"
     },
@@ -2977,57 +3006,6 @@
         ]
       }
     },
-    "/teams/{team}/request-payment-approval/": {
-      "post": {
-        "description": "Auto-approves self-service payment and sends approval notification to customer (used by TUI)",
-        "operationId": "requestPaymentApproval",
-        "parameters": [
-          {
-            "description": "Team slug",
-            "in": "path",
-            "name": "team",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "description": "Approval request details",
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/RequestPaymentApprovalRequest"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Approval request submitted successfully"
-          },
-          "400": {
-            "description": "Invalid request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - user does not have purchaser role"
-          },
-          "404": {
-            "description": "Team not found"
-          },
-          "409": {
-            "description": "Approval already requested or team already approved"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        },
-        "summary": "Request self-service payment approval for a team",
-        "tags": [
-          "teams"
-        ]
-      }
-    },
     "/teams/{team}/virtual_machines/": {
       "get": {
         "description": "Returns a list of virtual machines associated with the team.\n\n---\n\nRequires team role: any",
@@ -3077,7 +3055,7 @@
         "x-requires-permissions": "team role: any"
       },
       "post": {
-        "description": "Assigns and provisions an available virtual machine matching the specified requirements.\n\n---\n\nRequires team role: operator",
+        "description": "Assigns and provisions an available virtual machine matching the specified requirements.\nOptionally provide a user_data_url to apply custom cloud-init configuration during provisioning. When provided, the VM will be assigned and then rebuilt with custom user-data applied. Default configuration will be applied as vendor-data and custom user-data will be merged.\nWARNING: Providing custom user-data will significantly increase provisioning time as the VM needs to be rebuilt. The provisioning will continue in the background if the HTTP request is canceled, but the VM will still be provisioned successfully.\n\n\n---\n\nRequires team role: operator",
         "operationId": "assignAvailableVirtualMachineReq",
         "parameters": [
           {
@@ -3092,7 +3070,7 @@
             "name": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/VirtualMachineSpecs"
+              "$ref": "#/definitions/VMProvisionRequest"
             }
           }
         ],
@@ -3494,7 +3472,7 @@
     },
     "/teams/{team}/virtual_machines/{vm}/rebuild/": {
       "post": {
-        "description": "Performs a complete rebuild of the virtual machine to its initial state.\nWARNING: This operation will DELETE ALL DATA on the virtual machine. The VM will be recreated from the original template, resulting in complete data loss. This operation cannot be undone.\nThis request will not return until the rebuild is complete, but the rebuild will continue if the request is canceled.\n\n\n---\n\nRequires team role: operator",
+        "description": "Performs a complete rebuild of the virtual machine to its initial state.\nWARNING: This operation will DELETE ALL DATA on the virtual machine. The VM will be recreated from the original template, resulting in complete data loss. This operation cannot be undone.\nOptionally provide a user_data_url to apply custom cloud-init configuration during the rebuild. When provided, default configuration will be applied as vendor-data and custom user-data will be merged.\nThis request will not return until the rebuild is complete, but the rebuild will continue if the request is canceled.\n\n\n---\n\nRequires team role: operator",
         "operationId": "rebuildVMReq",
         "parameters": [
           {
@@ -3510,6 +3488,13 @@
             "name": "vm",
             "required": true,
             "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/VMResetRequest"
+            }
           }
         ],
         "responses": {
