@@ -277,6 +277,17 @@ type VirtualMachineSpecs struct {
 	GPUs         []GPUs `json:"gpus,omitempty"`
 }
 
+// VMProvisionRequest represents a request to provision a virtual machine
+type VMProvisionRequest struct {
+	VirtualMachineSpecs
+	UserDataURL string `json:"user_data_url,omitempty"`
+}
+
+// VMResetRequest represents a request to reset/rebuild a virtual machine
+type VMResetRequest struct {
+	UserDataURL string `json:"user_data_url,omitempty"`
+}
+
 // VirtualMachineDetails represents a virtual machine with detailed specifications
 type VirtualMachineDetails struct {
 	VirtualMachine
