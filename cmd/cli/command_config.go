@@ -2,9 +2,12 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hotaisle-cli/internal/config"
 	"log/slog"
+	"os"
+	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -16,52 +19,57 @@ func newCommandConfig(app *App) *cli.Command {
 		Commands: []*cli.Command{{
 			Name:  "set",
 			Usage: "Set a configuration value.",
-			Commands: []*cli.Command{{
-				Name:  "token",
-				Usage: "Set the API token.",
-				Action: func(ctx context.Context, command *cli.Command) error {
-					token := command.Args().First()
-					if len(token) > 0 {
+			Commands: []*cli.Command{
+				{
+					Name:  "token",
+					Usage: "Set the API token from the HOTAISLE_API_TOKEN environment variable.",
+					Action: func(ctx context.Context, command *cli.Command) error {
+						token := strings.TrimSpace(os.Getenv("HOTAISLE_API_TOKEN"))
+						if len(token) == 0 {
+							return errors.New("missing token, set HOTAISLE_API_TOKEN")
+						}
 						app.Config.ApiToken = token
 						err := config.Save(app.Config)
 						if err != nil {
 							return err
 						}
 						slog.Info("Config set", "token", token)
-					}
-					return nil
+						return nil
+					},
 				},
-			}, {
-				Name:  "log-level",
-				Usage: "Set the log-level. Valid values are: debug, info, warn, error, fatal, panic.",
-				Action: func(ctx context.Context, command *cli.Command) error {
-					token := command.Args().First()
-					if len(token) > 0 {
-						app.Config.LogLevel = token
-						err := config.Save(app.Config)
-						if err != nil {
-							return err
+				{
+					Name:  "log-level",
+					Usage: "Set the log-level. Valid values are: debug, info, warn, error, fatal, panic.",
+					Action: func(ctx context.Context, command *cli.Command) error {
+						token := strings.TrimSpace(command.Args().First())
+						if len(token) > 0 {
+							app.Config.LogLevel = token
+							err := config.Save(app.Config)
+							if err != nil {
+								return err
+							}
+							slog.Info("Config set", "log-level", token)
+							return nil
 						}
-						slog.Info("Config set", "log-level", token)
-					}
-					return nil
-				},
-			}, {
-				Name:  "default-team",
-				Usage: "Set the default team.",
-				Action: func(ctx context.Context, command *cli.Command) error {
-					token := command.Args().First()
-					if len(token) > 0 {
-						app.Config.DefaultTeam = token
-						err := config.Save(app.Config)
-						if err != nil {
-							return err
+						return errors.New("missing log-level")
+					},
+				}, {
+					Name:  "default-team",
+					Usage: "Set the default team.",
+					Action: func(ctx context.Context, command *cli.Command) error {
+						token := strings.TrimSpace(command.Args().First())
+						if len(token) > 0 {
+							app.Config.DefaultTeam = token
+							err := config.Save(app.Config)
+							if err != nil {
+								return err
+							}
+							slog.Info("Config set", "default-team", token)
+							return nil
 						}
-						slog.Info("Config set", "default-team", token)
-					}
-					return nil
-				},
-			}},
+						return errors.New("missing default-team")
+					},
+				}},
 		}, {
 			Name:  "get",
 			Usage: "Get a configuration value.",
