@@ -97,13 +97,13 @@ docs_dir := root_dir + "/docs"
 # Linker flags for embedding version information
 golist := shell(go + ' list -m')
 
-ld_flags := '-s -w' + \
-	" -X '" + golist + '/cmd/cli.Version=' 		+ version + "'" + \
-	" -X '" + golist + '/cmd/cli.Commit=' 		+ git_commit + "'" + \
-	" -X '" + golist + '/cmd/cli.Branch=' 		+ git_branch + "'" + \
-	" -X '" + golist + '/cmd/cli.BuildBy=' 		+ build_by + "'" + \
-	" -X '" + golist + '/cmd/cli.BuildTime='	+ build_time + "'" + \
-	" -X '" + golist + '/cmd/cli.GoVersion=' 	+ go_version + "'"
+ld_flags := ('-s -w' +
+	" -X '" + golist + '/cmd/cli.Version=' 		+ version + "'" +
+	" -X '" + golist + '/cmd/cli.Commit=' 		+ git_commit + "'" +
+	" -X '" + golist + '/cmd/cli.Branch=' 		+ git_branch + "'" +
+	" -X '" + golist + '/cmd/cli.BuildBy=' 		+ build_by + "'" +
+	" -X '" + golist + '/cmd/cli.BuildTime='	+ build_time + "'" +
+	" -X '" + golist + '/cmd/cli.GoVersion=' 	+ go_version + "'")
 
 # =============================================================================
 # Default Recipe
