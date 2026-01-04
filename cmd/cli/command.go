@@ -104,7 +104,7 @@ func (def commandDef) findCommand(path string) *commandDef {
 }
 
 func splitPath(path string) []string {
-	result := []string{}
+	var result []string
 	current := ""
 	for _, ch := range path {
 		if ch == '.' {
