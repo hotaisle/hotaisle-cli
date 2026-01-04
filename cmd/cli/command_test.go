@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"context"
 	"errors"
+	"hotaisle-cli/test"
+	"testing"
 
 	"github.com/urfave/cli/v3"
 )
@@ -16,11 +19,17 @@ func getCommand(app *App, def commandDef, path string, flags map[string]string) 
 	cmd := buildCommand(app, *cmdDef)
 
 	// Set flags if provided
-		for name, value := range flags {
-			if err := cmd.Set(name, value); err != nil {
-				return nil, err
-			}
+	for name, value := range flags {
+		if err := cmd.Set(name, value); err != nil {
+			return nil, err
 		}
+	}
 
 	return cmd, nil
+}
+
+func executeCommand(t *testing.T, cmd *cli.Command) string {
+	return test.CaptureStdout(t, func() error {
+		return cmd.Action(context.Background(), cmd)
+	})
 }
