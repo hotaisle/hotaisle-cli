@@ -44,10 +44,7 @@ func TestUserGetCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "get", nil)
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 	slog.Info(output)
 
 	var result client.GetUserResponse
@@ -70,7 +67,7 @@ func TestUserGetCommand_APIError(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	err = cmd.Action(ctx, nil)
+	err = cmd.Action(ctx, cmd)
 	slog.Info(err.Error())
 	assert.Error(t, err, "should return error for failed API call")
 }
@@ -93,10 +90,7 @@ func TestUserGetCommand_EmptyTeams(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "get", nil)
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	var result client.GetUserResponse
 	err = json.Unmarshal([]byte(output), &result)
@@ -171,10 +165,7 @@ func TestUserGetCommand_MultipleTeams(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "get", nil)
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	var result client.GetUserResponse
 	err = json.Unmarshal([]byte(output), &result)
@@ -205,10 +196,7 @@ func TestUserUpdateCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "update", map[string]string{"name": "Updated Name"})
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, cmd)
-	})
+	output := executeCommand(t, cmd)
 
 	var result client.User
 	err = json.Unmarshal([]byte(output), &result)
@@ -241,10 +229,7 @@ func TestUserSSHKeysListCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "ssh-keys.list", nil)
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	var result []client.SSHKey
 	err = json.Unmarshal([]byte(output), &result)
@@ -273,10 +258,7 @@ func TestUserSSHKeysAddCommand_Success(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, cmd)
-	})
+	output := executeCommand(t, cmd)
 
 	var result client.SSHKey
 	err = json.Unmarshal([]byte(output), &result)
@@ -294,10 +276,7 @@ func TestUserSSHKeysDeleteCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "ssh-keys.delete", map[string]string{"fingerprint": "SHA256:abc123"})
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, cmd)
-	})
+	output := executeCommand(t, cmd)
 
 	assert.Contains(t, output, "SSH key deleted successfully")
 }
@@ -326,10 +305,7 @@ func TestUserAPIKeysListCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "api-keys.list", nil)
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	var result []client.UserAPIKey
 	err = json.Unmarshal([]byte(output), &result)
@@ -356,10 +332,7 @@ func TestUserAPIKeysGetCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "api-keys.get", map[string]string{"prefix": "abc123"})
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, cmd)
-	})
+	output := executeCommand(t, cmd)
 
 	var result client.UserAPIKey
 	err = json.Unmarshal([]byte(output), &result)
@@ -391,10 +364,7 @@ func TestUserAPIKeysCreateCommand_Success(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, cmd)
-	})
+	output := executeCommand(t, cmd)
 
 	var result client.UserAPIKeyWithToken
 	err = json.Unmarshal([]byte(output), &result)
@@ -424,10 +394,7 @@ func TestUserAPIKeysUpdateCommand_Success(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, cmd)
-	})
+	output := executeCommand(t, cmd)
 
 	var result client.UserAPIKey
 	err = json.Unmarshal([]byte(output), &result)
@@ -446,10 +413,7 @@ func TestUserAPIKeysDeleteCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "api-keys.delete", map[string]string{"prefix": "abc123"})
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, cmd)
-	})
+	output := executeCommand(t, cmd)
 
 	assert.Contains(t, output, "API key deleted successfully")
 }

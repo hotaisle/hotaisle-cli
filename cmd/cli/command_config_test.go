@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"hotaisle-cli/test"
 	"os"
 	"testing"
 
@@ -20,7 +19,7 @@ func TestConfigSetToken_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.Background()
-	err = cmd.Action(ctx, nil)
+	err = cmd.Action(ctx, cmd)
 
 	assert.NoError(t, err)
 	assert.Equal(t, testToken, app.Config.ApiToken)
@@ -38,7 +37,7 @@ func TestConfigSetToken_MissingEnvVar(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.Background()
-	err = cmd.Action(ctx, nil)
+	err = cmd.Action(ctx, cmd)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "missing token, set HOTAISLE_API_TOKEN")
@@ -54,7 +53,7 @@ func TestConfigSetToken_EmptyEnvVar(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.Background()
-	err = cmd.Action(ctx, nil)
+	err = cmd.Action(ctx, cmd)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "missing token, set HOTAISLE_API_TOKEN")
@@ -70,7 +69,7 @@ func TestConfigSetToken_WhitespaceEnvVar(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.Background()
-	err = cmd.Action(ctx, nil)
+	err = cmd.Action(ctx, cmd)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "missing token, set HOTAISLE_API_TOKEN")
@@ -122,10 +121,7 @@ func TestConfigGetToken(t *testing.T) {
 	cmd, err := getCommand(app, configCommands, "get.token", nil)
 	assert.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	assert.Equal(t, "test-token-get", output)
 }
@@ -137,10 +133,7 @@ func TestConfigGetLogLevel(t *testing.T) {
 	cmd, err := getCommand(app, configCommands, "get.log-level", nil)
 	assert.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	assert.Equal(t, "warn", output)
 }
@@ -152,10 +145,7 @@ func TestConfigGetDefaultTeam(t *testing.T) {
 	cmd, err := getCommand(app, configCommands, "get.default-team", nil)
 	assert.NoError(t, err)
 
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return cmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	assert.Equal(t, "test-team", output)
 }
