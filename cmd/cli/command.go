@@ -93,7 +93,7 @@ func (def commandDef) findCommand(path string) *commandDef {
 		}
 	}
 
-	// If name doesn't match but we have subcommands, search them
+	// If name doesn't match, but we have subcommands, search them
 	for _, cmd := range def.Commands {
 		if result := cmd.findCommand(path); result != nil {
 			return result
