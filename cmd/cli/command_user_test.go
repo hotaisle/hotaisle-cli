@@ -13,13 +13,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/urfave/cli/v3"
 )
+
 
 func TestUserGetCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
-	// Create a mock user response
 	mockUser := &client.GetUserResponse{
 		User: client.User{
 			Name:    "Test User",
@@ -40,12 +39,11 @@ func TestUserGetCommand_Success(t *testing.T) {
 		}},
 	}
 
-	// Create a mock HTTP client
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/", http.MethodGet, 200, mockUser)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserGet(app)
+	cmd, err := getCommand(app, userCommands, "get", nil)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -53,9 +51,8 @@ func TestUserGetCommand_Success(t *testing.T) {
 	})
 	slog.Info(output)
 
-	// Verify the output is valid JSON and matches the expected structure
 	var result client.GetUserResponse
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err, "output should be valid JSON")
 
 	assert.Equal(t, "Test User", result.User.Name)
@@ -67,15 +64,14 @@ func TestUserGetCommand_Success(t *testing.T) {
 func TestUserGetCommand_APIError(t *testing.T) {
 	app, _ := setupTestApp(t)
 
-	// Create mock HTTP client that returns an error
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "", "", 401, nil)
-
 	app.Client = api.NewClient("invalid-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserGet(app)
+	cmd, err := getCommand(app, userCommands, "get", nil)
+	require.NoError(t, err)
 
 	ctx := context.Background()
-	err := cmd.Action(ctx, nil)
+	err = cmd.Action(ctx, nil)
 	slog.Info(err.Error())
 	assert.Error(t, err, "should return error for failed API call")
 }
@@ -83,7 +79,6 @@ func TestUserGetCommand_APIError(t *testing.T) {
 func TestUserGetCommand_EmptyTeams(t *testing.T) {
 	app, _ := setupTestApp(t)
 
-	// Create mock user response with no teams
 	mockUser := &client.GetUserResponse{
 		User: client.User{
 			Name:    "Solo User",
@@ -94,10 +89,10 @@ func TestUserGetCommand_EmptyTeams(t *testing.T) {
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "", "", 200, mockUser)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserGet(app)
+	cmd, err := getCommand(app, userCommands, "get", nil)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -105,7 +100,7 @@ func TestUserGetCommand_EmptyTeams(t *testing.T) {
 	})
 
 	var result client.GetUserResponse
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, "Solo User", result.User.Name)
@@ -172,10 +167,10 @@ func TestUserGetCommand_MultipleTeams(t *testing.T) {
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "", "", 200, mockUser)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserGet(app)
+	cmd, err := getCommand(app, userCommands, "get", nil)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -183,7 +178,7 @@ func TestUserGetCommand_MultipleTeams(t *testing.T) {
 	})
 
 	var result client.GetUserResponse
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, "Multi Team User", result.User.Name)
@@ -206,12 +201,10 @@ func TestUserUpdateCommand_Success(t *testing.T) {
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/", http.MethodPatch, 200, mockUser)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserUpdate(app)
-	cmd.Flags[0].(*cli.StringFlag).OnlyOnce = false
-	require.NoError(t, cmd.Set("name", "Updated Name"))
+	cmd, err := getCommand(app, userCommands, "update", map[string]string{"name": "Updated Name"})
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -219,7 +212,7 @@ func TestUserUpdateCommand_Success(t *testing.T) {
 	})
 
 	var result client.User
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, "Updated Name", result.Name)
@@ -244,10 +237,10 @@ func TestUserSSHKeysListCommand_Success(t *testing.T) {
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/ssh_keys/", http.MethodGet, 200, mockKeys)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserSSHKeysList(app)
+	cmd, err := getCommand(app, userCommands, "ssh-keys.list", nil)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -255,7 +248,7 @@ func TestUserSSHKeysListCommand_Success(t *testing.T) {
 	})
 
 	var result []client.SSHKey
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err)
 
 	assert.Len(t, result, 2)
@@ -274,11 +267,12 @@ func TestUserSSHKeysAddCommand_Success(t *testing.T) {
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/ssh_keys/", http.MethodPost, 200, mockKey)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserSSHKeysAdd(app)
-	require.NoError(t, cmd.Set("key", "ssh-rsa AAAAB3NzaC1yc2EAAA... user@example.com"))
+	cmd, err := getCommand(app, userCommands, "ssh-keys.add", map[string]string{
+		"key": "ssh-rsa AAAAB3NzaC1yc2EAAA... user@example.com",
+	})
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -286,7 +280,7 @@ func TestUserSSHKeysAddCommand_Success(t *testing.T) {
 	})
 
 	var result client.SSHKey
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, "SHA256:abc123", result.Fingerprint)
@@ -296,11 +290,10 @@ func TestUserSSHKeysDeleteCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/ssh_keys/SHA256:abc123/", http.MethodDelete, 204, nil)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserSSHKeysDelete(app)
-	require.NoError(t, cmd.Set("fingerprint", "SHA256:abc123"))
+	cmd, err := getCommand(app, userCommands, "ssh-keys.delete", map[string]string{"fingerprint": "SHA256:abc123"})
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -329,10 +322,10 @@ func TestUserAPIKeysListCommand_Success(t *testing.T) {
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/", http.MethodGet, 200, mockKeys)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserAPIKeysList(app)
+	cmd, err := getCommand(app, userCommands, "api-keys.list", nil)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -340,7 +333,7 @@ func TestUserAPIKeysListCommand_Success(t *testing.T) {
 	})
 
 	var result []client.UserAPIKey
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err)
 
 	assert.Len(t, result, 2)
@@ -359,11 +352,10 @@ func TestUserAPIKeysGetCommand_Success(t *testing.T) {
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/abc123/", http.MethodGet, 200, mockKey)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserAPIKeysGet(app)
-	require.NoError(t, cmd.Set("prefix", "abc123"))
+	cmd, err := getCommand(app, userCommands, "api-keys.get", map[string]string{"prefix": "abc123"})
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -371,7 +363,7 @@ func TestUserAPIKeysGetCommand_Success(t *testing.T) {
 	})
 
 	var result client.UserAPIKey
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, "abc123", result.Prefix)
@@ -392,12 +384,13 @@ func TestUserAPIKeysCreateCommand_Success(t *testing.T) {
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/", http.MethodPost, 200, mockKey)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserAPIKeysCreate(app)
-	require.NoError(t, cmd.Set("label", "New key"))
-	require.NoError(t, cmd.Set("user-role", "user"))
+	cmd, err := getCommand(app, userCommands, "api-keys.create", map[string]string{
+		"label":     "New key",
+		"user-role": "user",
+	})
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -405,7 +398,7 @@ func TestUserAPIKeysCreateCommand_Success(t *testing.T) {
 	})
 
 	var result client.UserAPIKeyWithToken
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, "abc123", result.Prefix)
@@ -423,13 +416,14 @@ func TestUserAPIKeysUpdateCommand_Success(t *testing.T) {
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/abc123/", http.MethodPatch, 200, mockKey)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserAPIKeysUpdate(app)
-	require.NoError(t, cmd.Set("prefix", "abc123"))
-	require.NoError(t, cmd.Set("label", "Updated key"))
-	require.NoError(t, cmd.Set("user-role", "owner"))
+	cmd, err := getCommand(app, userCommands, "api-keys.update", map[string]string{
+		"prefix":    "abc123",
+		"label":     "Updated key",
+		"user-role": "owner",
+	})
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -437,7 +431,7 @@ func TestUserAPIKeysUpdateCommand_Success(t *testing.T) {
 	})
 
 	var result client.UserAPIKey
-	err := json.Unmarshal([]byte(output), &result)
+	err = json.Unmarshal([]byte(output), &result)
 	require.NoError(t, err)
 
 	assert.Equal(t, "abc123", result.Prefix)
@@ -448,11 +442,10 @@ func TestUserAPIKeysDeleteCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/abc123/", http.MethodDelete, 204, nil)
-
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUserAPIKeysDelete(app)
-	require.NoError(t, cmd.Set("prefix", "abc123"))
+	cmd, err := getCommand(app, userCommands, "api-keys.delete", map[string]string{"prefix": "abc123"})
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {

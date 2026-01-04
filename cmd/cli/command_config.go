@@ -12,18 +12,18 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func newCommandConfig(app *App) *cli.Command {
-	return &cli.Command{
-		Name:  "config",
-		Usage: "Config File Management",
-		Commands: []*cli.Command{{
+var configCommands = commandDef{
+	Name:  "config",
+	Usage: "Config File Management",
+	Commands: []commandDef{
+		{
 			Name:  "set",
 			Usage: "Set a configuration value.",
-			Commands: []*cli.Command{
+			Commands: []commandDef{
 				{
 					Name:  "token",
 					Usage: "Set the API token from the HOTAISLE_API_TOKEN environment variable.",
-					Action: func(ctx context.Context, command *cli.Command) error {
+					Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
 						token := strings.TrimSpace(os.Getenv("HOTAISLE_API_TOKEN"))
 						if len(token) == 0 {
 							return errors.New("missing token, set HOTAISLE_API_TOKEN")
@@ -40,61 +40,72 @@ func newCommandConfig(app *App) *cli.Command {
 				{
 					Name:  "log-level",
 					Usage: "Set the log-level. Valid values are: debug, info, warn, error, fatal, panic.",
-					Action: func(ctx context.Context, command *cli.Command) error {
-						token := strings.TrimSpace(command.Args().First())
-						if len(token) > 0 {
-							app.Config.LogLevel = token
-							err := config.Save(app.Config)
-							if err != nil {
-								return err
-							}
-							slog.Info("Config set", "log-level", token)
-							return nil
+					Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
+						logLevel := strings.TrimSpace(cmd.Args().First())
+						if len(logLevel) == 0 {
+							return errors.New("missing log-level")
 						}
-						return errors.New("missing log-level")
+						app.Config.LogLevel = logLevel
+						err := config.Save(app.Config)
+						if err != nil {
+							return err
+						}
+						slog.Info("Config set", "log-level", logLevel)
+						return nil
 					},
-				}, {
+				},
+				{
 					Name:  "default-team",
 					Usage: "Set the default team.",
-					Action: func(ctx context.Context, command *cli.Command) error {
-						token := strings.TrimSpace(command.Args().First())
-						if len(token) > 0 {
-							app.Config.DefaultTeam = token
-							err := config.Save(app.Config)
-							if err != nil {
-								return err
-							}
-							slog.Info("Config set", "default-team", token)
-							return nil
+					Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
+						team := strings.TrimSpace(cmd.Args().First())
+						if len(team) == 0 {
+							return errors.New("missing default-team")
 						}
-						return errors.New("missing default-team")
+						app.Config.DefaultTeam = team
+						err := config.Save(app.Config)
+						if err != nil {
+							return err
+						}
+						slog.Info("Config set", "default-team", team)
+						return nil
 					},
-				}},
-		}, {
+				},
+			},
+		},
+		{
 			Name:  "get",
 			Usage: "Get a configuration value.",
-			Commands: []*cli.Command{{
-				Name:  "token",
-				Usage: "Get the API token.",
-				Action: func(ctx context.Context, command *cli.Command) error {
-					fmt.Print(app.Config.ApiToken)
-					return nil
+			Commands: []commandDef{
+				{
+					Name:  "token",
+					Usage: "Get the API token.",
+					Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
+						fmt.Print(app.Config.ApiToken)
+						return nil
+					},
 				},
-			}, {
-				Name:  "log-level",
-				Usage: "Get the log-level. Valid values are: debug, info, warn, error, fatal, panic.",
-				Action: func(ctx context.Context, command *cli.Command) error {
-					fmt.Print(app.Config.LogLevel)
-					return nil
+				{
+					Name:  "log-level",
+					Usage: "Get the log-level. Valid values are: debug, info, warn, error, fatal, panic.",
+					Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
+						fmt.Print(app.Config.LogLevel)
+						return nil
+					},
 				},
-			}, {
-				Name:  "default-team",
-				Usage: "Get the default team.",
-				Action: func(ctx context.Context, command *cli.Command) error {
-					fmt.Print(app.Config.DefaultTeam)
-					return nil
+				{
+					Name:  "default-team",
+					Usage: "Get the default team.",
+					Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
+						fmt.Print(app.Config.DefaultTeam)
+						return nil
+					},
 				},
-			}},
-		}},
-	}
+			},
+		},
+	},
+}
+
+func newCommandConfig(app *App) *cli.Command {
+	return buildCommand(app, configCommands)
 }
