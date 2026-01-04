@@ -54,5 +54,10 @@ func CaptureStdout(t *testing.T, fn func() error) string {
 		t.Fatal(err)
 	}
 
+	err = r.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	return buf.String()
 }
