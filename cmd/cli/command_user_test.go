@@ -1,13 +1,11 @@
 package cli
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"hotaisle-cli/client"
 	"hotaisle-cli/internal/api"
 	"hotaisle-cli/test"
-	"io"
 	"log/slog"
 	"net/http"
 	"testing"
@@ -15,9 +13,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli/v3"
 )
 
-func TestUserCommand_Success(t *testing.T) {
+func TestUserGetCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	// Create a mock user response
@@ -42,23 +41,11 @@ func TestUserCommand_Success(t *testing.T) {
 	}
 
 	// Create a mock HTTP client
-	mockClient := test.NewMockClient(test.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
-		assert.Equal(t, "/api/user/", req.URL.Path)
-		assert.Equal(t, http.MethodGet, req.Method)
-
-		body, err := json.Marshal(mockUser)
-		require.NoError(t, err)
-
-		return &http.Response{
-			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewReader(body)),
-			Header:     make(http.Header),
-		}, nil
-	}))
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/", http.MethodGet, 200, mockUser)
 
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUser(app)
+	cmd := newCommandUserGet(app)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -77,21 +64,15 @@ func TestUserCommand_Success(t *testing.T) {
 	assert.Equal(t, "test-team", result.Teams[0].Handle)
 }
 
-func TestUserCommand_APIError(t *testing.T) {
+func TestUserGetCommand_APIError(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	// Create mock HTTP client that returns an error
-	mockClient := test.NewMockClient(test.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
-		return &http.Response{
-			StatusCode: 401,
-			Body:       io.NopCloser(bytes.NewReader([]byte(`{"error":"unauthorized"}`))),
-			Header:     make(http.Header),
-		}, nil
-	}))
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "", "", 401, nil)
 
 	app.Client = api.NewClient("invalid-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUser(app)
+	cmd := newCommandUserGet(app)
 
 	ctx := context.Background()
 	err := cmd.Action(ctx, nil)
@@ -99,7 +80,7 @@ func TestUserCommand_APIError(t *testing.T) {
 	assert.Error(t, err, "should return error for failed API call")
 }
 
-func TestUserCommand_EmptyTeams(t *testing.T) {
+func TestUserGetCommand_EmptyTeams(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	// Create mock user response with no teams
@@ -112,20 +93,11 @@ func TestUserCommand_EmptyTeams(t *testing.T) {
 		Teams: []client.UserTeam{},
 	}
 
-	mockClient := test.NewMockClient(test.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
-		body, err := json.Marshal(mockUser)
-		require.NoError(t, err)
-
-		return &http.Response{
-			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewReader(body)),
-			Header:     make(http.Header),
-		}, nil
-	}))
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "", "", 200, mockUser)
 
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUser(app)
+	cmd := newCommandUserGet(app)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -145,11 +117,12 @@ func TestUserCommand_Structure(t *testing.T) {
 	cmd := newCommandUser(app)
 
 	assert.Equal(t, "user", cmd.Name)
-	assert.Equal(t, "Gets the current user.", cmd.Usage)
-	assert.NotNil(t, cmd.Action)
+	assert.Equal(t, "Manage user account.", cmd.Usage)
+	assert.NotNil(t, cmd.Commands)
+	assert.Len(t, cmd.Commands, 4)
 }
 
-func TestUserCommand_MultipleTeams(t *testing.T) {
+func TestUserGetCommand_MultipleTeams(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockUser := &client.GetUserResponse{
@@ -198,20 +171,11 @@ func TestUserCommand_MultipleTeams(t *testing.T) {
 		},
 	}
 
-	mockClient := test.NewMockClient(test.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
-		body, err := json.Marshal(mockUser)
-		require.NoError(t, err)
-
-		return &http.Response{
-			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewReader(body)),
-			Header:     make(http.Header),
-		}, nil
-	}))
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "", "", 200, mockUser)
 
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
-	cmd := newCommandUser(app)
+	cmd := newCommandUserGet(app)
 
 	ctx := context.Background()
 	output := test.CaptureStdout(t, func() error {
@@ -230,4 +194,270 @@ func TestUserCommand_MultipleTeams(t *testing.T) {
 	assert.True(t, result.Teams[0].Invitation)
 	assert.False(t, result.Teams[1].Invitation)
 	assert.True(t, result.Teams[2].Invitation)
+}
+
+func TestUserUpdateCommand_Success(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockUser := &client.User{
+		Name:    "Updated Name",
+		Email:   "test@example.com",
+		Created: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/", http.MethodPatch, 200, mockUser)
+
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	cmd := newCommandUserUpdate(app)
+	cmd.Flags[0].(*cli.StringFlag).OnlyOnce = false
+	require.NoError(t, cmd.Set("name", "Updated Name"))
+
+	ctx := context.Background()
+	output := test.CaptureStdout(t, func() error {
+		return cmd.Action(ctx, cmd)
+	})
+
+	var result client.User
+	err := json.Unmarshal([]byte(output), &result)
+	require.NoError(t, err)
+
+	assert.Equal(t, "Updated Name", result.Name)
+}
+
+func TestUserSSHKeysListCommand_Success(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockKeys := []client.SSHKey{
+		{
+			Type:        "ssh-rsa",
+			PublicKey:   "AAAAB3NzaC1yc2EAAA...",
+			Fingerprint: "SHA256:abc123",
+			Comment:     "user@example.com",
+		},
+		{
+			Type:        "ssh-ed25519",
+			PublicKey:   "AAAAC3NzaC1lZDI1NTE5...",
+			Fingerprint: "SHA256:def456",
+			Comment:     "user@work.com",
+		},
+	}
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/ssh_keys/", http.MethodGet, 200, mockKeys)
+
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	cmd := newCommandUserSSHKeysList(app)
+
+	ctx := context.Background()
+	output := test.CaptureStdout(t, func() error {
+		return cmd.Action(ctx, nil)
+	})
+
+	var result []client.SSHKey
+	err := json.Unmarshal([]byte(output), &result)
+	require.NoError(t, err)
+
+	assert.Len(t, result, 2)
+	assert.Equal(t, "SHA256:abc123", result[0].Fingerprint)
+	assert.Equal(t, "SHA256:def456", result[1].Fingerprint)
+}
+
+func TestUserSSHKeysAddCommand_Success(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockKey := &client.SSHKey{
+		Type:        "ssh-rsa",
+		PublicKey:   "AAAAB3NzaC1yc2EAAA...",
+		Fingerprint: "SHA256:abc123",
+		Comment:     "user@example.com",
+	}
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/ssh_keys/", http.MethodPost, 200, mockKey)
+
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	cmd := newCommandUserSSHKeysAdd(app)
+	require.NoError(t, cmd.Set("key", "ssh-rsa AAAAB3NzaC1yc2EAAA... user@example.com"))
+
+	ctx := context.Background()
+	output := test.CaptureStdout(t, func() error {
+		return cmd.Action(ctx, cmd)
+	})
+
+	var result client.SSHKey
+	err := json.Unmarshal([]byte(output), &result)
+	require.NoError(t, err)
+
+	assert.Equal(t, "SHA256:abc123", result.Fingerprint)
+}
+
+func TestUserSSHKeysDeleteCommand_Success(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/ssh_keys/SHA256:abc123/", http.MethodDelete, 204, nil)
+
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	cmd := newCommandUserSSHKeysDelete(app)
+	require.NoError(t, cmd.Set("fingerprint", "SHA256:abc123"))
+
+	ctx := context.Background()
+	output := test.CaptureStdout(t, func() error {
+		return cmd.Action(ctx, cmd)
+	})
+
+	assert.Contains(t, output, "SSH key deleted successfully")
+}
+
+func TestUserAPIKeysListCommand_Success(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockKeys := []client.UserAPIKey{
+		{
+			Prefix:   "abc123",
+			Label:    "Development key",
+			UserRole: "owner",
+			Teams:    []client.APIKeyTeam{},
+		},
+		{
+			Prefix:   "def456",
+			Label:    "Production key",
+			UserRole: "user",
+			Teams:    []client.APIKeyTeam{},
+		},
+	}
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/", http.MethodGet, 200, mockKeys)
+
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	cmd := newCommandUserAPIKeysList(app)
+
+	ctx := context.Background()
+	output := test.CaptureStdout(t, func() error {
+		return cmd.Action(ctx, nil)
+	})
+
+	var result []client.UserAPIKey
+	err := json.Unmarshal([]byte(output), &result)
+	require.NoError(t, err)
+
+	assert.Len(t, result, 2)
+	assert.Equal(t, "abc123", result[0].Prefix)
+	assert.Equal(t, "def456", result[1].Prefix)
+}
+
+func TestUserAPIKeysGetCommand_Success(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockKey := &client.UserAPIKey{
+		Prefix:   "abc123",
+		Label:    "Development key",
+		UserRole: "owner",
+		Teams:    []client.APIKeyTeam{},
+	}
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/abc123/", http.MethodGet, 200, mockKey)
+
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	cmd := newCommandUserAPIKeysGet(app)
+	require.NoError(t, cmd.Set("prefix", "abc123"))
+
+	ctx := context.Background()
+	output := test.CaptureStdout(t, func() error {
+		return cmd.Action(ctx, cmd)
+	})
+
+	var result client.UserAPIKey
+	err := json.Unmarshal([]byte(output), &result)
+	require.NoError(t, err)
+
+	assert.Equal(t, "abc123", result.Prefix)
+	assert.Equal(t, "Development key", result.Label)
+}
+
+func TestUserAPIKeysCreateCommand_Success(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockKey := &client.UserAPIKeyWithToken{
+		UserAPIKey: client.UserAPIKey{
+			Prefix:   "abc123",
+			Label:    "New key",
+			UserRole: "user",
+			Teams:    []client.APIKeyTeam{},
+		},
+		Token: "abc123.full-token-here",
+	}
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/", http.MethodPost, 200, mockKey)
+
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	cmd := newCommandUserAPIKeysCreate(app)
+	require.NoError(t, cmd.Set("label", "New key"))
+	require.NoError(t, cmd.Set("user-role", "user"))
+
+	ctx := context.Background()
+	output := test.CaptureStdout(t, func() error {
+		return cmd.Action(ctx, cmd)
+	})
+
+	var result client.UserAPIKeyWithToken
+	err := json.Unmarshal([]byte(output), &result)
+	require.NoError(t, err)
+
+	assert.Equal(t, "abc123", result.Prefix)
+	assert.Equal(t, "abc123.full-token-here", result.Token)
+}
+
+func TestUserAPIKeysUpdateCommand_Success(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockKey := &client.UserAPIKey{
+		Prefix:   "abc123",
+		Label:    "Updated key",
+		UserRole: "owner",
+		Teams:    []client.APIKeyTeam{},
+	}
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/abc123/", http.MethodPatch, 200, mockKey)
+
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	cmd := newCommandUserAPIKeysUpdate(app)
+	require.NoError(t, cmd.Set("prefix", "abc123"))
+	require.NoError(t, cmd.Set("label", "Updated key"))
+	require.NoError(t, cmd.Set("user-role", "owner"))
+
+	ctx := context.Background()
+	output := test.CaptureStdout(t, func() error {
+		return cmd.Action(ctx, cmd)
+	})
+
+	var result client.UserAPIKey
+	err := json.Unmarshal([]byte(output), &result)
+	require.NoError(t, err)
+
+	assert.Equal(t, "abc123", result.Prefix)
+	assert.Equal(t, "Updated key", result.Label)
+}
+
+func TestUserAPIKeysDeleteCommand_Success(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/abc123/", http.MethodDelete, 204, nil)
+
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	cmd := newCommandUserAPIKeysDelete(app)
+	require.NoError(t, cmd.Set("prefix", "abc123"))
+
+	ctx := context.Background()
+	output := test.CaptureStdout(t, func() error {
+		return cmd.Action(ctx, cmd)
+	})
+
+	assert.Contains(t, output, "API key deleted successfully")
 }
