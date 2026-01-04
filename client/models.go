@@ -22,12 +22,11 @@ type GetUserResponse struct {
 
 // Team represents a team
 type Team struct {
-	Handle                    string `json:"handle"`
-	Name                      string `json:"name"`
-	Description               string `json:"description,omitempty"`
-	SelfServicePaymentEnabled bool   `json:"self_service_payment_enabled,omitempty"`
-	MaximumVirtualMachines    int64  `json:"maximum_virtual_machines,omitempty"`
-	MaximumBareMetalServers   int64  `json:"maximum_bare_metal_servers,omitempty"`
+	Handle                  string `json:"handle"`
+	Name                    string `json:"name"`
+	Description             string `json:"description,omitempty"`
+	MaximumVirtualMachines  int64  `json:"maximum_virtual_machines,omitempty"`
+	MaximumBareMetalServers int64  `json:"maximum_bare_metal_servers,omitempty"`
 }
 
 // TeamUpdate represents a team update request
@@ -96,11 +95,6 @@ type PurchaseTeamCreditsRequest struct {
 type PurchaseTeamCreditsResponse struct {
 	CheckoutURL string    `json:"checkout_url"`
 	ExpiresAt   time.Time `json:"expires_at"`
-}
-
-// RequestPaymentApprovalRequest represents a request for self-service payment approval
-type RequestPaymentApprovalRequest struct {
-	Message string `json:"message"`
 }
 
 // SSHKey represents an SSH public key associated with a user
@@ -281,6 +275,17 @@ type VirtualMachineSpecs struct {
 	DiskCapacity uint64 `json:"disk_capacity"`
 	CPUs         *CPUs  `json:"cpus,omitempty"`
 	GPUs         []GPUs `json:"gpus,omitempty"`
+}
+
+// VMProvisionRequest represents a request to provision a virtual machine
+type VMProvisionRequest struct {
+	VirtualMachineSpecs
+	UserDataURL string `json:"user_data_url,omitempty"`
+}
+
+// VMResetRequest represents a request to reset/rebuild a virtual machine
+type VMResetRequest struct {
+	UserDataURL string `json:"user_data_url,omitempty"`
 }
 
 // VirtualMachineDetails represents a virtual machine with detailed specifications

@@ -43,12 +43,12 @@ func (s *VirtualMachinesService) Get(ctx context.Context, teamHandle, vmName str
 }
 
 // Provision assigns and provisions a virtual machine
-func (s *VirtualMachinesService) Provision(ctx context.Context, teamHandle string, specs VirtualMachineSpecs) (*VirtualMachineDetails, error) {
+func (s *VirtualMachinesService) Provision(ctx context.Context, teamHandle string, req VMProvisionRequest) (*VirtualMachineDetails, error) {
 	path := buildPath("/teams/{team}/virtual_machines/", map[string]string{
 		"team": teamHandle,
 	})
 	var result VirtualMachineDetails
-	err := s.client.doRequest(ctx, http.MethodPost, path, specs, &result)
+	err := s.client.doRequest(ctx, http.MethodPost, path, req, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -146,10 +146,10 @@ func (s *VirtualMachinesService) HardReset(ctx context.Context, teamHandle, vmNa
 }
 
 // Rebuild performs a complete rebuild of the virtual machine to its initial state
-func (s *VirtualMachinesService) Rebuild(ctx context.Context, teamHandle, vmName string) error {
+func (s *VirtualMachinesService) Rebuild(ctx context.Context, teamHandle, vmName string, req VMResetRequest) error {
 	path := buildPath("/teams/{team}/virtual_machines/{vm}/rebuild/", map[string]string{
 		"team": teamHandle,
 		"vm":   vmName,
 	})
-	return s.client.doRequest(ctx, http.MethodPost, path, nil, nil)
+	return s.client.doRequest(ctx, http.MethodPost, path, req, nil)
 }

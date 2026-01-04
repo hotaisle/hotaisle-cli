@@ -110,14 +110,6 @@ func (s *TeamsService) PurchaseCredits(ctx context.Context, teamHandle string, r
 	return &result, nil
 }
 
-// RequestPaymentApproval requests self-service payment approval for a team
-func (s *TeamsService) RequestPaymentApproval(ctx context.Context, teamHandle string, req RequestPaymentApprovalRequest) error {
-	path := buildPath("/teams/{team}/request-payment-approval/", map[string]string{
-		"team": teamHandle,
-	})
-	return s.client.doRequest(ctx, http.MethodPost, path, req, nil)
-}
-
 // GetTeamInvitations retrieves pending invitations for a team
 func (s *TeamsService) GetTeamInvitations(ctx context.Context, teamHandle string) ([]TeamMember, error) {
 	path := buildPath("/teams/{team}/members/invitations/", map[string]string{

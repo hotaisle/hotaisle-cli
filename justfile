@@ -97,13 +97,13 @@ docs_dir := root_dir + "/docs"
 # Linker flags for embedding version information
 golist := shell(go + ' list -m')
 
-ld_flags := '-s -w' + \
-	" -X '" + golist + '/cmd/cli.Version=' 		+ version + "'" + \
-	" -X '" + golist + '/cmd/cli.Commit=' 		+ git_commit + "'" + \
-	" -X '" + golist + '/cmd/cli.Branch=' 		+ git_branch + "'" + \
-	" -X '" + golist + '/cmd/cli.BuildBy=' 		+ build_by + "'" + \
-	" -X '" + golist + '/cmd/cli.BuildTime='	+ build_time + "'" + \
-	" -X '" + golist + '/cmd/cli.GoVersion=' 	+ go_version + "'"
+ld_flags := ('-s -w' +
+	" -X '" + golist + '/cmd/cli.Version=' 		+ version + "'" +
+	" -X '" + golist + '/cmd/cli.Commit=' 		+ git_commit + "'" +
+	" -X '" + golist + '/cmd/cli.Branch=' 		+ git_branch + "'" +
+	" -X '" + golist + '/cmd/cli.BuildBy=' 		+ build_by + "'" +
+	" -X '" + golist + '/cmd/cli.BuildTime='	+ build_time + "'" +
+	" -X '" + golist + '/cmd/cli.GoVersion=' 	+ go_version + "'")
 
 # =============================================================================
 # Default Recipe
@@ -178,7 +178,7 @@ build-one out_dir out_filename goos goarch goarm:
 		-ldflags="{{ld_flags}}" \
 		-o "${out_path}" \
 		./{{main_app}}
-	echo "✅ GOOS={{goos}} GOARCH={{goarch}} CGO_ENABLED={{CGO_ENABLED}} GOARM={{goarm}} ${out_path}"
+	echo "✅ GOOS={{goos}} GOARCH={{goarch}} CGO_ENABLED={{CGO_ENABLED}} GOARM={{goarm}} ldflags={{ld_flags}} ${out_path}"
 
 build-all:
 	#!/usr/bin/env bash
