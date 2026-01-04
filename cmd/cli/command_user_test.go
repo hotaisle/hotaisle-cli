@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
 func TestUserGetCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
@@ -64,7 +63,7 @@ func TestUserGetCommand_Success(t *testing.T) {
 func TestUserGetCommand_APIError(t *testing.T) {
 	app, _ := setupTestApp(t)
 
-	mockClient := test.NewMockHTTPClientWithAssertions(t, "", "", 401, nil)
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/", http.MethodGet, 401, nil)
 	app.Client = api.NewClient("invalid-token", "1.0.0", client.WithHTTPClient(mockClient))
 
 	cmd, err := getCommand(app, userCommands, "get", nil)
@@ -88,7 +87,7 @@ func TestUserGetCommand_EmptyTeams(t *testing.T) {
 		Teams: []client.UserTeam{},
 	}
 
-	mockClient := test.NewMockHTTPClientWithAssertions(t, "", "", 200, mockUser)
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/", http.MethodGet, 200, mockUser)
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
 	cmd, err := getCommand(app, userCommands, "get", nil)
@@ -166,7 +165,7 @@ func TestUserGetCommand_MultipleTeams(t *testing.T) {
 		},
 	}
 
-	mockClient := test.NewMockHTTPClientWithAssertions(t, "", "", 200, mockUser)
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/", http.MethodGet, 200, mockUser)
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
 	cmd, err := getCommand(app, userCommands, "get", nil)
