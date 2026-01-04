@@ -16,13 +16,11 @@ func getCommand(app *App, def commandDef, path string, flags map[string]string) 
 	cmd := buildCommand(app, *cmdDef)
 
 	// Set flags if provided
-	if flags != nil {
 		for name, value := range flags {
 			if err := cmd.Set(name, value); err != nil {
 				return nil, err
 			}
 		}
-	}
 
 	return cmd, nil
 }
