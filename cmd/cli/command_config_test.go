@@ -1,66 +1,14 @@
 package cli
 
 import (
-	"bytes"
 	"context"
-	"hotaisle-cli/internal/config"
+	"hotaisle-cli/test"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v3"
 )
-
-func setupTestApp(t *testing.T) (*App, string) {
-	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
-
-	cfg := &config.Config{
-		ApiToken:    "",
-		LogLevel:    "info",
-		DefaultTeam: "",
-	}
-
-	// Create config directory
-	configDir := filepath.Join(tmpDir, ".hotaisle")
-	require.NoError(t, os.MkdirAll(configDir, 0o700))
-
-	app := &App{
-		Config: cfg,
-	}
-
-	return app, tmpDir
-}
-
-func captureStdout(t *testing.T, fn func() error) string {
-	old := os.Stdout
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	os.Stdout = w
-
-	err = fn()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = w.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(r)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return buf.String()
-}
 
 func TestConfigSetToken_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
@@ -204,7 +152,7 @@ func TestConfigGetToken(t *testing.T) {
 	tokenCmd := getCmd.Commands[0] // "token"
 
 	ctx := context.Background()
-	output := captureStdout(t, func() error {
+	output := test.CaptureStdout(t, func() error {
 		return tokenCmd.Action(ctx, nil)
 	})
 
@@ -222,7 +170,7 @@ func TestConfigGetLogLevel(t *testing.T) {
 	logLevelCmd := getCmd.Commands[1] // "log-level"
 
 	ctx := context.Background()
-	output := captureStdout(t, func() error {
+	output := test.CaptureStdout(t, func() error {
 		return logLevelCmd.Action(ctx, nil)
 	})
 
@@ -240,7 +188,7 @@ func TestConfigGetDefaultTeam(t *testing.T) {
 	defaultTeamCmd := getCmd.Commands[2] // "default-team"
 
 	ctx := context.Background()
-	output := captureStdout(t, func() error {
+	output := test.CaptureStdout(t, func() error {
 		return defaultTeamCmd.Action(ctx, nil)
 	})
 
