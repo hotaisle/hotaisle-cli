@@ -1,8 +1,6 @@
 # Hot Aisle CLI
 
-> ⚠️ **Alpha Status**: This project is currently in early active development. APIs and functionality are subject to change. Features are incomplete and may change significantly.
-
-A command-line interface tool for [Hot Aisle operations](https://admin.hotaisle.app/api/docs/). After installation, you can run `hotaisle` from the command line for list of commands.
+A command-line interface tool for [Hot Aisle operations](https://admin.hotaisle.app/api/docs/). After installation, you can run `hotaisle` from the command line for a list of commands.
 
 # Installation
 
@@ -44,7 +42,7 @@ Download the appropriate rpm package from the [Releases page](https://github.com
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-Our release process is automated with Github Actions ensuring that all tests pass before a release is published and that the CLI is built for all supported platforms. We've removed the human factor the release process, so you don't have to worry about the security of it. The main branch can only accept PRs from maintainers with verified commits.
+Our release process is automated with GitHub Actions ensuring that all tests pass before a release is published and that the CLI is built for all supported platforms. We've removed the human factor from the release process, so you don't have to worry about the security of it. The main branch can only accept PRs from maintainers with verified commits.
 
 PRs run tests.
 Merge PR to main, runs a binary build, tag and GH release.
