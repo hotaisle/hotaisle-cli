@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"hotaisle-cli/test"
 	"os"
 	"testing"
 
@@ -13,18 +12,14 @@ import (
 func TestConfigSetToken_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
-	// Set the environment variable
 	testToken := "test-token-12345"
 	t.Setenv("HOTAISLE_API_TOKEN", testToken)
 
-	cmd := newCommandConfig(app)
-
-	// Find the "set token" command
-	setCmd := cmd.Commands[0]      // "set"
-	tokenCmd := setCmd.Commands[0] // "token"
+	cmd, err := getCommand(app, configCommands, "set.token", nil)
+	assert.NoError(t, err)
 
 	ctx := context.Background()
-	err := tokenCmd.Action(ctx, nil)
+	err = cmd.Action(ctx, cmd)
 
 	assert.NoError(t, err)
 	assert.Equal(t, testToken, app.Config.ApiToken)
@@ -33,20 +28,16 @@ func TestConfigSetToken_Success(t *testing.T) {
 func TestConfigSetToken_MissingEnvVar(t *testing.T) {
 	app, _ := setupTestApp(t)
 
-	// Make sure the environment variable is not set
 	err := os.Unsetenv("HOTAISLE_API_TOKEN")
 	if err != nil {
 		assert.FailNow(t, "failed to unset environment variable")
 	}
 
-	cmd := newCommandConfig(app)
-
-	// Find the "set token" command
-	setCmd := cmd.Commands[0]      // "set"
-	tokenCmd := setCmd.Commands[0] // "token"
+	cmd, err := getCommand(app, configCommands, "set.token", nil)
+	assert.NoError(t, err)
 
 	ctx := context.Background()
-	err = tokenCmd.Action(ctx, nil)
+	err = cmd.Action(ctx, cmd)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "missing token, set HOTAISLE_API_TOKEN")
@@ -56,17 +47,13 @@ func TestConfigSetToken_MissingEnvVar(t *testing.T) {
 func TestConfigSetToken_EmptyEnvVar(t *testing.T) {
 	app, _ := setupTestApp(t)
 
-	// Set an empty environment variable
 	t.Setenv("HOTAISLE_API_TOKEN", "")
 
-	cmd := newCommandConfig(app)
-
-	// Find the "set token" command
-	setCmd := cmd.Commands[0]      // "set"
-	tokenCmd := setCmd.Commands[0] // "token"
+	cmd, err := getCommand(app, configCommands, "set.token", nil)
+	assert.NoError(t, err)
 
 	ctx := context.Background()
-	err := tokenCmd.Action(ctx, nil)
+	err = cmd.Action(ctx, cmd)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "missing token, set HOTAISLE_API_TOKEN")
@@ -76,17 +63,13 @@ func TestConfigSetToken_EmptyEnvVar(t *testing.T) {
 func TestConfigSetToken_WhitespaceEnvVar(t *testing.T) {
 	app, _ := setupTestApp(t)
 
-	// Set whitespace-only environment variable
 	t.Setenv("HOTAISLE_API_TOKEN", "   \t\n  ")
 
-	cmd := newCommandConfig(app)
-
-	// Find the "set token" command
-	setCmd := cmd.Commands[0]      // "set"
-	tokenCmd := setCmd.Commands[0] // "token"
+	cmd, err := getCommand(app, configCommands, "set.token", nil)
+	assert.NoError(t, err)
 
 	ctx := context.Background()
-	err := tokenCmd.Action(ctx, nil)
+	err = cmd.Action(ctx, cmd)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "missing token, set HOTAISLE_API_TOKEN")
@@ -97,11 +80,6 @@ func TestConfigSetLogLevel_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	cmd := newCommandConfig(app)
-
-	// Verify the command structure
-	setCmd := cmd.Commands[0]         // "set"
-	logLevelCmd := setCmd.Commands[1] // "log-level"
-	assert.Equal(t, "log-level", logLevelCmd.Name)
 
 	// Execute the full command with arguments
 	app.AppCli = &cli.Command{
@@ -122,11 +100,6 @@ func TestConfigSetDefaultTeam_Success(t *testing.T) {
 
 	cmd := newCommandConfig(app)
 
-	// Find the "set default-team" command
-	setCmd := cmd.Commands[0]            // "set"
-	defaultTeamCmd := setCmd.Commands[2] // "default-team"
-	assert.Equal(t, "default-team", defaultTeamCmd.Name)
-
 	// Execute the full command with arguments
 	app.AppCli = &cli.Command{
 		Commands: []*cli.Command{cmd},
@@ -145,16 +118,10 @@ func TestConfigGetToken(t *testing.T) {
 	app, _ := setupTestApp(t)
 	app.Config.ApiToken = "test-token-get"
 
-	cmd := newCommandConfig(app)
+	cmd, err := getCommand(app, configCommands, "get.token", nil)
+	assert.NoError(t, err)
 
-	// Find the "get token" command
-	getCmd := cmd.Commands[1]      // "get"
-	tokenCmd := getCmd.Commands[0] // "token"
-
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return tokenCmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	assert.Equal(t, "test-token-get", output)
 }
@@ -163,16 +130,10 @@ func TestConfigGetLogLevel(t *testing.T) {
 	app, _ := setupTestApp(t)
 	app.Config.LogLevel = "warn"
 
-	cmd := newCommandConfig(app)
+	cmd, err := getCommand(app, configCommands, "get.log-level", nil)
+	assert.NoError(t, err)
 
-	// Find the "get log-level" command
-	getCmd := cmd.Commands[1]         // "get"
-	logLevelCmd := getCmd.Commands[1] // "log-level"
-
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return logLevelCmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	assert.Equal(t, "warn", output)
 }
@@ -181,16 +142,10 @@ func TestConfigGetDefaultTeam(t *testing.T) {
 	app, _ := setupTestApp(t)
 	app.Config.DefaultTeam = "test-team"
 
-	cmd := newCommandConfig(app)
+	cmd, err := getCommand(app, configCommands, "get.default-team", nil)
+	assert.NoError(t, err)
 
-	// Find the "get default-team" command
-	getCmd := cmd.Commands[1]            // "get"
-	defaultTeamCmd := getCmd.Commands[2] // "default-team"
-
-	ctx := context.Background()
-	output := test.CaptureStdout(t, func() error {
-		return defaultTeamCmd.Action(ctx, nil)
-	})
+	output := executeCommand(t, cmd)
 
 	assert.Equal(t, "test-team", output)
 }
@@ -199,7 +154,6 @@ func TestConfigCommandStructure(t *testing.T) {
 	app, _ := setupTestApp(t)
 	cmd := newCommandConfig(app)
 
-	// Test top-level command
 	assert.Equal(t, "config", cmd.Name)
 	assert.Equal(t, "Config File Management", cmd.Usage)
 	assert.Len(t, cmd.Commands, 2) // "set" and "get"

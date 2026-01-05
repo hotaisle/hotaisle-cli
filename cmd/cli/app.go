@@ -92,6 +92,7 @@ func makeApp() *App {
 		Commands: []*cli.Command{
 			newCommandConfig(app),
 			newCommandUser(app),
+			newCommandTeam(app),
 		},
 	}
 
