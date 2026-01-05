@@ -18,10 +18,9 @@ func Run() {
 	// Create a base context that will be canceled on signal
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
-	// Protect in a function to handle defer properly with os.Exit
 	if err := runApp(ctx); err != nil {
 		printError(err)
-		stop() // Make sure to stop the signal handling before exiting
+		stop()
 		os.Exit(1)
 	}
 }
