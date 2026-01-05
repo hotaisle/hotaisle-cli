@@ -93,6 +93,8 @@ func makeApp() *App {
 			newCommandConfig(app),
 			newCommandUser(app),
 			newCommandTeam(app),
+			newCommandBareMetal(app),
+			newCommandVirtualMachine(app),
 		},
 	}
 
