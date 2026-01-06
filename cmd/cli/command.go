@@ -150,16 +150,19 @@ func buildCommand(app *App, def commandDef) *cli.Command {
 	if len(def.Flags) > 0 {
 		cmd.Flags = make([]cli.Flag, len(def.Flags))
 		for i, flag := range def.Flags {
-			var usage string
+			if flag.Name == "team" && app.Config != nil && app.Config.DefaultTeam != "" {
+				flag.Required = false
+				flag.Value = app.Config.DefaultTeam
+				flag.Usage = flag.Usage + " (uses default_team from config)"
+			}
+
 			if flag.Required {
-				usage = flag.Usage + " (required)"
-			} else {
-				usage = flag.Usage
+				flag.Usage = flag.Usage + " (required)"
 			}
 
 			cmd.Flags[i] = &cli.StringFlag{
 				Name:     flag.Name,
-				Usage:    usage,
+				Usage:    flag.Usage,
 				Required: flag.Required,
 				Value:    flag.Value,
 			}

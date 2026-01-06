@@ -30,8 +30,11 @@ func runApp(ctx context.Context) error {
 	ctx, cancel = context.WithCancel(ctx)
 	defer cancel()
 
-	app := makeApp()
-	err := app.AppCli.Run(ctx, os.Args)
+	app, err := makeApp()
+	if err != nil {
+		return err
+	}
+	err = app.AppCli.Run(ctx, os.Args)
 
 	return err
 }
@@ -42,34 +45,41 @@ type App struct {
 	Client *api.Client
 }
 
-func makeApp() *App {
+func makeCommands(app *App) []*cli.Command {
+	return []*cli.Command{
+		newCommandConfig(app),
+		newCommandUser(app),
+		newCommandTeam(app),
+		newCommandBareMetal(app),
+		newCommandVirtualMachine(app),
+	}
+}
+
+func makeApp() (*App, error) {
 	app := &App{}
-	cmd := &cli.Command{
+
+	cfg, err := config.LoadDefault()
+	if err != nil {
+		if err := config.Save(cfg); err != nil {
+			return nil, err
+		}
+	}
+	app.Config = cfg
+
+	level := app.Config.LogLevel
+	err = setupLogging(level)
+	if err != nil {
+		return nil, err
+	}
+
+	app.Client = api.NewClient(app.Config.ApiToken, Version)
+
+	app.AppCli = &cli.Command{
 		Usage: "Manage Hot Aisle resources from your terminal.",
 		Version: fmt.Sprintf("%s (commit: %s, branch: %s)\nBuilt by: %s at %s\nGo version: %s",
 			Version, Commit, Branch, BuildBy, BuildTime, GoVersion),
 		EnableShellCompletion: true,
 		DefaultCommand:        "help",
-		Before: func(ctx context.Context, command *cli.Command) (context.Context, error) {
-			if app.Config == nil {
-				cfg, err := config.LoadDefault()
-				if err != nil {
-					if err := config.Save(cfg); err != nil {
-						return ctx, err
-					}
-				}
-				app.Config = cfg
-
-				level := app.Config.LogLevel
-				err = setupLogging(level)
-				if err != nil {
-					return ctx, err
-				}
-
-				app.Client = api.NewClient(app.Config.ApiToken, Version)
-			}
-			return ctx, nil
-		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "config-file",
@@ -78,27 +88,25 @@ func makeApp() *App {
 				Value:   config.Pretty,
 				Sources: cli.EnvVars("HOTAISLE_CONFIG_FILE"),
 				Action: func(ctx context.Context, cmd *cli.Command, s string) error {
-					if cfg, err := config.Load(cmd.String("config-file")); err != nil {
+					configFile := cmd.String("config-file")
+					cfg, err := config.Load(configFile)
+					if err != nil {
 						return err
-					} else {
-						app.Config = cfg
 					}
-					slog.Info("Loaded config", "file", cmd.String("config-file"))
+					app.Config = cfg
+					slog.Info("Loaded config", "file", configFile)
+
+					// commands have a dependency on app.Config
+					app.AppCli.Commands = makeCommands(app)
+
 					return nil
 				},
 			},
 		},
-		Commands: []*cli.Command{
-			newCommandConfig(app),
-			newCommandUser(app),
-			newCommandTeam(app),
-			newCommandBareMetal(app),
-			newCommandVirtualMachine(app),
-		},
+		Commands: makeCommands(app),
 	}
 
-	app.AppCli = cmd
-	return app
+	return app, nil
 }
 
 // setupLogging initializes the logging configuration
