@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTeamListCommand_Success(t *testing.T) {
@@ -36,13 +35,13 @@ func TestTeamListCommand_Success(t *testing.T) {
 	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
 
 	cmd, err := getCommand(app, teamCommands, "list", nil)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result []client.UserTeam
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, result, 2)
 	assert.Equal(t, "team-1", result[0].Handle)
 }
@@ -68,13 +67,13 @@ func TestTeamCreateCommand_Success(t *testing.T) {
 		"name":   "New Team",
 	}
 	cmd, err := getCommand(app, teamCommands, "create", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.UserTeamWithMembers
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "new-team", result.Handle)
 }
 
@@ -102,13 +101,13 @@ func TestTeamGetCommand_Success(t *testing.T) {
 		"handle": "test-team",
 	}
 	cmd, err := getCommand(app, teamCommands, "get", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.UserTeamDetails
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "test-team", result.Handle)
 	assert.Len(t, result.Members, 1)
 }
@@ -128,13 +127,13 @@ func TestTeamBalanceCommand_Success(t *testing.T) {
 		"handle": "test-team",
 	}
 	cmd, err := getCommand(app, teamCommands, "balance", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.BalanceInfo
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, int64(1000), result.AvailableBalance)
 }
 
@@ -151,7 +150,7 @@ func TestTeamMembersInviteCommand_Success(t *testing.T) {
 		"role":   "member",
 	}
 	cmd, err := getCommand(app, teamCommands, "members.invite", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
@@ -169,7 +168,7 @@ func TestTeamMembersRemoveCommand_Success(t *testing.T) {
 		"email":  "user@example.com",
 	}
 	cmd, err := getCommand(app, teamCommands, "members.remove", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 

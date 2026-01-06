@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBareMetalListCommand_Success(t *testing.T) {
@@ -28,13 +27,13 @@ func TestBareMetalListCommand_Success(t *testing.T) {
 
 	flags := map[string]string{"team": "test-team"}
 	cmd, err := getCommand(app, bareMetalCommands, "list", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result []client.BareMetalServerDetails
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, "server-1", result[0].Name)
 }
@@ -56,13 +55,13 @@ func TestBareMetalGetCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "get", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.BareMetalServerDetails
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "server-1", result.Name)
 }
 
@@ -86,13 +85,13 @@ func TestBareMetalReserveCommand_Success(t *testing.T) {
 		"disk-gb":     "100",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "reserve", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.BareMetalServerReservationResponse
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "server-1", result.Name)
 }
 
@@ -108,7 +107,7 @@ func TestBareMetalUpdateCommand_Success(t *testing.T) {
 		"description": "new-desc",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "update", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "Server updated successfully")
@@ -125,7 +124,7 @@ func TestBareMetalDeleteCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "delete", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "Server deleted successfully")
@@ -145,13 +144,13 @@ func TestBareMetalAvailableCommand_Success(t *testing.T) {
 
 	flags := map[string]string{"team": "test-team"}
 	cmd, err := getCommand(app, bareMetalCommands, "available", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result []client.AvailableBareMetalTypes
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, int64(5), result[0].Quantity)
 }
@@ -171,13 +170,13 @@ func TestBareMetalPowerStatusCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "power.status", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.BareMetalServerPowerState
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "on", result.State)
 }
 
@@ -192,7 +191,7 @@ func TestBareMetalPowerOnCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "power.on", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "Power on command sent")
@@ -209,7 +208,7 @@ func TestBareMetalPowerShutdownCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "power.shutdown", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "Graceful shutdown command sent")
@@ -226,7 +225,7 @@ func TestBareMetalPowerForceShutdownCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "power.force-shutdown", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "Force shutdown command sent")
@@ -243,7 +242,7 @@ func TestBareMetalPowerRebootCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "power.reboot", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "Warm reboot command sent")
@@ -260,7 +259,7 @@ func TestBareMetalPowerColdRebootCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "power.cold-reboot", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "Cold reboot command sent")
@@ -277,7 +276,7 @@ func TestBareMetalPowerACResetCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "power.ac-reset", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "AC reset command sent")
@@ -300,13 +299,13 @@ func TestBareMetalReinstallCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "reinstall", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.BareMetalServerDetails
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "server-1", result.Name)
 }
 
@@ -325,13 +324,13 @@ func TestBareMetalConsoleCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "console", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.BareMetalServerConsoleURL
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "http://console.example.com", result.URL)
 }
 
@@ -346,7 +345,7 @@ func TestBareMetalSupportAccessEnableCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "support-access.enable", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "Support access enabled")
@@ -363,7 +362,7 @@ func TestBareMetalSupportAccessDisableCommand_Success(t *testing.T) {
 		"server": "server-1",
 	}
 	cmd, err := getCommand(app, bareMetalCommands, "support-access.disable", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "Support access disabled")

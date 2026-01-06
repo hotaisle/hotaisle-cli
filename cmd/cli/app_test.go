@@ -1,12 +1,12 @@
 package cli
 
 import (
+	"github.com/stretchr/testify/assert"
+
 	"hotaisle-cli/internal/config"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func setupTestApp(t *testing.T) (*App, string) {
@@ -21,7 +21,7 @@ func setupTestApp(t *testing.T) (*App, string) {
 
 	// Create config directory
 	configDir := filepath.Join(tmpDir, ".hotaisle")
-	require.NoError(t, os.MkdirAll(configDir, 0o700))
+	assert.NoError(t, os.MkdirAll(configDir, 0o700))
 
 	app := &App{
 		Config: cfg,

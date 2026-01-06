@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestVMListCommand_Success(t *testing.T) {
@@ -28,13 +27,13 @@ func TestVMListCommand_Success(t *testing.T) {
 
 	flags := map[string]string{"team": "test-team"}
 	cmd, err := getCommand(app, virtualMachineCommands, "list", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result []client.VirtualMachineDetails
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, "vm-1", result[0].Name)
 }
@@ -56,13 +55,13 @@ func TestVMGetCommand_Success(t *testing.T) {
 		"vm":   "vm-1",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "get", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.VirtualMachineDetails
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "vm-1", result.Name)
 }
 
@@ -86,13 +85,13 @@ func TestVMProvisionCommand_Success(t *testing.T) {
 		"user-data-url": "http://example.com/user-data",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "provision", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.VirtualMachineDetails
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "vm-1", result.Name)
 }
 
@@ -108,7 +107,7 @@ func TestVMUpdateCommand_Success(t *testing.T) {
 		"description": "new-desc",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "update", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "VM updated successfully")
@@ -125,7 +124,7 @@ func TestVMDeleteCommand_Success(t *testing.T) {
 		"vm":   "vm-1",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "delete", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "VM deleted successfully")
@@ -145,13 +144,13 @@ func TestVMAvailableCommand_Success(t *testing.T) {
 
 	flags := map[string]string{"team": "test-team"}
 	cmd, err := getCommand(app, virtualMachineCommands, "available", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result []client.AvailableVirtualMachineTypes
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, int64(10), result[0].Quantity)
 }
@@ -171,13 +170,13 @@ func TestVMStateCommand_Success(t *testing.T) {
 		"vm":   "vm-1",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "state", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 
 	var result client.VirtualMachineState
 	err = json.Unmarshal([]byte(output), &result)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "running", result.State)
 }
 
@@ -192,7 +191,7 @@ func TestVMStartCommand_Success(t *testing.T) {
 		"vm":   "vm-1",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "start", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "VM start command sent")
@@ -209,7 +208,7 @@ func TestVMStopCommand_Success(t *testing.T) {
 		"vm":   "vm-1",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "stop", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "VM stop command sent")
@@ -226,7 +225,7 @@ func TestVMShutdownCommand_Success(t *testing.T) {
 		"vm":   "vm-1",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "shutdown", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "VM shutdown command sent")
@@ -243,7 +242,7 @@ func TestVMRebootCommand_Success(t *testing.T) {
 		"vm":   "vm-1",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "reboot", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "VM reboot command sent")
@@ -260,7 +259,7 @@ func TestVMHardResetCommand_Success(t *testing.T) {
 		"vm":   "vm-1",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "hard-reset", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "VM hard-reset command sent")
@@ -278,7 +277,7 @@ func TestVMRebuildCommand_Success(t *testing.T) {
 		"user-data-url": "http://example.com/new-user-data",
 	}
 	cmd, err := getCommand(app, virtualMachineCommands, "rebuild", flags)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	output := executeCommand(t, cmd)
 	assert.Contains(t, output, "VM rebuild command sent")
