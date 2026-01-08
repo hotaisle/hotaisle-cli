@@ -23,6 +23,8 @@ func Run() {
 		stop()
 		os.Exit(1)
 	}
+
+	stop()
 }
 
 func runApp(ctx context.Context) error {
