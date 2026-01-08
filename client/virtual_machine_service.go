@@ -22,10 +22,7 @@ func (s *VirtualMachinesService) List(ctx context.Context, teamHandle string) ([
 	})
 	var result []VirtualMachineDetails
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 // Get retrieves detailed information about a specific virtual machine
@@ -36,10 +33,7 @@ func (s *VirtualMachinesService) Get(ctx context.Context, teamHandle, vmName str
 	})
 	var result VirtualMachineDetails
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // Provision assigns and provisions a virtual machine
@@ -49,10 +43,7 @@ func (s *VirtualMachinesService) Provision(ctx context.Context, teamHandle strin
 	})
 	var result VirtualMachineDetails
 	err := s.client.doRequest(ctx, http.MethodPost, path, req, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // Update updates a virtual machine's description
@@ -80,10 +71,7 @@ func (s *VirtualMachinesService) GetAvailable(ctx context.Context, teamHandle st
 	})
 	var result []AvailableVirtualMachineTypes
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 // GetState retrieves the current power state of a virtual machine
@@ -94,10 +82,7 @@ func (s *VirtualMachinesService) GetState(ctx context.Context, teamHandle, vmNam
 	})
 	var result VirtualMachineState
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // Start starts a virtual machine that is currently stopped

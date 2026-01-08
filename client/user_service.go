@@ -19,40 +19,28 @@ func (c *Client) User() *UserService {
 func (s *UserService) Get(ctx context.Context) (*GetUserResponse, error) {
 	var result GetUserResponse
 	err := s.client.doRequest(ctx, http.MethodGet, "/user/", nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // Update updates the currently authenticated user profile
 func (s *UserService) Update(ctx context.Context, update UserUpdate) (*User, error) {
 	var result User
 	err := s.client.doRequest(ctx, http.MethodPatch, "/user/", update, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // GetSSHKeys retrieves all SSH keys for the user
 func (s *UserService) GetSSHKeys(ctx context.Context) ([]SSHKey, error) {
 	var result []SSHKey
 	err := s.client.doRequest(ctx, http.MethodGet, "/user/ssh_keys/", nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 // AddSSHKey adds a new SSH key to the user's account
 func (s *UserService) AddSSHKey(ctx context.Context, key SSHKeyRequest) (*SSHKey, error) {
 	var result SSHKey
 	err := s.client.doRequest(ctx, http.MethodPost, "/user/ssh_keys/", key, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // DeleteSSHKey permanently deletes an SSH key from the user's account
@@ -67,10 +55,7 @@ func (s *UserService) DeleteSSHKey(ctx context.Context, fingerprint string) erro
 func (s *UserService) GetAPIKeys(ctx context.Context) ([]UserAPIKey, error) {
 	var result []UserAPIKey
 	err := s.client.doRequest(ctx, http.MethodGet, "/user/api_keys/", nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 // GetAPIKey retrieves detailed information about a specific API key
@@ -80,20 +65,14 @@ func (s *UserService) GetAPIKey(ctx context.Context, prefix string) (*UserAPIKey
 	})
 	var result UserAPIKey
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // CreateAPIKey creates a new API key with specified permissions
 func (s *UserService) CreateAPIKey(ctx context.Context, req UserAPIKeyRequest) (*UserAPIKeyWithToken, error) {
 	var result UserAPIKeyWithToken
 	err := s.client.doRequest(ctx, http.MethodPost, "/user/api_keys/", req, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // UpdateAPIKey updates an existing API key
@@ -103,10 +82,7 @@ func (s *UserService) UpdateAPIKey(ctx context.Context, prefix string, req UserA
 	})
 	var result UserAPIKey
 	err := s.client.doRequest(ctx, http.MethodPatch, path, req, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // DeleteAPIKey permanently deletes an API key

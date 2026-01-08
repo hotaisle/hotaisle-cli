@@ -19,20 +19,14 @@ func (c *Client) Teams() *TeamsService {
 func (s *TeamsService) List(ctx context.Context) ([]UserTeam, error) {
 	var result []UserTeam
 	err := s.client.doRequest(ctx, http.MethodGet, "/teams/", nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 // Create creates a new team
 func (s *TeamsService) Create(ctx context.Context, team Team) (*UserTeamWithMembers, error) {
 	var result UserTeamWithMembers
 	err := s.client.doRequest(ctx, http.MethodPost, "/teams/", team, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // Get retrieves detailed information about a specific team
@@ -42,10 +36,7 @@ func (s *TeamsService) Get(ctx context.Context, teamHandle string) (*UserTeamDet
 	})
 	var result UserTeamDetails
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // Update updates a team's information
@@ -55,20 +46,14 @@ func (s *TeamsService) Update(ctx context.Context, teamHandle string, update Tea
 	})
 	var result UserTeamWithMembers
 	err := s.client.doRequest(ctx, http.MethodPatch, path, update, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // GetInvitations retrieves pending team invitations for the user
 func (s *TeamsService) GetInvitations(ctx context.Context) ([]UserTeam, error) {
 	var result []UserTeam
 	err := s.client.doRequest(ctx, http.MethodGet, "/teams/invitations/", nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 // AcceptInvitation accepts a pending team invitation
@@ -78,10 +63,7 @@ func (s *TeamsService) AcceptInvitation(ctx context.Context, teamHandle string) 
 	})
 	var result UserTeamWithMembers
 	err := s.client.doRequest(ctx, http.MethodPost, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // GetBalance retrieves team balance information
@@ -91,10 +73,7 @@ func (s *TeamsService) GetBalance(ctx context.Context, teamHandle string) (*Bala
 	})
 	var result BalanceInfo
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // PurchaseCredits creates a Stripe checkout session for purchasing credits
@@ -104,10 +83,7 @@ func (s *TeamsService) PurchaseCredits(ctx context.Context, teamHandle string, r
 	})
 	var result PurchaseTeamCreditsResponse
 	err := s.client.doRequest(ctx, http.MethodPost, path, req, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // GetTeamInvitations retrieves pending invitations for a team
@@ -117,10 +93,7 @@ func (s *TeamsService) GetTeamInvitations(ctx context.Context, teamHandle string
 	})
 	var result []TeamMember
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 // InviteMember invites a user to join the team
@@ -139,10 +112,7 @@ func (s *TeamsService) UpdateMember(ctx context.Context, teamHandle, email strin
 	})
 	var result TeamMember
 	err := s.client.doRequest(ctx, http.MethodPatch, path, update, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // RemoveMember removes a member from a team

@@ -22,10 +22,7 @@ func (s *BareMetalService) List(ctx context.Context, teamHandle string) ([]BareM
 	})
 	var result []BareMetalServerDetails
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 // Get retrieves detailed information about a specific bare metal server
@@ -36,10 +33,7 @@ func (s *BareMetalService) Get(ctx context.Context, teamHandle, serverName strin
 	})
 	var result BareMetalServerDetails
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // Reserve reserves a bare metal server for the team
@@ -49,10 +43,7 @@ func (s *BareMetalService) Reserve(ctx context.Context, teamHandle string, req B
 	})
 	var result BareMetalServerReservationResponse
 	err := s.client.doRequest(ctx, http.MethodPost, path, req, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // Update updates a bare metal server's description
@@ -80,10 +71,7 @@ func (s *BareMetalService) GetAvailable(ctx context.Context, teamHandle string) 
 	})
 	var result []AvailableBareMetalTypes
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 // GetPowerState retrieves the current power state of a server
@@ -94,10 +82,7 @@ func (s *BareMetalService) GetPowerState(ctx context.Context, teamHandle, server
 	})
 	var result BareMetalServerPowerState
 	err := s.client.doRequest(ctx, http.MethodGet, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // PowerOn turns on a server
@@ -162,10 +147,7 @@ func (s *BareMetalService) Reinstall(ctx context.Context, teamHandle, serverName
 	})
 	var result BareMetalServerDetails
 	err := s.client.doRequest(ctx, http.MethodPost, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // GetConsoleURL generates a URL for bare metal console access
@@ -176,10 +158,7 @@ func (s *BareMetalService) GetConsoleURL(ctx context.Context, teamHandle, server
 	})
 	var result BareMetalServerConsoleURL
 	err := s.client.doRequest(ctx, http.MethodPost, path, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return &result, err
 }
 
 // EnableSupportAccess enables Hot Aisle support staff to access the server
