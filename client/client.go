@@ -65,6 +65,11 @@ func NewClient(opts ...Option) *Client {
 		baseURL: DefaultBaseURL,
 		httpClient: &http.Client{
 			Timeout: DefaultTimeout,
+			Transport: &http.Transport{
+				MaxIdleConns:        20,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     30 * time.Second,
+			},
 		},
 		userAgent: "hotaisle/1.0",
 	}
