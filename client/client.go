@@ -65,6 +65,11 @@ func NewClient(opts ...Option) *Client {
 		baseURL: DefaultBaseURL,
 		httpClient: &http.Client{
 			Timeout: DefaultTimeout,
+			Transport: &http.Transport{
+				MaxIdleConns:        20,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     30 * time.Second,
+			},
 		},
 		userAgent: "hotaisle/1.0",
 	}
@@ -159,12 +164,14 @@ func (e *APIError) Error() string {
 
 // buildPath constructs a URL path with path parameters
 func buildPath(template string, params map[string]string) string {
-	path := template
-	for key, value := range params {
-		placeholder := "{" + key + "}"
-		path = strings.ReplaceAll(path, placeholder, url.PathEscape(value))
+	if len(params) == 0 {
+		return template
 	}
-	return path
+	replacements := make([]string, 0, len(params)*2)
+	for key, value := range params {
+		replacements = append(replacements, "{"+key+"}", url.PathEscape(value))
+	}
+	return strings.NewReplacer(replacements...).Replace(template)
 }
 
 // buildQuery constructs a URL query string
