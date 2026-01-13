@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"hotaisle-cli/internal/config"
 	"os"
@@ -132,9 +133,11 @@ func TestMakeAppWithInvalidConfig(t *testing.T) {
 	t.Setenv("HOME", tmp)
 
 	configDir := filepath.Join(tmp, ".hotaisle")
-	os.MkdirAll(configDir, 0o700)
+	err := os.MkdirAll(configDir, 0o700)
+	require.NoError(t, err)
 	configPath := filepath.Join(configDir, "config.json")
-	os.WriteFile(configPath, []byte("{invalid"), 0o600)
+	err = os.WriteFile(configPath, []byte("{invalid"), 0o600)
+	require.NoError(t, err)
 
 	app, err := makeApp()
 	assert.Error(t, err)
