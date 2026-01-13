@@ -33,7 +33,7 @@ var configCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						slog.Info("Config set", "token", token)
+						slog.Debug("Config set", "token", partialToken(token))
 						return nil
 					},
 				},
@@ -104,6 +104,14 @@ var configCommands = commandDef{
 			},
 		},
 	},
+}
+
+func partialToken(token string) string {
+	tokens := strings.Split(token, ".")
+	if len(tokens) > 0 {
+		return tokens[0]
+	}
+	return "Not a valid token"
 }
 
 func newCommandConfig(app *App) *cli.Command {
