@@ -168,3 +168,64 @@ func TestConfigCommandStructure(t *testing.T) {
 	assert.Equal(t, "get", getCmd.Name)
 	assert.Len(t, getCmd.Commands, 3) // "token", "log-level", "default-team"
 }
+
+func TestPartialToken(t *testing.T) {
+	tests := []struct {
+		name     string
+		token    string
+		expected string
+	}{
+		{
+			name:     "Token with dots - returns first segment",
+			token:    "prefix.segment1.segment2",
+			expected: "prefix",
+		},
+		{
+			name:     "Token with single dot - returns first segment",
+			token:    "prefix.rest",
+			expected: "prefix",
+		},
+		{
+			name:     "Token without dots - returns full token",
+			token:    "simpletoken123",
+			expected: "simpletoken123",
+		},
+		{
+			name:     "Empty token",
+			token:    "",
+			expected: "",
+		},
+		{
+			name:     "Token with leading dot - returns empty string",
+			token:    ".segment",
+			expected: "",
+		},
+		{
+			name:     "Token with trailing dot - returns prefix",
+			token:    "prefix.",
+			expected: "prefix",
+		},
+		{
+			name:     "Token with consecutive dots - returns first segment",
+			token:    "prefix..suffix",
+			expected: "prefix",
+		},
+		{
+			name:     "Token with multiple dots - returns first segment",
+			token:    "one.two.three.four.five",
+			expected: "one",
+		},
+		{
+			name:     "Token with special characters and dots",
+			token:    "abc123_!*-def.xyz",
+			expected: "abc123_!*-def",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := partialToken(tt.token)
+			assert.Equal(t, tt.expected, result, "partialToken(%q) = %q, want %q", tt.token, result, tt.expected)
+		})
+	}
+}

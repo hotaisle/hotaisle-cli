@@ -41,28 +41,35 @@ func defaultConfigPath() (string, error) {
 	return path, nil
 }
 
-func LoadDefault() (*Config, error) {
-	return Load("")
-}
-
-func Load(path string) (*Config, error) {
-	if len(path) == 0 {
-		defaultPath, err := defaultConfigPath()
-		if err != nil {
-			return nil, err
-		}
-		path = defaultPath
-	}
-
+func Load(path *string) (*Config, error) {
 	config := NewConfig()
 
-	slog.Debug("Loading config", "path", path)
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return config, err
+	if path == nil {
+		defaultPath, err := defaultConfigPath()
+		if err != nil {
+			slog.Debug("Failed to get config path, using defaults", "error", err)
+			return nil, err
+		}
+		path = &defaultPath
 	}
-	if err := json.Unmarshal(b, &config); err != nil {
-		return config, err
+
+	slog.Debug("Loading config", "path", *path)
+	configData, err := os.ReadFile(*path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			slog.Debug("Config file does not exist, saving defaults to file", "path", *path)
+			err := Save(config)
+			if err != nil {
+				return nil, err
+			}
+			return config, nil
+		}
+		slog.Debug("Failed to read config file", "path", *path, "error", err)
+		return nil, err
+	}
+	if err := json.Unmarshal(configData, &config); err != nil {
+		slog.Debug("Failed to parse config", "path", *path, "error", err)
+		return nil, err
 	}
 	return config, nil
 }

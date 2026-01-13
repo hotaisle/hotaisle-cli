@@ -4,9 +4,6 @@ import (
 	"hotaisle-cli/client"
 )
 
-const DefaultHost = "admin.hotaisle.app"
-const DefaultBaseURL = "https://" + DefaultHost + "/api"
-
 type Client struct {
 	Api *client.Client
 }
@@ -14,7 +11,7 @@ type Client struct {
 func NewClient(token string, version string, opts ...client.Option) *Client {
 	// Prepare the default options
 	defaultOpts := []client.Option{
-		client.WithBaseURL(DefaultBaseURL),
+		client.WithBaseURL(client.DefaultBaseURL),
 		client.WithToken(token),
 		client.WithUserAgent("hotaisle/" + version),
 	}

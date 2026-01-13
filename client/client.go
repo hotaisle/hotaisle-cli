@@ -97,6 +97,10 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 		bodyReader = bytes.NewReader(jsonBody)
 	}
 
+	// hardcode a long timeout just to be safe, nothing should really take this long
+	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	defer cancel()
+
 	fullURL := c.baseURL + path
 	req, err := http.NewRequestWithContext(ctx, method, fullURL, bodyReader)
 	if err != nil {
@@ -173,15 +177,3 @@ func buildPath(template string, params map[string]string) string {
 	}
 	return strings.NewReplacer(replacements...).Replace(template)
 }
-
-// buildQuery constructs a URL query string
-//func buildQuery(params map[string]string) string {
-//	if len(params) == 0 {
-//		return ""
-//	}
-//	query := url.Values{}
-//	for key, value = range params {
-//		query.Set(key, value)
-//	}
-//	return "?" + query.Encode()
-//}

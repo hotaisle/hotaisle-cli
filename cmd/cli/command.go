@@ -135,7 +135,10 @@ func joinPath(parts []string) string {
 
 // printJSON marshals a value to pretty-printed JSON and prints it
 func printJSON(v any) error {
-	prettyJSON, _ := json.MarshalIndent(v, "", "  ")
+	prettyJSON, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
 	fmt.Print(string(prettyJSON))
 	return nil
 }
