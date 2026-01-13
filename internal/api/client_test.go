@@ -74,13 +74,8 @@ func TestDefaultConstants(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "DefaultHost is correct",
-			constant: DefaultHost,
-			expected: "admin.hotaisle.app",
-		},
-		{
 			name:     "DefaultBaseURL is correct",
-			constant: DefaultBaseURL,
+			constant: client.DefaultBaseURL,
 			expected: "https://admin.hotaisle.app/api",
 		},
 	}
