@@ -60,17 +60,14 @@ func makeCommands(app *App) []*cli.Command {
 func makeApp() (*App, error) {
 	app := &App{}
 
-	cfg, err := config.LoadDefault()
+	cfg, err := config.Load(nil)
 	if err != nil {
-		if err := config.Save(cfg); err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	app.Config = cfg
 
 	level := app.Config.LogLevel
-	err = setupLogging(level)
-	if err != nil {
+	if err := setupLogging(level); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +88,7 @@ func makeApp() (*App, error) {
 				Sources: cli.EnvVars("HOTAISLE_CONFIG_FILE"),
 				Action: func(ctx context.Context, cmd *cli.Command, s string) error {
 					configFile := cmd.String("config-file")
-					cfg, err := config.Load(configFile)
+					cfg, err := config.Load(&configFile)
 					if err != nil {
 						return err
 					}
