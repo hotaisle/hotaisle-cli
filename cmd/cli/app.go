@@ -28,8 +28,7 @@ func Run() {
 }
 
 func runApp(ctx context.Context) error {
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	app, err := makeApp()
