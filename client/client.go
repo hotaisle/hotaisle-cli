@@ -177,15 +177,3 @@ func buildPath(template string, params map[string]string) string {
 	}
 	return strings.NewReplacer(replacements...).Replace(template)
 }
-
-// buildQuery constructs a URL query string
-//func buildQuery(params map[string]string) string {
-//	if len(params) == 0 {
-//		return ""
-//	}
-//	query := url.Values{}
-//	for key, value = range params {
-//		query.Set(key, value)
-//	}
-//	return "?" + query.Encode()
-//}
