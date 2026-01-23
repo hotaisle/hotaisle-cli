@@ -81,23 +81,30 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Import GPG key
-        run: |
-          echo "${{ secrets.APT_GPG_PRIVATE_KEY }}" | gpg --import --batch --yes --no-tty
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.APT_GPG_PASSPHRASE }}
 
       - name: Add packages to APT repository
         run: |
           cd apt-repo
 
-          # Copy new deb packages
-          cp ../dist-pkg/*.deb pool/main/
+          # Organize packages by architecture
+          mkdir -p pool/main/{amd64,arm64,armhf}
 
-          # Generate Packages files
+          # Copy packages to architecture-specific directories
+          cp ../dist-pkg/*-amd64.deb pool/main/amd64/ 2>/dev/null || true
+          cp ../dist-pkg/*-arm64.deb pool/main/arm64/ 2>/dev/null || true
+          cp ../dist-pkg/*-arm.deb pool/main/armhf/ 2>/dev/null || true
+
+          # Generate Packages files for each architecture
           mkdir -p dists/stable/main/binary-{amd64,arm64,armhf}
 
-          # Scan all packages into each architecture's Packages file
-          dpkg-scanpackages pool/ > dists/stable/main/binary-amd64/Packages
-          dpkg-scanpackages pool/ > dists/stable/main/binary-arm64/Packages
-          dpkg-scanpackages pool/ > dists/stable/main/binary-armhf/Packages
+          # Scan packages by architecture
+          dpkg-scanpackages --arch amd64 pool/main/amd64 > dists/stable/main/binary-amd64/Packages 2>/dev/null || echo -n "" > dists/stable/main/binary-amd64/Packages
+          dpkg-scanpackages --arch arm64 pool/main/arm64 > dists/stable/main/binary-arm64/Packages 2>/dev/null || echo -n "" > dists/stable/main/binary-arm64/Packages
+          dpkg-scanpackages --arch armhf pool/main/armhf > dists/stable/main/binary-armhf/Packages 2>/dev/null || echo -n "" > dists/stable/main/binary-armhf/Packages
 
           # Compress Packages files
           gzip -k -f dists/stable/main/binary-amd64/Packages
@@ -123,9 +130,9 @@ jobs:
           echo "SHA256:" >> Release
           find main -type f -exec sha256sum {} \; | sed 's|main/| |' >> Release
 
-          # Sign the Release file with GPG in non-interactive mode
-          gpg --batch --yes --no-tty --default-key "${{ secrets.APT_GPG_KEY_ID }}" -abs -o Release.gpg Release
-          gpg --batch --yes --no-tty --default-key "${{ secrets.APT_GPG_KEY_ID }}" -abs --clearsign -o InRelease Release
+          # Sign the Release file with GPG
+          gpg --batch --yes --armor --detach-sign -o Release.gpg Release
+          gpg --batch --yes --armor --clearsign -o InRelease Release
 
       - name: Push to APT repository
         run: |
