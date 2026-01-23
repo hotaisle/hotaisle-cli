@@ -124,11 +124,21 @@ jobs:
           Date: $(date -Ru)
           EOF
 
-          # Add checksums to Release file
+          # Add checksums to Release file (paths must be relative to dists/stable/)
           echo "MD5Sum:" >> Release
-          find main -type f -exec md5sum {} \; | sed 's|main/| |' >> Release
+          find main -type f | while read file; do
+            echo " $(md5sum "$file" | cut -d' ' -f1) $(stat -c%s "$file") $file"
+          done >> Release
+
+          echo "SHA1:" >> Release
+          find main -type f | while read file; do
+            echo " $(sha1sum "$file" | cut -d' ' -f1) $(stat -c%s "$file") $file"
+          done >> Release
+
           echo "SHA256:" >> Release
-          find main -type f -exec sha256sum {} \; | sed 's|main/| |' >> Release
+          find main -type f | while read file; do
+            echo " $(sha256sum "$file" | cut -d' ' -f1) $(stat -c%s "$file") $file"
+          done >> Release
 
           # Sign the Release file with GPG
           gpg --batch --yes --armor --detach-sign -o Release.gpg Release
