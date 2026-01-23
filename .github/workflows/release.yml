@@ -82,7 +82,7 @@ jobs:
 
       - name: Import GPG key
         run: |
-          echo "${{ secrets.APT_GPG_PRIVATE_KEY }}" | gpg --import --batch --yes
+          echo "${{ secrets.APT_GPG_PRIVATE_KEY }}" | gpg --import --batch --yes --no-tty
 
       - name: Add packages to APT repository
         run: |
@@ -91,12 +91,18 @@ jobs:
           # Copy new deb packages
           cp ../dist-pkg/*.deb pool/main/
 
-          # Generate Packages file for each architecture
-          for arch in amd64 arm64 armhf; do
-            mkdir -p dists/stable/main/binary-$arch
-            dpkg-scanpackages --arch $arch pool/ > dists/stable/main/binary-$arch/Packages
-            gzip -k -f dists/stable/main/binary-$arch/Packages
-          done
+          # Generate Packages files
+          mkdir -p dists/stable/main/binary-{amd64,arm64,armhf}
+
+          # Scan all packages into each architecture's Packages file
+          dpkg-scanpackages pool/ > dists/stable/main/binary-amd64/Packages
+          dpkg-scanpackages pool/ > dists/stable/main/binary-arm64/Packages
+          dpkg-scanpackages pool/ > dists/stable/main/binary-armhf/Packages
+
+          # Compress Packages files
+          gzip -k -f dists/stable/main/binary-amd64/Packages
+          gzip -k -f dists/stable/main/binary-arm64/Packages
+          gzip -k -f dists/stable/main/binary-armhf/Packages
 
           # Generate Release file
           cd dists/stable
@@ -117,9 +123,9 @@ jobs:
           echo "SHA256:" >> Release
           find main -type f -exec sha256sum {} \; | sed 's|main/| |' >> Release
 
-          # Sign the Release file
-          gpg --default-key "${{ secrets.APT_GPG_KEY_ID }}" -abs -o Release.gpg Release
-          gpg --default-key "${{ secrets.APT_GPG_KEY_ID }}" -abs --clearsign -o InRelease Release
+          # Sign the Release file with GPG in non-interactive mode
+          gpg --batch --yes --no-tty --default-key "${{ secrets.APT_GPG_KEY_ID }}" -abs -o Release.gpg Release
+          gpg --batch --yes --no-tty --default-key "${{ secrets.APT_GPG_KEY_ID }}" -abs --clearsign -o InRelease Release
 
       - name: Push to APT repository
         run: |
