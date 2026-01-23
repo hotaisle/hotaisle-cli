@@ -10,15 +10,21 @@ Download the latest release for your platform from the [Releases page](https://g
 
 ### Debian/ubuntu apt
 
+```bash
+# Add repository
+echo "deb [signed-by=/usr/share/keyrings/hotaisle-archive-keyring.gpg] https://hotaisle.github.io/apt-repo stable main" | sudo tee /etc/apt/sources.list.d/hotaisle.list
+
+# Add GPG key
+curl -fsSL https://hotaisle.github.io/apt-repo/hotaisle-archive-keyring.gpg | sudo tee /usr/share/keyrings/hotaisle-archive-keyring.gpg > /dev/null
+
+# Update and install
+sudo apt update
+sudo apt install hotaisle-cli
+```
+
+### By hand
+
 Download the appropriate deb package from the [Releases page](https://github.com/hotaisle/hotaisle-cli/releases) and install it with `dpkg -i`.
-
-> ⚠️ **Alpha Status**: Below isn't implemented yet. Will want to use something like this: https://github.com/morph027/apt-repo-action/
-
-```
-wget -qO - https://hotaisle.github.io/hotaisle-cli/public.key | sudo apt-key add -
-echo "deb https://hotaisle.github.io/hotaisle-cli/deb/ /" | sudo tee /etc/apt/sources.list.d/hotaisle.list
-sudo apt update && sudo apt install hotaisle
-```
 
 ### RPM-based distros (Fedora, CentOS, RHEL)
 

@@ -72,3 +72,62 @@ jobs:
           git add Formula/hotaisle.rb
           git commit -m "Update formula for ${{ steps.tag_version.outputs.new_tag }}"
           git push origin main
+
+      - name: Checkout APT repository
+        uses: actions/checkout@v5
+        with:
+          repository: hotaisle/apt-repo
+          path: apt-repo
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.APT_GPG_PRIVATE_KEY }}" | gpg --import --batch --yes
+
+      - name: Add packages to APT repository
+        run: |
+          cd apt-repo
+
+          # Copy new deb packages
+          cp ../dist-pkg/*.deb pool/main/
+
+          # Generate Packages file for each architecture
+          for arch in amd64 arm64 armhf; do
+            mkdir -p dists/stable/main/binary-$arch
+            dpkg-scanpackages --arch $arch pool/ > dists/stable/main/binary-$arch/Packages
+            gzip -k -f dists/stable/main/binary-$arch/Packages
+          done
+
+          # Generate Release file
+          cd dists/stable
+          cat > Release <<EOF
+          Origin: Hotaisle
+          Label: Hotaisle
+          Suite: stable
+          Codename: stable
+          Architectures: amd64 arm64 armhf
+          Components: main
+          Description: Hotaisle APT Repository
+          Date: $(date -Ru)
+          EOF
+
+          # Add checksums to Release file
+          echo "MD5Sum:" >> Release
+          find main -type f -exec md5sum {} \; | sed 's|main/| |' >> Release
+          echo "SHA256:" >> Release
+          find main -type f -exec sha256sum {} \; | sed 's|main/| |' >> Release
+
+          # Sign the Release file
+          gpg --default-key "${{ secrets.APT_GPG_KEY_ID }}" -abs -o Release.gpg Release
+          gpg --default-key "${{ secrets.APT_GPG_KEY_ID }}" -abs --clearsign -o InRelease Release
+
+      - name: Push to APT repository
+        run: |
+          cd apt-repo
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add .
+          git commit -m "Add packages from ${{ steps.tag_version.outputs.new_tag }}" || echo "No changes to commit"
+          git push origin main

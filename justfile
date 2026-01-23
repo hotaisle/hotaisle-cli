@@ -300,7 +300,7 @@ run *args: build
 	{{bin_dir}}/{{project_name}} {{args}}
 
 clean:
-	@rm -rf {{dist_dir}} {{bin_dir}}
+	@rm -rf {{dist_dir}} {{dist_pkg_dir}} {{bin_dir}}
 
 # =============================================================================
 # Testing & Quality
