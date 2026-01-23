@@ -270,11 +270,11 @@ type VirtualMachine struct {
 
 // VirtualMachineSpecs contains the specifications of a virtual machine
 type VirtualMachineSpecs struct {
-	CPUCores     uint64 `json:"cpu_cores"`
-	RAMCapacity  uint64 `json:"ram_capacity"`
-	DiskCapacity uint64 `json:"disk_capacity"`
-	CPUs         *CPUs  `json:"cpus,omitempty"`
-	GPUs         []GPUs `json:"gpus,omitempty"`
+	CPUCores     *uint64 `json:"cpu_cores,omitempty"`
+	RAMCapacity  *uint64 `json:"ram_capacity,omitempty"`
+	DiskCapacity *uint64 `json:"disk_capacity,omitempty"`
+	CPUs         *CPUs   `json:"cpus,omitempty"`
+	GPUs         []GPUs  `json:"gpus,omitempty"`
 }
 
 // VMProvisionRequest represents a request to provision a virtual machine

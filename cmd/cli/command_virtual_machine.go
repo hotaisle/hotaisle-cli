@@ -48,33 +48,63 @@ var virtualMachineCommands = commandDef{
 			Usage: "Provision a new virtual machine.",
 			Flags: []flagDef{
 				{Name: "team", Usage: "Team handle", Required: true},
-				{Name: "cpu-cores", Usage: "Required CPU cores", Required: true},
-				{Name: "ram-gb", Usage: "Required RAM in GB", Required: true},
-				{Name: "disk-gb", Usage: "Required Disk in GB", Required: true},
+				{Name: "cpu-cores", Usage: "Required CPU cores"},
+				{Name: "ram-gb", Usage: "Required RAM in GB"},
+				{Name: "disk-gb", Usage: "Required Disk in GB"},
+				{Name: "gpu-model", Usage: "GPU model"},
+				{Name: "gpu-count", Usage: "GPU count"},
 				{Name: "user-data-url", Usage: "URL for cloud-init user data"},
 			},
 			Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
-				cpuCores, err := strconv.ParseUint(cmd.String("cpu-cores"), 10, 64)
-				if err != nil {
-					return fmt.Errorf("invalid cpu-cores: %w", err)
-				}
-				ramGB, err := strconv.ParseUint(cmd.String("ram-gb"), 10, 64)
-				if err != nil {
-					return fmt.Errorf("invalid ram-gb: %w", err)
-				}
-				diskGB, err := strconv.ParseUint(cmd.String("disk-gb"), 10, 64)
-				if err != nil {
-					return fmt.Errorf("invalid disk-gb: %w", err)
+				var req client.VMProvisionRequest
+				req.UserDataURL = cmd.String("user-data-url")
+
+				if cpuCoresStr := cmd.String("cpu-cores"); cpuCoresStr != "" {
+					cpuCores, err := strconv.ParseUint(cpuCoresStr, 10, 64)
+					if err != nil {
+						return fmt.Errorf("invalid cpu-cores: %w", err)
+					}
+					req.CPUCores = &cpuCores
 				}
 
-				resp, err := app.Client.Api.VirtualMachines().Provision(ctx, cmd.String("team"), client.VMProvisionRequest{
-					VirtualMachineSpecs: client.VirtualMachineSpecs{
-						CPUCores:     cpuCores,
-						RAMCapacity:  ramGB,
-						DiskCapacity: diskGB,
-					},
-					UserDataURL: cmd.String("user-data-url"),
-				})
+				if ramGBStr := cmd.String("ram-gb"); ramGBStr != "" {
+					ramGB, err := strconv.ParseUint(ramGBStr, 10, 64)
+					if err != nil {
+						return fmt.Errorf("invalid ram-gb: %w", err)
+					}
+					req.RAMCapacity = &ramGB
+				}
+
+				if diskGBStr := cmd.String("disk-gb"); diskGBStr != "" {
+					diskGB, err := strconv.ParseUint(diskGBStr, 10, 64)
+					if err != nil {
+						return fmt.Errorf("invalid disk-gb: %w", err)
+					}
+					req.DiskCapacity = &diskGB
+				}
+
+				if gpuModel := cmd.String("gpu-model"); gpuModel != "" {
+					gpuCountStr := cmd.String("gpu-count")
+					if gpuCountStr == "" {
+						return fmt.Errorf("gpu-count is required when gpu-model is specified")
+					}
+					gpuCount, err := strconv.ParseUint(gpuCountStr, 10, 64)
+					if err != nil {
+						return fmt.Errorf("invalid gpu-count: %w", err)
+					}
+					req.GPUs = []client.GPUs{{
+						Components: client.Components{
+							Model: gpuModel,
+							Count: gpuCount,
+						},
+					}}
+				}
+
+				if req.CPUCores == nil && req.RAMCapacity == nil && req.DiskCapacity == nil && len(req.GPUs) == 0 {
+					return fmt.Errorf("at least one specification must be provided (cpu-cores, ram-gb, disk-gb, or gpu-model)")
+				}
+
+				resp, err := app.Client.Api.VirtualMachines().Provision(ctx, cmd.String("team"), req)
 				if err != nil {
 					return err
 				}

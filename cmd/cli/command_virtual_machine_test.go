@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"hotaisle-cli/client"
 	"hotaisle-cli/internal/api"
@@ -93,6 +94,95 @@ func TestVMProvisionCommand_Success(t *testing.T) {
 	err = json.Unmarshal([]byte(output), &result)
 	assert.NoError(t, err)
 	assert.Equal(t, "vm-1", result.Name)
+}
+
+func TestVMProvisionCommand_WithGPU(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockVM := &client.VirtualMachineDetails{
+		VirtualMachine: client.VirtualMachine{
+			Name: "vm-gpu",
+		},
+	}
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/virtual_machines/", http.MethodPost, 200, mockVM)
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	flags := map[string]string{
+		"team":      "test-team",
+		"gpu-model": "MI300X",
+		"gpu-count": "1",
+	}
+	cmd, err := getCommand(app, virtualMachineCommands, "provision", flags)
+	assert.NoError(t, err)
+
+	output := executeCommand(t, cmd)
+
+	var result client.VirtualMachineDetails
+	err = json.Unmarshal([]byte(output), &result)
+	assert.NoError(t, err)
+	assert.Equal(t, "vm-gpu", result.Name)
+}
+
+func TestVMProvisionCommand_WithPartialSpecs(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	mockVM := &client.VirtualMachineDetails{
+		VirtualMachine: client.VirtualMachine{
+			Name: "vm-partial",
+		},
+	}
+
+	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/virtual_machines/", http.MethodPost, 200, mockVM)
+	app.Client = api.NewClient("test-token", "1.0.0", client.WithHTTPClient(mockClient))
+
+	flags := map[string]string{
+		"team":      "test-team",
+		"cpu-cores": "4",
+		"ram-gb":    "16",
+	}
+	cmd, err := getCommand(app, virtualMachineCommands, "provision", flags)
+	assert.NoError(t, err)
+
+	output := executeCommand(t, cmd)
+
+	var result client.VirtualMachineDetails
+	err = json.Unmarshal([]byte(output), &result)
+	assert.NoError(t, err)
+	assert.Equal(t, "vm-partial", result.Name)
+}
+
+func TestVMProvisionCommand_NoSpecs(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	flags := map[string]string{
+		"team": "test-team",
+	}
+	cmd, err := getCommand(app, virtualMachineCommands, "provision", flags)
+	assert.NoError(t, err)
+
+	ctx := context.Background()
+	err = cmd.Action(ctx, cmd)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "at least one specification must be provided")
+}
+
+func TestVMProvisionCommand_GPUWithoutCount(t *testing.T) {
+	app, _ := setupTestApp(t)
+
+	flags := map[string]string{
+		"team":      "test-team",
+		"gpu-model": "MI300X",
+	}
+	cmd, err := getCommand(app, virtualMachineCommands, "provision", flags)
+	assert.NoError(t, err)
+
+	ctx := context.Background()
+	err = cmd.Action(ctx, cmd)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "gpu-count is required when gpu-model is specified")
 }
 
 func TestVMUpdateCommand_Success(t *testing.T) {
