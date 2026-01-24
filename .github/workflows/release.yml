@@ -82,8 +82,8 @@ jobs:
 
       - name: Copy packages to APT repository directory
         run: |
-          mkdir -p apt-repo/packages
-          cp dist-pkg/*.deb apt-repo/packages/
+          mkdir -p dist-deb
+          cp dist-pkg/*.deb dist-deb
 
       - name: Create APT repository
         id: create-apt-repo
@@ -92,7 +92,7 @@ jobs:
           repo-name: apt-repo
           signing-key: ${{ secrets.APT_GPG_PRIVATE_KEY }}
           signing-key-passphrase: ${{ secrets.APT_GPG_PASSPHRASE }}
-          scan-dir: apt-repo/packages
+          scan-dir: dist-deb
           limit: 10
           codename: stable
           components: main
@@ -107,6 +107,8 @@ jobs:
         run: |
           ls -lah ${{ steps.create-apt-repo.outputs.dir }} 
           cp -r ${{ steps.create-apt-repo.outputs.dir }} apt-repo
+          
+          cd apt-repo
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
