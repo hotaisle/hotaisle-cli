@@ -90,7 +90,7 @@ jobs:
         uses: morph027/apt-repo-action@v3
         with:
           repo-name: apt-repo
-          signing-key: ${{ secrets.APT_GPG_KEY_ID }}
+          signing-key: ${{ secrets.APT_GPG_PRIVATE_KEY }}
           signing-key-passphrase: ${{ secrets.APT_GPG_PASSPHRASE }}
           scan-dir: apt-repo/packages
           limit: 10
@@ -105,6 +105,7 @@ jobs:
 
       - name: Push to APT repository
         run: |
+          ls -lah ${{ steps.create-apt-repo.outputs.dir }} 
           cp -r ${{ steps.create-apt-repo.outputs.dir }} apt-repo
 
           git config user.name "github-actions[bot]"
