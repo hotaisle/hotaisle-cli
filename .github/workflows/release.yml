@@ -88,7 +88,7 @@ jobs:
       - name: Generate APT repository
         uses: morph027/apt-repo-action@v3
         with:
-          repo-name: hotaisle
+          repo-name: apt-repo
           signing-key: ${{ secrets.APT_GPG_KEY_ID }}
           signing-key-passphrase: ${{ secrets.APT_GPG_PASSPHRASE }}
           scan-dir: apt-repo/packages
