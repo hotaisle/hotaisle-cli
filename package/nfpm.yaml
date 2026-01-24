@@ -21,3 +21,9 @@ contents:
      expand: true
      file_info:
        mode: 0755
+rpm:
+  signature:
+    key_id: ${{ secrets.APT_GPG_KEY_ID }}
+deb:
+  signature:
+    key_id: ${{ secrets.APT_GPG_KEY_ID }}
