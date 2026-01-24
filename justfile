@@ -172,13 +172,13 @@ build-one out_dir out_filename goos goarch goarm:
 
 	# Build
 	mkdir -p "{{out_dir}}"
-	GOOS={{goos}} GOARCH={{goarch}} CGO_ENABLED={{CGO_ENABLED}} GOARM={{goarm}} \
+	GOOS={{goos}} GOARCH={{goarch}} GOARM={{goarm}} CGO_ENABLED={{CGO_ENABLED}} \
 		{{go}} build \
 		-tags '{{all_tags}}' \
 		-ldflags="{{ld_flags}}" \
 		-o "${out_path}" \
 		./{{main_app}}
-	echo "✅ GOOS={{goos}} GOARCH={{goarch}} CGO_ENABLED={{CGO_ENABLED}} GOARM={{goarm}} ldflags={{ld_flags}} ${out_path}"
+	echo "✅ GOOS={{goos}} GOARCH={{goarch}} GOARM={{goarm}} CGO_ENABLED={{CGO_ENABLED}} ldflags={{ld_flags}} ${out_path}"
 
 build-all:
 	#!/usr/bin/env bash
