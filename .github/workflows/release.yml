@@ -85,7 +85,8 @@ jobs:
           mkdir -p apt-repo/packages
           cp dist-pkg/*.deb apt-repo/packages/
 
-      - name: Generate APT repository
+      - name: Create APT repository
+        id: create-apt-repo
         uses: morph027/apt-repo-action@v3
         with:
           repo-name: apt-repo
