@@ -86,7 +86,7 @@ jobs:
           cp dist-pkg/*.deb apt-repo/packages/
 
       - name: Generate APT repository
-        uses: morph027/apt-repo-action@v2
+        uses: morph027/apt-repo-action@v3
         with:
           repo-name: hotaisle
           signing-key: ${{ secrets.APT_GPG_KEY_ID }}
