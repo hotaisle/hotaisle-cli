@@ -98,7 +98,7 @@ jobs:
           # Copy packages to architecture-specific directories
           cp ../dist-pkg/*-amd64.deb pool/main/amd64/
           cp ../dist-pkg/*-arm64.deb pool/main/arm64/
-          cp ../dist-pkg/*-arm.deb pool/main/armhf/
+          cp ../dist-pkg/*-armhf.deb pool/main/armhf/
 
           # Generate Packages files for each architecture
           mkdir -p dists/stable/main/binary-{amd64,arm64,armhf}

@@ -189,7 +189,12 @@ build-all:
 		local platform="$1"
 		IFS='/' read -r os arch arm <<< "$platform"
 		ext=""; [ "$os" = "windows" ] && ext=".exe"
-		out_filename="{{project_name}}-{{version}}-${os}-${arch}${ext}"
+
+		# Map 'arm' to 'armhf' for output filename (Debian convention)
+		local out_arch="$arch"
+		[ "$arch" = "arm" ] && out_arch="armhf"
+
+		out_filename="{{project_name}}-{{version}}-${os}-${out_arch}${ext}"
 		just build-one "{{dist_dir}}" "$out_filename" "$os" "$arch" "$arm"
 	}
 	export -f build_platform
@@ -251,8 +256,14 @@ nfpm: build-all
 		local arch="$1"
 		local packager="$2"
 
-		local binary="{{dist_dir}}/hotaisle-cli-{{version}}-linux-${arch}"
-		local package="{{dist_pkg_dir}}/hotaisle-cli-{{version}}-linux-${arch}.${packager}"
+		# Map 'arm' to 'armhf' for Debian packages
+		local file_arch="$arch"
+		if [ "$arch" = "arm" ]; then
+			file_arch="armhf"
+		fi
+
+		local binary="{{dist_dir}}/hotaisle-cli-{{version}}-linux-${file_arch}"
+		local package="{{dist_pkg_dir}}/hotaisle-cli-{{version}}-linux-${file_arch}.${packager}"
 
 		if [ -e "$package" ] && [ "$package" -nt "$binary" ]; then
 			echo "⏭️  Skipping $package (up to date)"
@@ -260,7 +271,7 @@ nfpm: build-all
 		fi
 
 		mkdir -p "{{dist_pkg_dir}}"
-		ARCH="$arch" VERSION="{{version}}" nfpm package \
+		ARCH="$file_arch" VERSION="{{version}}" nfpm package \
 			--packager "$packager" \
 			--config package/nfpm.yaml \
 			--target "$package"
