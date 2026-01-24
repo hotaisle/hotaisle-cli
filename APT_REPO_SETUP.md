@@ -93,46 +93,9 @@ git commit -m "Add public GPG key"
 git push origin main
 ```
 
-### 6. Create Initial Repository Files
+### 6. Create Repository Files
 
-```bash
-cd apt-repo
-
-# Create initial empty Packages files
-for arch in amd64 arm64 armhf; do
-  touch dists/stable/main/binary-$arch/Packages
-  gzip -c dists/stable/main/binary-$arch/Packages > dists/stable/main/binary-$arch/Packages.gz
-done
-
-# Create Release file
-cd dists/stable
-cat > Release <<EOF
-Origin: Hotaisle
-Label: Hotaisle
-Suite: stable
-Codename: stable
-Architectures: amd64 arm64 armhf
-Components: main
-Description: Hotaisle APT Repository
-Date: $(date -Ru)
-EOF
-
-# Add checksums
-echo "MD5Sum:" >> Release
-find main -type f -exec md5sum {} \; | sed 's|main/| |' >> Release
-echo "SHA256:" >> Release
-find main -type f -exec sha256sum {} \; | sed 's|main/| |' >> Release
-
-# Sign the Release file
-gpg --default-key YOUR_KEY_ID -abs -o Release.gpg Release
-gpg --default-key YOUR_KEY_ID -abs --clearsign -o InRelease Release
-
-# Commit and push
-cd ../..
-git add .
-git commit -m "Initial repository structure"
-git push origin main
-```
+Use the morph027/apt-repo-action@v3 action.
 
 ## User Installation Instructions
 
@@ -151,28 +114,3 @@ curl -fsSL https://hotaisle.github.io/apt-repo/hotaisle-archive-keyring.gpg | su
 sudo apt update
 sudo apt install hotaisle-cli
 ```
-
-## Troubleshooting
-
-### Package not found
-- Verify the Packages.gz files are generated correctly
-- Check that GitHub Pages is serving files (may take a few minutes after push)
-
-### GPG signature verification failed
-- Ensure users have imported the public key correctly
-- Verify the key ID in GitHub secrets matches your GPG key
-
-### Architecture mismatch
-- Your deb files use `arm` suffix but APT expects `armhf`
-- The workflow maps `arm` to `armhf` architecture automatically
-
-## Maintenance
-
-The workflow automatically:
-1. Copies new deb packages to the repository
-2. Regenerates Packages files for all architectures
-3. Updates the Release file with new checksums
-4. Signs the Release file with GPG
-5. Commits and pushes changes
-
-No manual intervention is required after the initial setup.
