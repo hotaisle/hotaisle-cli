@@ -106,7 +106,7 @@ jobs:
       - name: Push to APT repository
         run: |
           ls -lah ${{ steps.create-apt-repo.outputs.dir }} 
-          cp -r ${{ steps.create-apt-repo.outputs.dir }} apt-repo
+          cp -r ${{ steps.create-apt-repo.outputs.dir }}/. apt-repo/
           
           cd apt-repo
 
