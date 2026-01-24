@@ -90,7 +90,7 @@ jobs:
         uses: morph027/apt-repo-action@v3
         with:
           repo-name: apt-repo
-          signing-key: ${{ secrets.APT_GPG_KEY_ID }}
+          signing-key: ${{ secrets.APT_GPG_PRIVATE_KEY }}
           signing-key-passphrase: ${{ secrets.APT_GPG_PASSPHRASE }}
           scan-dir: apt-repo/packages
           limit: 10
