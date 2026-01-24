@@ -12,10 +12,10 @@ Download the latest release for your platform from the [Releases page](https://g
 
 ```bash
 # Add repository
-echo "deb [signed-by=/usr/share/keyrings/hotaisle-archive-keyring.gpg] https://hotaisle.github.io/apt-repo stable main" | sudo tee /etc/apt/sources.list.d/hotaisle.list
+echo "deb [signed-by=/usr/share/keyrings/hotaisle-gpg.key] https://hotaisle.github.io/apt-repo stable main" | sudo tee /etc/apt/sources.list.d/hotaisle.list
 
 # Add GPG key
-curl -fsSL https://hotaisle.github.io/apt-repo/hotaisle-archive-keyring.gpg | sudo tee /usr/share/keyrings/hotaisle-archive-keyring.gpg > /dev/null
+curl -fsSL https://hotaisle.github.io/apt-repo/gpg.key | sudo tee /usr/share/keyrings/hotaisle-gpg.key > /dev/null
 
 # Update and install
 sudo apt update
