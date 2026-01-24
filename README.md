@@ -19,7 +19,7 @@ curl -fsSL https://hotaisle.github.io/apt-repo/gpg.key | sudo tee /usr/share/key
 
 # Update and install
 sudo apt update
-sudo apt install hotaisle-cli
+sudo apt install hotaisle
 ```
 
 ### By hand
