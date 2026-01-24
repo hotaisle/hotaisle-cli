@@ -105,6 +105,7 @@ jobs:
 
       - name: Push to APT repository
         run: |
+          ls -lah ${{ steps.create-apt-repo.outputs.dir }} 
           cp -r ${{ steps.create-apt-repo.outputs.dir }} apt-repo
 
           git config user.name "github-actions[bot]"
