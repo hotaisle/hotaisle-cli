@@ -80,76 +80,31 @@ jobs:
           path: apt-repo
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.APT_GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.APT_GPG_PASSPHRASE }}
-
-      - name: Add packages to APT repository
+      - name: Copy packages to APT repository directory
         run: |
-          set -xe
-          
-          cd apt-repo
+          mkdir -p apt-repo/packages
+          cp dist-pkg/*.deb apt-repo/packages/
 
-          # Organize packages by architecture
-          mkdir -p pool/main/{amd64,arm64,armhf}
-
-          # Copy packages to architecture-specific directories
-          cp ../dist-pkg/*-amd64.deb pool/main/amd64/
-          cp ../dist-pkg/*-arm64.deb pool/main/arm64/
-          cp ../dist-pkg/*-arm.deb pool/main/armhf/
-
-          # Generate Packages files for each architecture
-          mkdir -p dists/stable/main/binary-{amd64,arm64,armhf}
-
-          # Scan packages by architecture
-          # dpkg-scanpackages expects to be run from repo root and outputs "pool/..." paths
-          dpkg-scanpackages --arch amd64 pool/main/amd64 /dev/null > dists/stable/main/binary-amd64/Packages
-          dpkg-scanpackages --arch arm64 pool/main/arm64 /dev/null > dists/stable/main/binary-arm64/Packages
-          dpkg-scanpackages --arch armhf pool/main/armhf /dev/null > dists/stable/main/binary-armhf/Packages
-
-          # Compress Packages files
-          gzip -k -f dists/stable/main/binary-amd64/Packages
-          gzip -k -f dists/stable/main/binary-arm64/Packages
-          gzip -k -f dists/stable/main/binary-armhf/Packages
-
-          # Generate Release file
-          cd dists/stable
-          cat > Release <<EOF
-          Origin: Hotaisle
-          Label: Hotaisle
-          Suite: stable
-          Codename: stable
-          Architectures: amd64 arm64 armhf
-          Components: main
-          Description: Hotaisle APT Repository
-          Date: $(date -Ru)
-          EOF
-
-          # Add checksums to Release file (paths must be relative to dists/stable/)
-          echo "MD5Sum:" >> Release
-          find main -type f | while read file; do
-            echo " $(md5sum "$file" | cut -d' ' -f1) $(stat -c%s "$file") $file"
-          done >> Release
-
-          echo "SHA1:" >> Release
-          find main -type f | while read file; do
-            echo " $(sha1sum "$file" | cut -d' ' -f1) $(stat -c%s "$file") $file"
-          done >> Release
-
-          echo "SHA256:" >> Release
-          find main -type f | while read file; do
-            echo " $(sha256sum "$file" | cut -d' ' -f1) $(stat -c%s "$file") $file"
-          done >> Release
-
-          # Sign the Release file with GPG
-          gpg --batch --yes --armor --detach-sign -o Release.gpg Release
-          gpg --batch --yes --armor --clearsign -o InRelease Release
+      - name: Generate APT repository
+        uses: morph027/apt-repo-action@v2
+        with:
+          repo-name: hotaisle
+          signing-key: ${{ secrets.APT_GPG_KEY_ID }}
+          signing-key-passphrase: ${{ secrets.APT_GPG_PASSPHRASE }}
+          scan-dir: apt-repo/packages
+          limit: 10
+          codename: stable
+          components: main
+          architectures: amd64 arm64 armhf
+          import-from-repo-failure-allow: true
+          import-from-repo-url: |
+            deb-amd64 https://hotaisle.github.io/apt-repo stable main
+            deb-arm64 https://hotaisle.github.io/apt-repo stable main
+            deb-armhf https://hotaisle.github.io/apt-repo stable main
 
       - name: Push to APT repository
         run: |
-          cd apt-repo
+          cp -r ${{ steps.create-apt-repo.outputs.dir }} apt-repo
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
