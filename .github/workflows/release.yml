@@ -88,23 +88,26 @@ jobs:
 
       - name: Add packages to APT repository
         run: |
+          set -xe
+          
           cd apt-repo
 
           # Organize packages by architecture
           mkdir -p pool/main/{amd64,arm64,armhf}
 
           # Copy packages to architecture-specific directories
-          cp ../dist-pkg/*-amd64.deb pool/main/amd64/ 2>/dev/null || true
-          cp ../dist-pkg/*-arm64.deb pool/main/arm64/ 2>/dev/null || true
-          cp ../dist-pkg/*-arm.deb pool/main/armhf/ 2>/dev/null || true
+          cp ../dist-pkg/*-amd64.deb pool/main/amd64/
+          cp ../dist-pkg/*-arm64.deb pool/main/arm64/
+          cp ../dist-pkg/*-arm.deb pool/main/armhf/
 
           # Generate Packages files for each architecture
           mkdir -p dists/stable/main/binary-{amd64,arm64,armhf}
 
           # Scan packages by architecture
-          dpkg-scanpackages --arch amd64 pool/main/amd64 > dists/stable/main/binary-amd64/Packages 2>/dev/null || echo -n "" > dists/stable/main/binary-amd64/Packages
-          dpkg-scanpackages --arch arm64 pool/main/arm64 > dists/stable/main/binary-arm64/Packages 2>/dev/null || echo -n "" > dists/stable/main/binary-arm64/Packages
-          dpkg-scanpackages --arch armhf pool/main/armhf > dists/stable/main/binary-armhf/Packages 2>/dev/null || echo -n "" > dists/stable/main/binary-armhf/Packages
+          # dpkg-scanpackages expects to be run from repo root and outputs "pool/..." paths
+          dpkg-scanpackages --arch amd64 pool/main/amd64 /dev/null > dists/stable/main/binary-amd64/Packages
+          dpkg-scanpackages --arch arm64 pool/main/arm64 /dev/null > dists/stable/main/binary-arm64/Packages
+          dpkg-scanpackages --arch armhf pool/main/armhf /dev/null > dists/stable/main/binary-armhf/Packages
 
           # Compress Packages files
           gzip -k -f dists/stable/main/binary-amd64/Packages
