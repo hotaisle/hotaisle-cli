@@ -44,6 +44,10 @@ Download the appropriate rpm package from the [Releases page](https://github.com
 - [Just](https://github.com/casey/just) command runner
 - [act](https://github.com/nektos/act) (optional)
 
+# Getting an API key
+
+When you log in to the admin TUI via `ssh admin.hotaisle.app`, check the breadcrumbs at the top; you’ll likely start in the team settings. Press Esc, then use the arrow keys to move up to your name to edit your personal settings, including API keys.
+
 # Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
