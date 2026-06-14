@@ -48,11 +48,11 @@ var virtualMachineCommands = commandDef{
 			Usage: "Provision a new virtual machine.",
 			Flags: []flagDef{
 				{Name: "team", Usage: "Team handle", Required: true},
-				{Name: "cpu-cores", Usage: "Required CPU cores"},
-				{Name: "ram-gb", Usage: "Required RAM in GB"},
-				{Name: "disk-gb", Usage: "Required Disk in GB"},
+				{Name: "gpu-count", Usage: "GPU count", Required: true},
+				{Name: "cpu-cores", Usage: "CPU cores"},
+				{Name: "ram-gb", Usage: "RAM in GB"},
+				{Name: "disk-gb", Usage: "Disk in GB"},
 				{Name: "gpu-model", Usage: "GPU model"},
-				{Name: "gpu-count", Usage: "GPU count"},
 				{Name: "user-data-url", Usage: "URL for cloud-init user data"},
 			},
 			Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
@@ -132,7 +132,7 @@ var virtualMachineCommands = commandDef{
 		},
 		{
 			Name:  "delete",
-			Usage: "Delete a virtual machine and its resources.",
+			Usage: "Delete a virtual machine and its resources. Ends billing.",
 			Flags: []flagDef{
 				{Name: "team", Usage: "Team handle", Required: true},
 				{Name: "vm", Usage: "VM name", Required: true},
@@ -193,7 +193,7 @@ var virtualMachineCommands = commandDef{
 		},
 		{
 			Name:  "stop",
-			Usage: "Forcefully stop a running virtual machine.",
+			Usage: "Forcefully stop a running virtual machine. Continues billing.",
 			Flags: []flagDef{
 				{Name: "team", Usage: "Team handle", Required: true},
 				{Name: "vm", Usage: "VM name", Required: true},
