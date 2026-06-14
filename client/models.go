@@ -80,10 +80,12 @@ type TeamInvitationRequest struct {
 
 // BalanceInfo contains balance and estimated time until depletion
 type BalanceInfo struct {
-	AvailableBalance    int64      `json:"available_balance"`
-	HourlyRate          int64      `json:"hourly_rate"`
-	EstimatedRunoutTime *time.Time `json:"estimated_runout_time,omitempty"`
-	MinimumBalance      int64      `json:"minimum_balance,omitempty"`
+	AvailableBalance     int64      `json:"available_balance"`
+	HourlyRate           int64      `json:"hourly_rate"`
+	BareMetalServerCount int64      `json:"bare_metal_server_count"`
+	VirtualMachineCount  int64      `json:"virtual_machine_count"`
+	EstimatedRunoutTime  *time.Time `json:"estimated_runout_time,omitempty"`
+	MinimumBalance       int64      `json:"minimum_balance,omitempty"`
 }
 
 // PurchaseTeamCreditsRequest represents a request to purchase credits for a team

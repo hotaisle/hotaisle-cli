@@ -116,8 +116,10 @@ func TestTeamBalanceCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockBalance := &client.BalanceInfo{
-		AvailableBalance: 1000,
-		HourlyRate:       10,
+		AvailableBalance:     1000,
+		HourlyRate:           10,
+		BareMetalServerCount: 2,
+		VirtualMachineCount:  3,
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/balance/", http.MethodGet, 200, mockBalance)
@@ -135,6 +137,8 @@ func TestTeamBalanceCommand_Success(t *testing.T) {
 	err = json.Unmarshal([]byte(output), &result)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1000), result.AvailableBalance)
+	assert.Equal(t, int64(2), result.BareMetalServerCount)
+	assert.Equal(t, int64(3), result.VirtualMachineCount)
 }
 
 func TestTeamMembersInviteCommand_Success(t *testing.T) {
