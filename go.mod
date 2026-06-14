@@ -1,11 +1,11 @@
 module hotaisle-cli
 
-go 1.25.5
+go 1.26.4
 
 require (
 	github.com/phsym/console-slog v0.3.1
 	github.com/stretchr/testify v1.11.1
-	github.com/urfave/cli/v3 v3.6.1
+	github.com/urfave/cli/v3 v3.10.0
 )
 
 require (
