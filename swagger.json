@@ -566,12 +566,30 @@
 			"x-go-package": "github.com/hotaisle/hotManager/api/types"
 		},
 		"GPUs": {
-			"allOf": [
-				{
-					"$ref": "#/definitions/Components"
-				}
-			],
 			"description": "GPUs represents graphics processing unit information",
+			"properties": {
+				"count": {
+					"description": "Number of GPUs of this type",
+					"example": 4,
+					"format": "uint64",
+					"type": "integer",
+					"x-go-name": "Count"
+				},
+				"manufacturer": {
+					"description": "GPU manufacturer",
+					"example": "AMD",
+					"type": "string",
+					"x-go-name": "Manufacturer"
+				},
+				"model": {
+					"description": "GPU model",
+					"example": "MI300X",
+					"type": "string",
+					"x-go-name": "Model"
+				}
+			},
+			"required": ["count"],
+			"type": "object",
 			"x-go-package": "github.com/hotaisle/hotManager/api/types"
 		},
 		"GetUserResponse": {

@@ -93,10 +93,8 @@ var virtualMachineCommands = commandDef{
 						return fmt.Errorf("invalid gpu-count: %w", err)
 					}
 					req.GPUs = []client.GPUs{{
-						Components: client.Components{
-							Model: gpuModel,
-							Count: gpuCount,
-						},
+						Model: gpuModel,
+						Count: gpuCount,
 					}}
 				}
 

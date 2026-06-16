@@ -168,7 +168,9 @@ type Disks struct {
 
 // GPUs represents graphics processing unit information
 type GPUs struct {
-	Components
+	Count        uint64 `json:"count"`
+	Manufacturer string `json:"manufacturer,omitempty"`
+	Model        string `json:"model,omitempty"`
 }
 
 // MemoryModules represents memory module information
