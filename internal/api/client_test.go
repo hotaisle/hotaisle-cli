@@ -2,10 +2,11 @@ package api
 
 import (
 	"context"
-	"hotaisle-cli/client"
-	"hotaisle-cli/test"
 	"net/http"
 	"testing"
+
+	"hotaisle-cli/client"
+	"hotaisle-cli/test"
 
 	"github.com/stretchr/testify/assert"
 )

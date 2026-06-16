@@ -3,13 +3,14 @@ package cli
 import (
 	"context"
 	"fmt"
-	"hotaisle-cli/internal/api"
-	"hotaisle-cli/internal/config"
-	"hotaisle-cli/internal/log"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"hotaisle-cli/internal/api"
+	"hotaisle-cli/internal/config"
+	"hotaisle-cli/internal/log"
 
 	"github.com/urfave/cli/v3"
 )

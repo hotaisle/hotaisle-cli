@@ -1,11 +1,12 @@
 package config
 
 import (
-	"hotaisle-cli/internal/log"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"hotaisle-cli/internal/log"
 
 	"github.com/stretchr/testify/assert"
 )

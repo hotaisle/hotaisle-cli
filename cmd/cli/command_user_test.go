@@ -3,13 +3,14 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"hotaisle-cli/client"
-	"hotaisle-cli/internal/api"
-	"hotaisle-cli/test"
 	"log/slog"
 	"net/http"
 	"testing"
 	"time"
+
+	"hotaisle-cli/client"
+	"hotaisle-cli/internal/api"
+	"hotaisle-cli/test"
 
 	"github.com/stretchr/testify/assert"
 )
