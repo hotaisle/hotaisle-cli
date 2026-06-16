@@ -1,14 +1,15 @@
 package cli
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"hotaisle-cli/internal/config"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"hotaisle-cli/internal/config"
 
 	"github.com/urfave/cli/v3"
 )

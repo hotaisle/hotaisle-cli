@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hotaisle-cli/internal/config"
 	"log/slog"
 	"os"
 	"strings"
+
+	"hotaisle-cli/internal/config"
 
 	"github.com/urfave/cli/v3"
 )

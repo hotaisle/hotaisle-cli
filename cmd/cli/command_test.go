@@ -3,8 +3,9 @@ package cli
 import (
 	"context"
 	"errors"
-	"hotaisle-cli/test"
 	"testing"
+
+	"hotaisle-cli/test"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v3"
