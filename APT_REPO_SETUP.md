@@ -87,8 +87,8 @@ Your APT repository will be available at: `https://hotaisle.github.io/apt-repo`
 
 ```bash
 cd apt-repo
-cp public.key hotaisle-archive-keyring.gpg
-git add hotaisle-archive-keyring.gpg
+cp public.key gpg.key
+git add gpg.key
 git commit -m "Add public GPG key"
 git push origin main
 ```
@@ -105,10 +105,10 @@ Create a file `/etc/apt/sources.list.d/hotaisle.list`:
 
 ```bash
 # Add repository
-echo "deb [signed-by=/usr/share/keyrings/hotaisle-archive-keyring.gpg] https://hotaisle.github.io/apt-repo stable main" | sudo tee /etc/apt/sources.list.d/hotaisle.list
+echo "deb [signed-by=/usr/share/keyrings/hotaisle-gpg.key] https://hotaisle.github.io/apt-repo stable main" | sudo tee /etc/apt/sources.list.d/hotaisle.list
 
 # Add GPG key
-curl -fsSL https://hotaisle.github.io/apt-repo/hotaisle-archive-keyring.gpg | sudo tee /usr/share/keyrings/hotaisle-archive-keyring.gpg > /dev/null
+curl -fsSL https://hotaisle.github.io/apt-repo/gpg.key | sudo tee /usr/share/keyrings/hotaisle-gpg.key > /dev/null
 
 # Update and install
 sudo apt update
