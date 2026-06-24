@@ -81,7 +81,8 @@ go_version := shell(go + ' version')
 version := `git describe --tags --match 'v*' 2>/dev/null || echo "dev"`
 
 git_commit := trim(`git rev-parse --short HEAD 2>/dev/null || echo "unknown"`)
-git_branch := trim(shell('git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ""')) || "unknown"
+git_branch_raw := trim(shell('git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ""'))
+git_branch := if git_branch_raw == "" { "unknown" } else { git_branch_raw }
 build_time := `date -u '+%Y-%m-%d_%H:%M:%S'`
 build_by := `whoami`
 
@@ -372,4 +373,3 @@ version:
 	@echo "Build by:    {{build_by}}"
 	@echo "Build time:  {{build_time}}"
 	@echo "Go version:  {{go_version}}"
-
