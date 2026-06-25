@@ -1,29 +1,44 @@
 name: Bump version and release
 on:
-  pull_request:
-    types:
-      - closed
+  push:
     branches:
       - main
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   build:
-    if: ${{ github.event.pull_request.merged == true && !github.event.act }} # skip during local actions testing
+    if: ${{ !github.event.act }} # skip during local actions testing
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: extractions/setup-just@v4
 
-      - name: Bump version and push tag
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.2
+      - name: Create release token
+        id: release-token
+        uses: actions/create-github-app-token@v3
         with:
-          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            hotaisle-cli
+            homebrew-tap
+            apt-repo
+            rpm-repo
+          permission-contents: write
 
       - uses: actions/checkout@v6
         with:
-          ref: ${{ steps.tag_version.outputs.new_tag }}
+          fetch-depth: 0
+          token: ${{ steps.release-token.outputs.token }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
 
       - uses: actions/setup-go@v6
         with:
@@ -38,31 +53,31 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-bin-
 
-      - name: Build distribution
-        run: just release
-
-      - name: Create a GitHub release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          makeLatest: true
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
-          artifacts: "dist/*.zip, dist/*.tar.gz, dist-pkg/*"
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - name: Create tag and GitHub release
+        id: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ steps.release-token.outputs.token }}
+        run: |
+          npx --yes \
+            --package semantic-release@25 \
+            --package @semantic-release/exec@7 \
+            semantic-release
 
       - name: Checkout Homebrew tap
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         uses: actions/checkout@v6
         with:
           repository: hotaisle/homebrew-tap
           path: homebrew-tap
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          token: ${{ steps.release-token.outputs.token }}
 
       - name: Generate Homebrew formula
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         run: |
-          VERSION="${{ steps.tag_version.outputs.new_tag }}" just brew-formula > homebrew-tap/Formula/hotaisle.rb
+          VERSION="${{ steps.semantic-release.outputs.new_tag }}" just brew-formula > homebrew-tap/Formula/hotaisle.rb
 
       - name: Push formula to Homebrew tap
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         run: |
           cd homebrew-tap
 
@@ -70,22 +85,25 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add Formula/hotaisle.rb
-          git commit -m "Update formula for ${{ steps.tag_version.outputs.new_tag }}"
+          git commit -m "Update formula for ${{ steps.semantic-release.outputs.new_tag }}"
           git push origin main
 
       - name: Checkout APT repository
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         uses: actions/checkout@v6
         with:
           repository: hotaisle/apt-repo
           path: apt-repo
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          token: ${{ steps.release-token.outputs.token }}
 
       - name: Copy packages to APT repository directory
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         run: |
           mkdir -p dist-deb
           cp dist-pkg/*.deb dist-deb
 
       - name: Create APT repository
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         id: create-apt-repo
         uses: morph027/apt-repo-action@v3
         with:
@@ -104,6 +122,7 @@ jobs:
             deb-armhf https://hotaisle.github.io/apt-repo stable main
 
       - name: Push to APT repository
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         run: |
           ls -lah ${{ steps.create-apt-repo.outputs.dir }} 
           cp -r ${{ steps.create-apt-repo.outputs.dir }}/. apt-repo/
@@ -114,17 +133,19 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add .
-          git commit -m "Add packages from ${{ steps.tag_version.outputs.new_tag }}" || echo "No changes to commit"
+          git commit -m "Add packages from ${{ steps.semantic-release.outputs.new_tag }}" || echo "No changes to commit"
           git push origin main
 
       - name: Checkout RPM repository
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         uses: actions/checkout@v6
         with:
           repository: hotaisle/rpm-repo
           path: rpm-repo
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          token: ${{ steps.release-token.outputs.token }}
 
       - name: Create RPM repository
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         env:
           APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
           APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
@@ -145,6 +166,7 @@ jobs:
             --detach-sign --armor rpm-repo/repodata/repomd.xml
 
       - name: Push to RPM repository
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
         run: |
           cd rpm-repo
 
@@ -152,5 +174,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add .
-          git commit -m "Add packages from ${{ steps.tag_version.outputs.new_tag }}" || echo "No changes to commit"
+          git commit -m "Add packages from ${{ steps.semantic-release.outputs.new_tag }}" || echo "No changes to commit"
           git push origin main

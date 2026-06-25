@@ -77,8 +77,8 @@ export CGO_ENABLED := env("CGO_ENABLED", "0")
 gobin := GOPATH + "/bin"
 go_version := shell(go + ' version')
 
-# Automatically detect version information from git
-version := `git describe --tags --match 'v*' 2>/dev/null || echo "dev"`
+# Automatically detect version information from git, unless release automation provides it.
+version := env("VERSION", shell("git describe --tags --match 'v*' 2>/dev/null || echo dev"))
 
 git_commit := trim(`git rev-parse --short HEAD 2>/dev/null || echo "unknown"`)
 git_branch_raw := trim(shell('git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ""'))

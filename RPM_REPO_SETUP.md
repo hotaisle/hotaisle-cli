@@ -63,7 +63,10 @@ same ones used by the APT release steps):
 - `APT_GPG_PRIVATE_KEY`: Content of the armored private key
 - `APT_GPG_PASSPHRASE`: Passphrase for the private key
 - `APT_GPG_KEY_ID`: The GPG key ID (format: `ABCD1234EFGH5678`)
-- `PERSONAL_ACCESS_TOKEN`: Token with push access to `hotaisle/rpm-repo`
+
+The release workflow pushes RPM repository updates with the release GitHub App.
+See `RELEASE_GITHUB_APP_SETUP.md` for the required app installation and
+repository secret/variable setup.
 
 ### 4. Enable GitHub Pages for the RPM Repository
 
