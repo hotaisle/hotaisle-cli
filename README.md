@@ -28,9 +28,25 @@ Download the appropriate deb package from the [Releases page](https://github.com
 
 ### RPM-based distros (Fedora, CentOS, RHEL)
 
-Download the appropriate rpm package from the [Releases page](https://github.com/hotaisle/hotaisle-cli/releases) and install it with  `dnf install`.
+```bash
+# Add repository
+sudo tee /etc/yum.repos.d/hotaisle.repo > /dev/null <<'EOF'
+[hotaisle]
+name=Hot Aisle
+baseurl=https://hotaisle.github.io/rpm-repo
+enabled=1
+repo_gpgcheck=1
+gpgcheck=0
+gpgkey=https://hotaisle.github.io/rpm-repo/gpg.key
+EOF
 
-> ⚠️ **Alpha Status**: This isn't implemented yet. Need some help with this.
+# Install
+sudo dnf install hotaisle
+```
+
+### By hand (RPM)
+
+Download the appropriate rpm package from the [Releases page](https://github.com/hotaisle/hotaisle-cli/releases) and install it with `dnf install`.
 
 ### Homebrew
 
