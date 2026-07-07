@@ -1,4 +1,4 @@
-module hotaisle-cli
+module github.com/hotaisle/hotaisle-cli
 
 go 1.26.4
 

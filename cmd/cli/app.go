@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"hotaisle-cli/internal/api"
-	"hotaisle-cli/internal/config"
-	"hotaisle-cli/internal/log"
+	"github.com/hotaisle/hotaisle-cli/internal/api"
+	"github.com/hotaisle/hotaisle-cli/internal/config"
+	"github.com/hotaisle/hotaisle-cli/internal/log"
 
 	"github.com/urfave/cli/v3"
 )

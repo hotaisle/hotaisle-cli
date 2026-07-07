@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"hotaisle-cli/test"
+	"github.com/hotaisle/hotaisle-cli/test"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v3"
