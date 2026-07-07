@@ -7,6 +7,7 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
+        analyzeCommitsCmd: "test ${commits.length} -gt 0 && echo patch || true",
         prepareCmd: "VERSION=${nextRelease.gitTag} just release",
         successCmd:
           'echo "released=true" >> "$GITHUB_OUTPUT" && echo "new_tag=${nextRelease.gitTag}" >> "$GITHUB_OUTPUT"',
