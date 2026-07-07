@@ -1,6 +1,6 @@
 package main
 
-import "hotaisle-cli/cmd/cli"
+import "github.com/hotaisle/hotaisle-cli/cmd/cli"
 
 func main() {
 	cli.Run()

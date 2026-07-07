@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"hotaisle-cli/internal/config"
+	"github.com/hotaisle/hotaisle-cli/internal/config"
 
 	"github.com/urfave/cli/v3"
 )

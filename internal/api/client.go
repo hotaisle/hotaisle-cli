@@ -1,7 +1,7 @@
 package api
 
 import (
-	"hotaisle-cli/client"
+	"github.com/hotaisle/hotaisle-cli/client"
 )
 
 type Client struct {

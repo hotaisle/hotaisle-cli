@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"hotaisle-cli/internal/log"
+	"github.com/hotaisle/hotaisle-cli/internal/log"
 
 	"github.com/stretchr/testify/assert"
 )

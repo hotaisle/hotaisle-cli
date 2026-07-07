@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"hotaisle-cli/client"
+	"github.com/hotaisle/hotaisle-cli/client"
 
 	"github.com/urfave/cli/v3"
 )

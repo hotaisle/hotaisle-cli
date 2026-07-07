@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"hotaisle-cli/client"
-	"hotaisle-cli/test"
+	"github.com/hotaisle/hotaisle-cli/client"
+	"github.com/hotaisle/hotaisle-cli/test"
 
 	"github.com/stretchr/testify/assert"
 )
