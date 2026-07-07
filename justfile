@@ -34,7 +34,6 @@ alias b := build
 alias r := run
 alias help := default
 
-
 # =============================================================================
 # Variables
 # =============================================================================
@@ -43,17 +42,16 @@ alias help := default
 # These can be overridden via environment variables or .env file
 project_name := env("PROJECT_NAME", "hotaisle-cli")
 organization := env("ORGANIZATION", "hotaisle")
-description := "Hot Aisle CLI"
-maintainer := "hello@hotaisle.ai"
+#description := "Hot Aisle CLI"
+#maintainer := "hello@hotaisle.ai"
 main_app := "."
 
 build_platforms := "linux/amd64/- linux/arm64/- linux/arm/7 darwin/amd64/- darwin/arm64/- windows/amd64/- windows/arm64/-"
 
-
 # Feature flags
 # Enable/disable various build features
-enable_docker := env("ENABLE_DOCKER", "false")
-enable_docs := env("ENABLE_DOCS", "true")
+#enable_docker := env("ENABLE_DOCKER", "false")
+#enable_docs := env("ENABLE_DOCS", "true")
 
 # Build configuration
 # Tags for conditional compilation
@@ -63,8 +61,8 @@ all_tags := build_tags + " " + extra_tags
 
 # Test configuration
 # Settings for test execution and coverage
-test_timeout := "5m"
-coverage_threshold := "80"
+#test_timeout := "5m"
+#coverage_threshold := "80"
 bench_time := "2s"
 
 # Go settings
@@ -304,7 +302,7 @@ brew-formula:
 		package/brew-formula.rb
 
 # CI/CD
-ci:	deps vet lint dist nfpm
+ci: deps vet lint test dist nfpm
 release: deps dist nfpm
 
 # Run the application
