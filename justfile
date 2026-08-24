@@ -302,8 +302,8 @@ brew-formula:
 		package/brew-formula.rb
 
 # CI/CD
-ci: deps vet lint test security dist nfpm
-release: deps security dist nfpm
+ci: deps js-deps vet lint lsp js-check test security dist nfpm
+release: deps js-check security dist nfpm
 
 # Run the application
 run *args: build
@@ -334,9 +334,36 @@ fmt:
 	{{go}} fmt ./...
 	{{gobin}}/gofumpt -l -w .
 
-# Run linters
+# Run linters without changing the working tree
 lint:
+	{{gobin}}/golangci-lint run
+
+# Apply every available safe linter fix
+lint-fix:
 	{{gobin}}/golangci-lint run --fix
+
+# Fail on every gopls diagnostic, including informational hints
+lsp:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	diagnostics="$(git ls-files -z --cached --others --exclude-standard -- '*.go' | \
+		xargs -0 {{gobin}}/gopls check -severity=hint)"
+	if [[ -n "$diagnostics" ]]; then
+		printf '%s\n' "$diagnostics" >&2
+		exit 1
+	fi
+
+# Install locked JavaScript development dependencies
+js-deps:
+	npm ci --ignore-scripts
+
+# Fail on every Biome and Ultracite diagnostic
+js-check:
+	npm run check
+
+# Apply every available safe JavaScript fix
+js-fix:
+	npm run fix
 
 # Run security scan
 security:

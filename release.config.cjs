@@ -1,6 +1,6 @@
+"use strict";
 module.exports = {
   branches: ["main"],
-  tagFormat: "v${version}",
   plugins: [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
@@ -17,10 +17,11 @@ module.exports = {
       "@semantic-release/github",
       {
         assets: ["dist/*.zip", "dist/*.tar.gz", "dist-pkg/*"],
-        successComment: false,
         failComment: false,
         labels: false,
+        successComment: false,
       },
     ],
   ],
+  tagFormat: "v${version}",
 };
