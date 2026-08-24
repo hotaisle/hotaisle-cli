@@ -302,8 +302,8 @@ brew-formula:
 		package/brew-formula.rb
 
 # CI/CD
-ci: deps vet lint test dist nfpm
-release: deps dist nfpm
+ci: deps vet lint test security dist nfpm
+release: deps security dist nfpm
 
 # Run the application
 run *args: build

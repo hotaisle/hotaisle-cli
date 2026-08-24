@@ -4,11 +4,13 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/hotaisle/hotaisle-cli/internal/log"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoadFirstTime(t *testing.T) {
@@ -171,4 +173,31 @@ func TestLoadComplexConfig(t *testing.T) {
 	assert.Equal(t, "error", cfg.LogLevel)
 	assert.Equal(t, "very-long-api-token-with-special-chars:!@#$%^&*()", cfg.ApiToken)
 	assert.Equal(t, "team_123/subteam", cfg.DefaultTeam)
+}
+
+func TestSaveTightensConfigPermissions(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows does not expose Unix permission bits")
+	}
+
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	configDir := filepath.Join(tmp, Directory)
+	require.NoError(t, os.MkdirAll(configDir, 0o755))
+	configPath := filepath.Join(configDir, File)
+	require.NoError(t, os.WriteFile(configPath, []byte("{}"), 0o644))
+	require.NoError(t, os.Chmod(configDir, 0o755))
+	require.NoError(t, os.Chmod(configPath, 0o644))
+
+	cfg := NewConfig()
+	cfg.ApiToken = "secret-token"
+	require.NoError(t, Save(cfg))
+
+	dirInfo, err := os.Stat(configDir)
+	require.NoError(t, err)
+	assert.Equal(t, os.FileMode(0o700), dirInfo.Mode().Perm())
+
+	fileInfo, err := os.Stat(configPath)
+	require.NoError(t, err)
+	assert.Equal(t, os.FileMode(0o600), fileInfo.Mode().Perm())
 }

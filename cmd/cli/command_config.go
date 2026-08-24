@@ -108,11 +108,10 @@ var configCommands = commandDef{
 }
 
 func partialToken(token string) string {
-	tokens := strings.Split(token, ".")
-	if len(tokens) > 0 {
-		return tokens[0]
+	if token == "" {
+		return ""
 	}
-	return "Not a valid token"
+	return "[redacted]"
 }
 
 func newCommandConfig(app *App) *cli.Command {

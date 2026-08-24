@@ -27,7 +27,7 @@ func NewConfig() *Config {
 	}
 }
 
-func defaultConfigPath() (string, error) {
+func defaultConfigDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -37,8 +37,18 @@ func defaultConfigPath() (string, error) {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return "", err
 	}
-	path := filepath.Join(dir, File)
-	return path, nil
+	if err := os.Chmod(dir, 0o700); err != nil { // #nosec G302 -- directories require owner execute permission
+		return "", err
+	}
+	return dir, nil
+}
+
+func defaultConfigPath() (string, error) {
+	dir, err := defaultConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, File), nil
 }
 
 func Load(path *string) (*Config, error) {
@@ -78,7 +88,7 @@ func Save(cfg *Config) error {
 	if cfg == nil {
 		return errors.New("nil config")
 	}
-	path, err := defaultConfigPath()
+	dir, err := defaultConfigDir()
 	if err != nil {
 		return err
 	}
@@ -86,5 +96,34 @@ func Save(cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, b, 0o600)
+	return writeConfig(dir, b)
+}
+
+func writeConfig(dir string, data []byte) (err error) {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := root.Close(); err == nil {
+			err = closeErr
+		}
+	}()
+	file, err := root.OpenFile(File, os.O_WRONLY|os.O_CREATE, 0o600)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := file.Close(); err == nil {
+			err = closeErr
+		}
+	}()
+	if err := file.Chmod(0o600); err != nil {
+		return err
+	}
+	if err := file.Truncate(0); err != nil {
+		return err
+	}
+	_, err = file.Write(data)
+	return err
 }
