@@ -25,16 +25,14 @@ func TestUserGetCommand_Success(t *testing.T) {
 			Created: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		Teams: []client.UserTeam{{
-			Team: client.Team{
-				Handle:                  "test-team",
-				Name:                    "Test Team",
-				Description:             "",
-				MaximumVirtualMachines:  0,
-				MaximumBareMetalServers: 0,
-			},
-			Roles:          []string{"owner"},
-			EffectiveRoles: []string{"operator"},
-			Invitation:     true,
+			Handle:                  "test-team",
+			Name:                    "Test Team",
+			Description:             "",
+			MaximumVirtualMachines:  0,
+			MaximumBareMetalServers: 0,
+			Roles:                   []string{"owner"},
+			EffectiveRoles:          []string{"operator"},
+			Invitation:              true,
 		}},
 	}
 
@@ -121,40 +119,34 @@ func TestUserGetCommand_MultipleTeams(t *testing.T) {
 		},
 		Teams: []client.UserTeam{
 			{
-				Team: client.Team{
-					Handle:                  "team-one",
-					Name:                    "Test Team",
-					Description:             "",
-					MaximumVirtualMachines:  0,
-					MaximumBareMetalServers: 0,
-				},
-				Roles:          []string{"owner"},
-				EffectiveRoles: []string{"operator"},
-				Invitation:     true,
+				Handle:                  "team-one",
+				Name:                    "Test Team",
+				Description:             "",
+				MaximumVirtualMachines:  0,
+				MaximumBareMetalServers: 0,
+				Roles:                   []string{"owner"},
+				EffectiveRoles:          []string{"operator"},
+				Invitation:              true,
 			},
 			{
-				Team: client.Team{
-					Handle:                  "team-two",
-					Name:                    "Test Team",
-					Description:             "",
-					MaximumVirtualMachines:  0,
-					MaximumBareMetalServers: 0,
-				},
-				Roles:          []string{"owner"},
-				EffectiveRoles: []string{"operator"},
-				Invitation:     false,
+				Handle:                  "team-two",
+				Name:                    "Test Team",
+				Description:             "",
+				MaximumVirtualMachines:  0,
+				MaximumBareMetalServers: 0,
+				Roles:                   []string{"owner"},
+				EffectiveRoles:          []string{"operator"},
+				Invitation:              false,
 			},
 			{
-				Team: client.Team{
-					Handle:                  "team-three",
-					Name:                    "Test Team",
-					Description:             "",
-					MaximumVirtualMachines:  0,
-					MaximumBareMetalServers: 0,
-				},
-				Roles:          []string{"owner"},
-				EffectiveRoles: []string{"operator"},
-				Invitation:     true,
+				Handle:                  "team-three",
+				Name:                    "Test Team",
+				Description:             "",
+				MaximumVirtualMachines:  0,
+				MaximumBareMetalServers: 0,
+				Roles:                   []string{"owner"},
+				EffectiveRoles:          []string{"operator"},
+				Invitation:              true,
 			},
 		},
 	}
@@ -346,13 +338,11 @@ func TestUserAPIKeysCreateCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockKey := &client.UserAPIKeyWithToken{
-		UserAPIKey: client.UserAPIKey{
-			Prefix:   "abc123",
-			Label:    "New key",
-			UserRole: "user",
-			Teams:    []client.APIKeyTeam{},
-		},
-		Token: "abc123.full-token-here",
+		Prefix:   "abc123",
+		Label:    "New key",
+		UserRole: "user",
+		Teams:    []client.APIKeyTeam{},
+		Token:    "abc123.full-token-here",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/", http.MethodPost, 200, mockKey)

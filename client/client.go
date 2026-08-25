@@ -17,7 +17,8 @@ const (
 	// DefaultBaseURL is the default API base URL
 	DefaultBaseURL = "https://admin.hotaisle.app/api"
 	// DefaultTimeout is the default HTTP client timeout
-	DefaultTimeout = 30 * time.Second
+	DefaultTimeout       = 30 * time.Second
+	maxResponseBodyBytes = 16 << 20
 )
 
 // Client is an HTTPS client for the HotAisle API
@@ -87,7 +88,7 @@ func (c *Client) SetToken(token string) {
 }
 
 // doRequest executes an HTTP request
-func (c *Client) doRequest(ctx context.Context, method, path string, body interface{}, result interface{}) error {
+func (c *Client) doRequest(ctx context.Context, method, path string, body any, result any) error {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
@@ -127,9 +128,12 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 		_ = Body.Close()
 	}(resp.Body)
 
-	respBody, err := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBodyBytes+1))
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)
+	}
+	if len(respBody) > maxResponseBodyBytes {
+		return fmt.Errorf("response body exceeds %d bytes", maxResponseBodyBytes)
 	}
 
 	// Handle error responses

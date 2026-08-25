@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -87,7 +88,7 @@ func (def commandDef) findCommand(path string) *commandDef {
 		}
 		// Otherwise search in subcommands
 		for _, cmd := range def.Commands {
-			if result := cmd.findCommand(joinPath(parts[1:])); result != nil {
+			if result := cmd.findCommand(strings.Join(parts[1:], ".")); result != nil {
 				return result
 			}
 		}
@@ -118,17 +119,6 @@ func splitPath(path string) []string {
 	}
 	if current != "" {
 		result = append(result, current)
-	}
-	return result
-}
-
-func joinPath(parts []string) string {
-	result := ""
-	for i, part := range parts {
-		if i > 0 {
-			result += "."
-		}
-		result += part
 	}
 	return result
 }

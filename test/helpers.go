@@ -22,7 +22,7 @@ func NewMockHTTPClient(handler func(req *http.Request) (*http.Response, error)) 
 
 // NewMockHTTPClientWithAssertions creates a mock HTTP client that validates the request and returns a response
 // If data is nil, an empty response is returned. Otherwise, a JSON response is returned.
-func NewMockHTTPClientWithAssertions(t testing.TB, expectedPath, expectedMethod string, statusCode int, data interface{}) *http.Client {
+func NewMockHTTPClientWithAssertions(t testing.TB, expectedPath, expectedMethod string, statusCode int, data any) *http.Client {
 	return NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		if expectedPath != "" && req.URL.Path != expectedPath {
 			t.Errorf("Expected path %s, got %s", expectedPath, req.URL.Path)
@@ -47,7 +47,7 @@ func NewOkResponse() *http.Response {
 }
 
 // NewJSONResponse creates an HTTP response with a JSON body
-func NewJSONResponse(t testing.TB, statusCode int, data interface{}) *http.Response {
+func NewJSONResponse(t testing.TB, statusCode int, data any) *http.Response {
 	body, err := json.Marshal(data)
 	if err != nil {
 		t.Fatalf("failed to marshal JSON: %v", err)

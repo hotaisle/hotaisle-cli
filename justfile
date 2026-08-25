@@ -130,11 +130,11 @@ deps:
 	export -f install_tool
 
 	tools=(
-		"github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
-		"mvdan.cc/gofumpt@latest"
-		"golang.org/x/vuln/cmd/govulncheck@latest"
-		"github.com/golang/mock/mockgen@latest"
-		"github.com/goreleaser/nfpm/v2/cmd/nfpm@latest"
+		"github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1"
+		"golang.org/x/tools/gopls@v0.23.0"
+		"mvdan.cc/gofumpt@v0.11.0"
+		"golang.org/x/vuln/cmd/govulncheck@v1.7.0"
+		"github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.47.0"
 	)
 
 	printf '%s\n' "${tools[@]}" | xargs -P 0 -I {} bash -c 'install_tool "$@"' _ {}
@@ -302,8 +302,8 @@ brew-formula:
 		package/brew-formula.rb
 
 # CI/CD
-ci: deps vet lint test dist nfpm
-release: deps dist nfpm
+ci: deps js-deps vet lint lsp js-check test security dist nfpm
+release: deps js-check security dist nfpm
 
 # Run the application
 run *args: build
@@ -334,9 +334,36 @@ fmt:
 	{{go}} fmt ./...
 	{{gobin}}/gofumpt -l -w .
 
-# Run linters
+# Run linters without changing the working tree
 lint:
+	{{gobin}}/golangci-lint run
+
+# Apply every available safe linter fix
+lint-fix:
 	{{gobin}}/golangci-lint run --fix
+
+# Fail on every gopls diagnostic, including informational hints
+lsp:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	diagnostics="$(git ls-files -z --cached --others --exclude-standard -- '*.go' | \
+		xargs -0 {{gobin}}/gopls check -severity=hint)"
+	if [[ -n "$diagnostics" ]]; then
+		printf '%s\n' "$diagnostics" >&2
+		exit 1
+	fi
+
+# Install locked JavaScript development dependencies
+js-deps:
+	npm ci --ignore-scripts
+
+# Fail on every Biome and Ultracite diagnostic
+js-check:
+	npm run check
+
+# Apply every available safe JavaScript fix
+js-fix:
+	npm run fix
 
 # Run security scan
 security:

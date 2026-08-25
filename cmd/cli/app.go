@@ -127,6 +127,6 @@ func printError(err error) {
 }
 
 // printErrorf prints a formatted error message to stderr
-func printErrorf(format string, args ...interface{}) {
+func printErrorf(format string, args ...any) {
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
 }

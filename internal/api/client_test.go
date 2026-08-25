@@ -122,7 +122,8 @@ func TestNewClient_UserAgentFormat(t *testing.T) {
 				test.NewMockClient(test.RoundTripFunc(func(req *http.Request) (*http.Response, error) {
 					capturedUserAgent = req.Header.Get("User-Agent")
 					return test.NewOkResponse(), nil
-				}))))
+				})),
+			))
 
 			assert.NotNil(t, c, "expected client to be non-nil")
 			assert.NotNil(t, c.Api, "expected Api to be non-nil")

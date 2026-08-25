@@ -1,6 +1,12 @@
 package client
 
-import "testing"
+import (
+	"context"
+	"io"
+	"net/http"
+	"strings"
+	"testing"
+)
 
 func TestBuildPath(t *testing.T) {
 	tests := []struct {
@@ -121,6 +127,33 @@ func TestBuildPath(t *testing.T) {
 	}
 }
 
+func TestDoRequestRejectsOversizedResponse(t *testing.T) {
+	client := NewClient(
+		WithBaseURL("https://example.com"),
+		WithHTTPClient(&http.Client{
+			Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+				body := strings.NewReader(strings.Repeat("x", maxResponseBodyBytes+1))
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(body),
+					Header:     make(http.Header),
+				}, nil
+			}),
+		}),
+	)
+
+	err := client.doRequest(context.Background(), http.MethodGet, "/", nil, nil)
+	if err == nil || !strings.Contains(err.Error(), "response body exceeds") {
+		t.Fatalf("doRequest() error = %v, want response size error", err)
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
 // Benchmark to compare performance
 func BenchmarkBuildPath(b *testing.B) {
 	params := map[string]string{
@@ -130,7 +163,7 @@ func BenchmarkBuildPath(b *testing.B) {
 	template := "/teams/{team}/members/{email}/"
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		buildPath(template, params)
 	}
 }
@@ -146,7 +179,7 @@ func BenchmarkBuildPathManyParams(b *testing.B) {
 	template := "/path/{a}/to/{b}/resource/{c}/with/{d}/id/{e}/"
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		buildPath(template, params)
 	}
 }

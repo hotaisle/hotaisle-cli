@@ -18,9 +18,7 @@ func TestVMListCommand_Success(t *testing.T) {
 
 	mockVMs := []client.VirtualMachineDetails{
 		{
-			VirtualMachine: client.VirtualMachine{
-				Name: "vm-1",
-			},
+			Name: "vm-1",
 		},
 	}
 
@@ -44,9 +42,7 @@ func TestVMGetCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockVM := &client.VirtualMachineDetails{
-		VirtualMachine: client.VirtualMachine{
-			Name: "vm-1",
-		},
+		Name: "vm-1",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/virtual_machines/vm-1/", http.MethodGet, 200, mockVM)
@@ -71,9 +67,7 @@ func TestVMProvisionCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockVM := &client.VirtualMachineDetails{
-		VirtualMachine: client.VirtualMachine{
-			Name: "vm-1",
-		},
+		Name: "vm-1",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/virtual_machines/", http.MethodPost, 200, mockVM)
@@ -101,9 +95,7 @@ func TestVMProvisionCommand_WithGPU(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockVM := &client.VirtualMachineDetails{
-		VirtualMachine: client.VirtualMachine{
-			Name: "vm-gpu",
-		},
+		Name: "vm-gpu",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/virtual_machines/", http.MethodPost, 200, mockVM)
@@ -129,9 +121,7 @@ func TestVMProvisionCommand_WithPartialSpecs(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockVM := &client.VirtualMachineDetails{
-		VirtualMachine: client.VirtualMachine{
-			Name: "vm-partial",
-		},
+		Name: "vm-partial",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/virtual_machines/", http.MethodPost, 200, mockVM)

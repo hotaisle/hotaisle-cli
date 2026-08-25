@@ -17,18 +17,14 @@ func TestTeamListCommand_Success(t *testing.T) {
 
 	mockTeams := []client.UserTeam{
 		{
-			Team: client.Team{
-				Handle: "team-1",
-				Name:   "Team 1",
-			},
-			Roles: []string{"owner"},
+			Handle: "team-1",
+			Name:   "Team 1",
+			Roles:  []string{"owner"},
 		},
 		{
-			Team: client.Team{
-				Handle: "team-2",
-				Name:   "Team 2",
-			},
-			Roles: []string{"member"},
+			Handle: "team-2",
+			Name:   "Team 2",
+			Roles:  []string{"member"},
 		},
 	}
 
@@ -51,13 +47,9 @@ func TestTeamCreateCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockTeam := &client.UserTeamWithMembers{
-		UserTeam: client.UserTeam{
-			Team: client.Team{
-				Handle:      "new-team",
-				Name:        "New Team",
-				Description: "A new team",
-			},
-		},
+		Handle:      "new-team",
+		Name:        "New Team",
+		Description: "A new team",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/", http.MethodPost, 200, mockTeam)
@@ -82,16 +74,10 @@ func TestTeamGetCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockTeam := &client.UserTeamDetails{
-		UserTeamWithMembers: client.UserTeamWithMembers{
-			UserTeam: client.UserTeam{
-				Team: client.Team{
-					Handle: "test-team",
-					Name:   "Test Team",
-				},
-			},
-			Members: []client.TeamMember{
-				{Name: "User 1", Email: "user1@example.com"},
-			},
+		Handle: "test-team",
+		Name:   "Test Team",
+		Members: []client.TeamMember{
+			{Name: "User 1", Email: "user1@example.com"},
 		},
 	}
 

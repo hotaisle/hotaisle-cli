@@ -261,7 +261,7 @@ type AvailableBareMetalTypes struct {
 	Quantity                  int64                `json:"Quantity"`
 	MinimumReservationMinutes int64                `json:"MinimumReservationMinutes"`
 	OnDemandPrice             int64                `json:"OnDemandPrice,omitempty"`
-	Specs                     BareMetalServerSpecs `json:"Specs,omitempty"`
+	Specs                     BareMetalServerSpecs `json:"Specs"`
 }
 
 // VirtualMachine represents a virtual machine instance
@@ -314,5 +314,5 @@ type AvailableVirtualMachineTypes struct {
 	Quantity                  int64               `json:"Quantity"`
 	MinimumReservationMinutes int64               `json:"MinimumReservationMinutes"`
 	OnDemandPrice             int64               `json:"OnDemandPrice,omitempty"`
-	Specs                     VirtualMachineSpecs `json:"Specs,omitempty"`
+	Specs                     VirtualMachineSpecs `json:"Specs"`
 }

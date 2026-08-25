@@ -1,0 +1,13 @@
+title = "Hot Aisle CLI secret scanning"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+  [[rules.allowlists]]
+  description = "Historical test-only API token fixture"
+  condition = "AND"
+  paths = ['''^cmd/cli/command_config_test\.go$''']
+  regexes = ['''^prefix\.segment1\.segment2$''']

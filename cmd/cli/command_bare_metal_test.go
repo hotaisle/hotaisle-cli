@@ -17,9 +17,7 @@ func TestBareMetalListCommand_Success(t *testing.T) {
 
 	mockServers := []client.BareMetalServerDetails{
 		{
-			BareMetalServer: client.BareMetalServer{
-				Name: "server-1",
-			},
+			Name: "server-1",
 		},
 	}
 
@@ -43,9 +41,7 @@ func TestBareMetalGetCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockServer := &client.BareMetalServerDetails{
-		BareMetalServer: client.BareMetalServer{
-			Name: "server-1",
-		},
+		Name: "server-1",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/bare_metal/server-1/", http.MethodGet, 200, mockServer)
@@ -70,9 +66,7 @@ func TestBareMetalReserveCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockResp := &client.BareMetalServerReservationResponse{
-		BareMetalServer: client.BareMetalServer{
-			Name: "server-1",
-		},
+		Name: "server-1",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/bare_metal/", http.MethodPost, 200, mockResp)
@@ -287,9 +281,7 @@ func TestBareMetalReinstallCommand_Success(t *testing.T) {
 	app, _ := setupTestApp(t)
 
 	mockServer := &client.BareMetalServerDetails{
-		BareMetalServer: client.BareMetalServer{
-			Name: "server-1",
-		},
+		Name: "server-1",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/teams/test-team/bare_metal/server-1/reinstall/", http.MethodPost, 200, mockServer)

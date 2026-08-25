@@ -12,72 +12,94 @@ jobs:
   build:
     if: ${{ !github.event.act }} # skip during local actions testing
     runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.semantic-release.outputs.released }}
+      new_tag: ${{ steps.semantic-release.outputs.new_tag }}
     permissions:
       contents: read
     steps:
-      - uses: extractions/setup-just@v4
-
-      - name: Create release token
-        id: release-token
-        uses: actions/create-github-app-token@v3
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
         with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |
-            hotaisle-cli
-            homebrew-tap
-            apt-repo
-            rpm-repo
-          permission-contents: write
+          just-version: 1.58.0
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          token: ${{ steps.release-token.outputs.token }}
+          persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version: 26.7.0
+          cache: npm
 
-      - uses: actions/setup-go@v6
+      - name: Install release dependencies
+        run: |
+          npm ci --ignore-scripts
+          npm audit --audit-level=critical
+          # release.config.cjs explicitly excludes npm publishing; remove that unused dependency subtree.
+          rm -rf node_modules/@semantic-release/npm node_modules/npm
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
           cache: true
 
       - name: Cache Go install binaries
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/go/bin
           key: ${{ runner.os }}-go-bin-${{ hashFiles('justfile', '**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-bin-
 
+      - name: Create release token
+        id: release-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: hotaisle-cli
+          permission-contents: write
+
       - name: Create tag and GitHub release
         id: semantic-release
         env:
           GITHUB_TOKEN: ${{ steps.release-token.outputs.token }}
-        run: |
-          npx --yes \
-            --package semantic-release@25 \
-            --package @semantic-release/exec@7 \
-            semantic-release
+        run: ./node_modules/.bin/semantic-release
+
+      - name: Create Homebrew repository token
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        id: homebrew-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: homebrew-tap
+          permission-contents: write
 
       - name: Checkout Homebrew tap
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: hotaisle/homebrew-tap
           path: homebrew-tap
-          token: ${{ steps.release-token.outputs.token }}
+          token: ${{ steps.homebrew-token.outputs.token }}
+          persist-credentials: false
 
       - name: Generate Homebrew formula
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        env:
+          NEW_TAG: ${{ steps.semantic-release.outputs.new_tag }}
         run: |
-          VERSION="${{ steps.semantic-release.outputs.new_tag }}" just brew-formula > homebrew-tap/Formula/hotaisle.rb
+          VERSION="$NEW_TAG" just brew-formula > homebrew-tap/Formula/hotaisle.rb
 
       - name: Push formula to Homebrew tap
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        env:
+          NEW_TAG: ${{ steps.semantic-release.outputs.new_tag }}
+          REPO_TOKEN: ${{ steps.homebrew-token.outputs.token }}
         run: |
           cd homebrew-tap
 
@@ -85,16 +107,28 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add Formula/hotaisle.rb
-          git commit -m "Update formula for ${{ steps.semantic-release.outputs.new_tag }}"
-          git push origin main
+          git commit -m "Update formula for $NEW_TAG"
+          git push "https://x-access-token:${REPO_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/homebrew-tap.git" HEAD:main
+
+      - name: Create APT repository token
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        id: apt-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: apt-repo
+          permission-contents: write
 
       - name: Checkout APT repository
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: hotaisle/apt-repo
           path: apt-repo
-          token: ${{ steps.release-token.outputs.token }}
+          token: ${{ steps.apt-token.outputs.token }}
+          persist-credentials: false
 
       - name: Copy packages to APT repository directory
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
@@ -102,47 +136,91 @@ jobs:
           mkdir -p dist-deb
           cp dist-pkg/*.deb dist-deb
 
-      - name: Create APT repository
+      - name: Checkout pinned APT repository builder
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
-        id: create-apt-repo
-        uses: morph027/apt-repo-action@v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repo-name: apt-repo
-          signing-key: ${{ secrets.APT_GPG_PRIVATE_KEY }}
-          signing-key-passphrase: ${{ secrets.APT_GPG_PASSPHRASE }}
-          scan-dir: dist-deb
-          limit: 10
-          codename: stable
-          components: main
-          architectures: amd64 arm64 armhf
-          import-from-repo-failure-allow: true
-          import-from-repo-url: |
+          repository: morph027/apt-repo-action
+          ref: b6b977523e6a5e235075787489bb073c60b71eb4 # v3.8
+          path: .apt-repo-action
+          persist-credentials: false
+
+      - name: Install pinned APT repository tooling
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        run: |
+          REPREPRO_DEB=/tmp/reprepro_5.5.1-1_amd64.deb
+          wget --quiet --https-only \
+            --output-document="$REPREPRO_DEB" \
+            https://packaging.gitlab.io/reprepro-multiple-versions/pool/main/r/reprepro/reprepro_5.5.1-1_amd64.deb
+          echo "acabb921525769c19dfa1a43552a0fa756aa6c6e10d377c9dfb54bdb341ba0ad  $REPREPRO_DEB" | sha256sum --check -
+
+          sudo apt-get update
+          sudo apt-get install --yes apt-mirror apt-transport-https "$REPREPRO_DEB"
+          install -m 0755 "$(go env GOPATH)/bin/nfpm" /tmp/nfpm
+
+      - name: Import existing APT packages
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        working-directory: dist-deb
+        env:
+          IMPORT_FROM_REPO: |
             deb-amd64 https://hotaisle.github.io/apt-repo stable main
             deb-arm64 https://hotaisle.github.io/apt-repo stable main
             deb-armhf https://hotaisle.github.io/apt-repo stable main
+          IMPORT_FROM_REPO_FAILURE_ALLOW: "true"
+        run: ../.apt-repo-action/import.sh
+
+      - name: Create APT repository
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        id: create-apt-repo
+        env:
+          REPO_NAME: apt-repo
+          SIGNING_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+          SIGNING_KEY_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+          SCAN_DIR: dist-deb
+          LIMIT: 10
+          CODENAME: stable
+          COMPONENTS: main
+          ARCHITECTURES: amd64 arm64 armhf
+        run: .apt-repo-action/repo.sh
 
       - name: Push to APT repository
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        env:
+          NEW_TAG: ${{ steps.semantic-release.outputs.new_tag }}
+          REPO_TOKEN: ${{ steps.apt-token.outputs.token }}
+          APT_REPO_DIR: ${{ steps.create-apt-repo.outputs.dir }}
         run: |
-          ls -lah ${{ steps.create-apt-repo.outputs.dir }} 
-          cp -r ${{ steps.create-apt-repo.outputs.dir }}/. apt-repo/
-          
+          ls -lah "$APT_REPO_DIR"
+          cp -r "$APT_REPO_DIR"/. apt-repo/
+
           cd apt-repo
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add .
-          git commit -m "Add packages from ${{ steps.semantic-release.outputs.new_tag }}" || echo "No changes to commit"
-          git push origin main
+          git commit -m "Add packages from $NEW_TAG" || echo "No changes to commit"
+          git push "https://x-access-token:${REPO_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/apt-repo.git" HEAD:main
+
+      - name: Create RPM repository token
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        id: rpm-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: rpm-repo
+          permission-contents: write
 
       - name: Checkout RPM repository
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: hotaisle/rpm-repo
           path: rpm-repo
-          token: ${{ steps.release-token.outputs.token }}
+          token: ${{ steps.rpm-token.outputs.token }}
+          persist-credentials: false
 
       - name: Create RPM repository
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
@@ -167,6 +245,9 @@ jobs:
 
       - name: Push to RPM repository
         if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        env:
+          NEW_TAG: ${{ steps.semantic-release.outputs.new_tag }}
+          REPO_TOKEN: ${{ steps.rpm-token.outputs.token }}
         run: |
           cd rpm-repo
 
@@ -174,5 +255,25 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add .
-          git commit -m "Add packages from ${{ steps.semantic-release.outputs.new_tag }}" || echo "No changes to commit"
-          git push origin main
+          git commit -m "Add packages from $NEW_TAG" || echo "No changes to commit"
+          git push "https://x-access-token:${REPO_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/rpm-repo.git" HEAD:main
+
+  attest:
+    needs: build
+    if: ${{ needs.build.outputs.released == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download published artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.build.outputs.new_tag }}
+        run: gh release download "$RELEASE_TAG" --dir release-assets
+
+      - name: Attest published artifacts
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: release-assets/*
