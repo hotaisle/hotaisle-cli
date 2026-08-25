@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to attest
+        required: true
+        type: string
 
 concurrency:
   group: release
@@ -10,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    if: ${{ !github.event.act }} # skip during local actions testing
+    if: ${{ github.event_name == 'push' && !github.event.act }} # skip during local actions testing and manual attestation
     runs-on: ubuntu-latest
     outputs:
       released: ${{ steps.semantic-release.outputs.released }}
@@ -260,7 +266,7 @@ jobs:
 
   attest:
     needs: build
-    if: ${{ needs.build.outputs.released == 'true' }}
+    if: ${{ always() && (github.event_name == 'workflow_dispatch' || needs.build.outputs.released == 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -270,8 +276,8 @@ jobs:
       - name: Download published artifacts
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.build.outputs.new_tag }}
-        run: gh release download "$RELEASE_TAG" --dir release-assets
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || needs.build.outputs.new_tag }}
+        run: gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir release-assets
 
       - name: Attest published artifacts
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
