@@ -9,6 +9,6 @@
     "@biomejs/biome": "2.5.10",
     "@semantic-release/exec": "7.1.0",
     "semantic-release": "25.0.9",
-    "ultracite": "7.10.6"
+    "ultracite": "7.11.1"
   }
 }
