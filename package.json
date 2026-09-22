@@ -6,9 +6,9 @@
     "fix": "ultracite fix"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.10",
+    "@biomejs/biome": "2.5.14",
     "@semantic-release/exec": "7.1.0",
     "semantic-release": "25.0.9",
-    "ultracite": "7.10.6"
+    "ultracite": "7.12.0"
   }
 }
