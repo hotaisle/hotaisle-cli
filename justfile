@@ -130,10 +130,10 @@ deps:
 	export -f install_tool
 
 	tools=(
-		"github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1"
+		"github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2"
 		"golang.org/x/tools/gopls@v0.23.0"
-		"mvdan.cc/gofumpt@v0.11.0"
-		"golang.org/x/vuln/cmd/govulncheck@v1.7.0"
+		"mvdan.cc/gofumpt@v0.12.0"
+		"golang.org/x/vuln/cmd/govulncheck@v1.8.0"
 		"github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.47.0"
 	)
 
