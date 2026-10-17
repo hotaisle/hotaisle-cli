@@ -130,11 +130,11 @@ deps:
 	export -f install_tool
 
 	tools=(
-		"github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2"
-		"golang.org/x/tools/gopls@v0.23.0"
+		"github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0"
+		"golang.org/x/tools/gopls@v0.24.0"
 		"mvdan.cc/gofumpt@v0.12.0"
-		"golang.org/x/vuln/cmd/govulncheck@v1.8.0"
-		"github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.47.0"
+		"golang.org/x/vuln/cmd/govulncheck@v1.9.0"
+		"github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.48.0"
 	)
 
 	printf '%s\n' "${tools[@]}" | xargs -P 0 -I {} bash -c 'install_tool "$@"' _ {}
