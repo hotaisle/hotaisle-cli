@@ -56,7 +56,7 @@ Download the appropriate rpm package from the [Releases page](https://github.com
 
 ### Prerequisites
 
-- Go 1.26.4 or later
+- Go 1.27.2 or later
 - [Just](https://github.com/casey/just) command runner
 - [act](https://github.com/nektos/act) (optional)
 
