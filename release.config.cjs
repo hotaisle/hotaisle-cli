@@ -6,21 +6,42 @@ module.exports = {
     [
       "@semantic-release/release-notes-generator",
       {
-        preset: "conventionalcommits",
-        presetConfig: {
-          types: [
-            { hidden: false, section: "Features", type: "feat" },
-            { hidden: false, section: "Bug Fixes", type: "fix" },
-            { hidden: false, section: "Performance", type: "perf" },
-            { hidden: false, section: "Reverts", type: "revert" },
-            { hidden: false, section: "Documentation", type: "docs" },
-            { hidden: false, section: "Styles", type: "style" },
-            { hidden: false, section: "Maintenance", type: "chore" },
-            { hidden: false, section: "Refactoring", type: "refactor" },
-            { hidden: false, section: "Tests", type: "test" },
-            { hidden: false, section: "Build System", type: "build" },
-            { hidden: false, section: "Continuous Integration", type: "ci" },
-          ],
+        writerOpts: {
+          transform(commit, context) {
+            const sections = {
+              build: "Build System",
+              chore: "Maintenance",
+              ci: "Continuous Integration",
+              docs: "Documentation",
+              feat: "Features",
+              fix: "Bug Fixes",
+              perf: "Performance",
+              refactor: "Refactoring",
+              revert: "Reverts",
+              style: "Styles",
+              test: "Tests",
+            };
+            const subjectIssues = new Set(commit.subject?.match(/#\d+/g));
+            return {
+              ...commit,
+              notes: commit.notes.map((note) => ({
+                ...note,
+                title: "BREAKING CHANGES",
+              })),
+              references: commit.references.filter(
+                (reference) => !subjectIssues.has(`#${reference.issue}`)
+              ),
+              scope: commit.scope === "*" ? "" : commit.scope,
+              shortHash: commit.hash.slice(0, 7),
+              subject: commit.subject?.replace(
+                /#(\d+)/g,
+                `[#$1](${context.host}/${context.owner}/${context.repository}/issues/$1)`
+              ),
+              type: Object.hasOwn(sections, commit.type)
+                ? sections[commit.type]
+                : commit.type,
+            };
+          },
         },
       },
     ],
