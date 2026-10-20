@@ -1,6 +1,6 @@
 module github.com/hotaisle/hotaisle-cli
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/phsym/console-slog v0.3.1
