@@ -52,6 +52,7 @@ Use `--agent` to retain Markdown tables or `--json` for structured rental option
 ### Dependencies
 
 - Update Biome to 2.6.4 and Ultracite to 8.1.0, and refresh compatible transitive npm dependencies in the lockfile. Apply the updated tools' required Unicode-aware named regex captures and YAML formatting without changing release classification or package contents.
+- Update the CI and release Node.js runtime to 26.13.0 and CodeQL to 4.39.1, retaining full commit pins for GitHub Actions. Other action pins, Go dependencies, Go build tools, Just, and the pinned APT repository tooling were verified against their current stable releases.
 
 ### Release automation
 
