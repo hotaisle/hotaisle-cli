@@ -40,7 +40,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(server)
+				return app.printResult(server)
 			},
 		},
 		{
@@ -78,7 +78,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(resp)
+				return app.printResult(resp)
 			},
 		},
 		{
@@ -128,7 +128,7 @@ var bareMetalCommands = commandDef{
 				if len(available) == 0 {
 					return app.emptyAvailability("bare metal servers", cmd.String("team"))
 				}
-				return app.printJSON(available)
+				return app.printResult(available)
 			},
 		},
 		{
@@ -147,7 +147,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(state)
+						return app.printResult(state)
 					},
 				},
 				{
@@ -254,7 +254,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(server)
+				return app.printResult(server)
 			},
 		},
 		{
@@ -269,7 +269,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(url)
+				return app.printResult(url)
 			},
 		},
 		{

@@ -23,7 +23,7 @@ func newCommandQuickstart(app *App) *cli.Command {
 			frontmatter, body, _ := strings.Cut(strings.TrimPrefix(skills.HotAisle, "---\n"), "\n---\n")
 			markdown := fmt.Sprintf("---\n%s\n---\n\nInstalled CLI version: %s. Commit: %s.\n%s", frontmatter, markdownCode(Version), markdownCode(Commit), body)
 			if cmd.Bool("json") {
-				return app.printJSON(struct {
+				return app.printResult(struct {
 					Version  string `json:"version"`
 					Commit   string `json:"commit"`
 					Markdown string `json:"markdown"`

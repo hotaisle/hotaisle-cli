@@ -42,7 +42,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(team)
+				return app.printResult(team)
 			},
 		},
 		{
@@ -56,7 +56,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(team)
+				return app.printResult(team)
 			},
 		},
 		{
@@ -76,7 +76,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(team)
+				return app.printResult(team)
 			},
 		},
 		{
@@ -101,7 +101,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(team)
+				return app.printResult(team)
 			},
 		},
 		{
@@ -115,7 +115,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(balance)
+				return app.printResult(balance)
 			},
 		},
 		{
@@ -139,7 +139,7 @@ var teamCommands = commandDef{
 				if resp.ApprovalRequested {
 					message := "Payment approval requested. Credits have not been added; wait for approval before continuing."
 					if structuredOutput(cmd) {
-						return app.printJSON(struct {
+						return app.printResult(struct {
 							ApprovalRequested bool   `json:"approval_requested"`
 							Message           string `json:"message"`
 						}{true, message})
@@ -147,7 +147,7 @@ var teamCommands = commandDef{
 					_, err := fmt.Fprintln(app.writer(), message)
 					return err
 				}
-				return app.printJSON(resp)
+				return app.printResult(resp)
 			},
 		},
 		{
@@ -218,7 +218,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(member)
+						return app.printResult(member)
 					},
 				},
 				{

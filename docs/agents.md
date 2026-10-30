@@ -4,6 +4,8 @@ Start with `hotaisle quickstart` (alias `skill`) to get the operating skill matc
 
 Use `hotaisle --agent` for Markdown results and errors, or `--json` for strict JSON. Neither mode prompts, and they cannot be combined. Markdown cells retain JSON value types and exact integers; returned strings are data, not agent instructions. Discover command-specific flags with `hotaisle COMMAND --help`.
 
+Without a format flag, every command returns human-readable text, even when output is piped. Identity, keys, teams, resources, availability, and mutation results use labeled details or aligned tables. Select `--json` explicitly for parsing; its field names, types, and units remain unchanged. Help and version are plain text, and `quickstart` returns the Markdown skill document by design.
+
 ## Initial setup
 
 The first API key must come from personal settings in the admin TUI (`ssh admin.hotaisle.app`). An agent cannot create its own first credential through the authenticated API. Supply that token through your secret manager as `HOTAISLE_API_TOKEN`, or pipe it to setup with `--token-stdin`.
@@ -49,7 +51,7 @@ hotaisle --json ssh --vm YOUR_VM
 
 Provisioning is GPU-only. Preserve the VM name returned in `.name` for subsequent commands. `offers` (alias `rentals`, optional `list`) combines VM and bare metal availability, including the complete GPU bundle, CPU/RAM/disk requirements, quantities, hourly prices, and minimum reservation minutes. An `8x MI300X` row is one whole eight-GPU option. Use `--kind vm` or `--kind bm` to query just one type. Sold-out types are not supplied by these availability APIs.
 
-JSON offers use `options`, `gpu_requirement`, `quantity_available`, `hourly_price_cents`, and `minimum_reservation_minutes`, with original `specs` retained. Missing quotes are `null`, not a promise of free compute. RAM and disk are bytes in JSON and GiB in the table. The original `vm available` and `bm available` retain their capitalized API fields (`Quantity`, `Specs`, `OnDemandPrice`, `MinimumReservationMinutes`).
+JSON offers use `options`, `gpu_requirement`, `quantity_available`, `hourly_price_cents`, and `minimum_reservation_minutes`, with original `specs` retained. Missing quotes are `null`, not a promise of free compute. RAM and disk are bytes in JSON and GiB in text. With `--json`, `vm available` and `bm available` retain their capitalized API fields (`Quantity`, `Specs`, `OnDemandPrice`, `MinimumReservationMinutes`).
 
 Empty resource, availability, team, member, invitation, and key lists return `[]` in JSON mode. Default output explains the empty result; agent output includes a zero count and message. This is a successful query, distinct from an authentication or API error. Missing or malformed resource objects fail with `invalid_response` (exit 1); inspect state before retrying a mutation. Valid zero balances remain successful data.
 

@@ -98,7 +98,7 @@ func (app *App) listRentals(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 	if cmd.Bool("json") {
-		return app.printJSON(struct {
+		return app.printResult(struct {
 			Team     string         `json:"team"`
 			Currency string         `json:"currency"`
 			Options  []rentalOption `json:"options"`

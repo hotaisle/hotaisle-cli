@@ -38,7 +38,7 @@ type flagDef struct {
 //	                if err != nil {
 //	                    return err
 //	                }
-//	                return app.printJSON(resources)
+//	                return app.printResult(resources)
 //	            },
 //	        },
 //	        {
@@ -54,7 +54,7 @@ type flagDef struct {
 //	                if err != nil {
 //	                    return err
 //	                }
-//	                return app.printJSON(resource)
+//	                return app.printResult(resource)
 //	            },
 //	        },
 //	    },
@@ -123,14 +123,12 @@ func splitPath(path string) []string {
 	return result
 }
 
-func writeJSON(w io.Writer, v any, newline bool) error {
+func writeJSON(w io.Writer, v any) error {
 	prettyJSON, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
 	}
-	if newline {
-		prettyJSON = append(prettyJSON, '\n')
-	}
+	prettyJSON = append(prettyJSON, '\n')
 	_, err = w.Write(prettyJSON)
 	return err
 }

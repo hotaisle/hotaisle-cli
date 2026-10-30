@@ -36,7 +36,7 @@ func markdownCell(value jsontext.Value) string {
 }
 
 func writeMarkdown(w io.Writer, title string, value any) error {
-	raw, err := json.Marshal(value)
+	raw, err := resultValue(value)
 	if err != nil {
 		return err
 	}

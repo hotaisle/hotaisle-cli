@@ -56,7 +56,7 @@ func newCommandVMWait(app *App) *cli.Command {
 			if err != nil {
 				return err
 			}
-			return app.printJSON(state)
+			return app.printResult(state)
 		},
 	}
 }
@@ -190,13 +190,13 @@ func (app *App) printSSH(ctx context.Context, cmd *cli.Command, team, name strin
 	if cmd.Bool("address") {
 		address := (&url.URL{Scheme: "ssh", User: url.User(connection.User), Host: net.JoinHostPort(connection.Host, strconv.FormatInt(connection.Port, 10))}).String()
 		if structuredOutput(cmd) {
-			return app.printJSON(map[string]string{"address": address})
+			return app.printResult(map[string]string{"address": address})
 		}
 		_, err := fmt.Fprintln(app.writer(), address)
 		return err
 	}
 	if structuredOutput(cmd) {
-		return app.printJSON(connection)
+		return app.printResult(connection)
 	}
 	_, err = fmt.Fprintln(app.writer(), strings.Join(connection.Argv, " "))
 	return err

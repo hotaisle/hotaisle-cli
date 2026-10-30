@@ -251,8 +251,11 @@ func TestCreditPurchaseDistinguishesCheckoutFromApprovalRequest(t *testing.T) {
 					if mode != "default" {
 						assert.Contains(t, stdout, "approval_requested")
 					}
-				} else if mode == "agent" {
+				} else if mode != "json" {
 					assert.Contains(t, stdout, "https://example.com/checkout")
+					if mode == "default" {
+						assert.Contains(t, stdout, "Checkout URL:")
+					}
 				} else {
 					assert.JSONEq(t, `{"checkout_url":"https://example.com/checkout","expires_at":"2030-01-01T00:00:00Z"}`, stdout)
 				}

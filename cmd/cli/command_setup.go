@@ -134,7 +134,7 @@ func (app *App) setup(ctx context.Context, cmd *cli.Command) error {
 		next = append([]string{"Register an SSH public key before provisioning: hotaisle setup --ssh-key-file ~/.ssh/id_ed25519.pub"}, next...)
 	}
 	if structuredOutput(cmd) {
-		return app.printJSON(struct {
+		return app.printResult(struct {
 			Success  bool     `json:"success"`
 			Team     string   `json:"team"`
 			SSHReady bool     `json:"ssh_ready"`

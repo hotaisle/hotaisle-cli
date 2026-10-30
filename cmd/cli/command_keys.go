@@ -191,7 +191,7 @@ func (app *App) addSSHKey(ctx context.Context, cmd *cli.Command) error {
 			}
 		}
 	}
-	return app.printJSON(struct {
+	return app.printResult(struct {
 		Key                *client.SSHKey `json:"key"`
 		AlreadyRegistered  bool           `json:"already_registered"`
 		Scope              string         `json:"scope"`

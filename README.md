@@ -106,7 +106,9 @@ When you log in to the admin TUI via `ssh admin.hotaisle.app`, check the breadcr
 
 ## Configuration and compatibility
 
-Existing commands, GPU provisioning flags, and config keys remain supported. Non-empty reads retain their existing JSON shapes; empty availability queries print an explicit message for terminal users and return `[]` with `--json`. Mutations retain their existing text messages unless `--json` or `--agent` is supplied. Normal failures retain exit code 1. Future incompatible changes must use the repository's Conventional Commit breaking-change mechanism.
+Existing commands, GPU provisioning flags, and config keys remain supported. All commands default to human-readable text, including identity, account keys, teams, resource details, and mutation results. Scripts that previously parsed the default JSON output must add `--json`; explicit JSON output retains its existing shapes and units. Normal failures retain exit code 1. This default-output change requires a major release through the repository's Conventional Commit breaking-change mechanism.
+
+See the [changelog and migration instructions](CHANGELOG.md#unreleased) before upgrading scripts from 0.10.x.
 
 The default config is `~/.hotaisle/config.json`. `--config-file PATH` (or `-c PATH`) overrides `HOTAISLE_CONFIG_FILE`, which overrides the default path. Both reads and writes use the selected file. Missing files are created only when saving configuration; help and version work even when configuration is invalid.
 
@@ -114,17 +116,27 @@ The default config is `~/.hotaisle/config.json`. `--config-file PATH` (or `-c PA
 
 ## Automation output
 
+Output defaults to human-readable text, including when piped or redirected. Objects use labeled details and nested sections; short lists use aligned tables. Long or nested records expand into details rather than an excessively wide table. Prices include USD and their rate period; memory and disk include GiB. Unknown values are explicit, and valid zero values remain visible.
+
+| Mode | Results and errors |
+| --- | --- |
+| Default | Human-readable text |
+| `--json` | JSON with existing field names, types, and units |
+| `--agent` | Markdown with exact JSON literals in table cells |
+
+Help and version output remain plain text. `quickstart` / `skill` returns its Markdown document so it can be installed directly; `--json quickstart` wraps that document with version metadata.
+
 Use `hotaisle --agent COMMAND` for Markdown output intended for models. Results use tables, exact JSON literals within cells, and escaped multiline text. Errors use Markdown on stderr with the same fields and exit codes as JSON mode. This mode never prompts. `--agent` and `--json` are mutually exclusive.
 
-Put `--json` before the command, for example `hotaisle --json vm start --vm YOUR_VM`. Reads retain their existing shapes. Mutations that previously printed text return `{"success":true,"message":"..."}`. Config getters return an object keyed by the configuration name. JSON documents end with a newline.
+Put `--json` before the command, for example `hotaisle --json whoami` or `hotaisle --json vm start --vm YOUR_VM`. JSON reads retain their existing shapes. Mutations with text acknowledgements return `{"success":true,"message":"..."}`. Config getters return an object keyed by the configuration name. JSON documents end with a newline. Always select `--json` when parsing results in a script.
 
-Empty lists of resources, teams, members, invitations, and keys return `[]` in JSON mode. Terminal output explains what was not found; agent output includes a zero count and message. Populated lists keep their existing shapes. Unset config values have an explanatory terminal message and retain empty strings in structured output; config writes always confirm that the configuration was saved.
+Empty lists of resources, teams, members, invitations, and keys return `[]` in JSON mode. Terminal output explains what was not found; agent output includes a zero count and message. Populated JSON lists keep their existing shapes. Unset config values have an explanatory terminal message and retain empty strings in structured output; config writes always confirm that the configuration was saved.
 
 An empty, `null`, malformed, or unusable resource object is an `invalid_response` error (exit 1), rather than a successful object filled with default values. Zero balances and other valid zero values remain data. Optional fields such as missing rental price quotes retain their meaningful `null` values.
 
 `team purchase-credits` returns checkout details when payment can proceed. If the API instead requests payment approval (HTTP 202), the CLI explicitly reports `approval_requested:true` in structured output and explains that credits have not been added.
 
-Failures emit a single JSON document to stderr and leave stdout empty:
+In JSON mode, failures emit a single JSON document to stderr and leave stdout empty:
 
 ```json
 {"error":{"code":"authentication","message":"...","hint":"...","http_status":401,"retryable":false}}
@@ -156,7 +168,7 @@ Managed instances fetch authorized keys at the next SSH login as `hotaisle`, inc
 
 `hotaisle offers` combines all currently available VM and bare metal configurations for the selected team. Each row shows the complete GPU bundle (for example, `8x MI300X`), number of available bundles, CPU cores, RAM/disk in GiB, hourly USD price, and minimum reservation minutes. A missing price is shown as `not quoted`. The API does not expose a catalog of sold-out configurations, so the CLI does not invent those options.
 
-Use `--kind vm` or `--kind bm` to query one resource type. `hotaisle --json offers` returns normalized `options` with prices in cents and memory/storage in bytes; the older `vm available` and `bm available` commands keep their existing response shapes. An eight-GPU row is one indivisible offered configuration, not eight independent rentals.
+Use `--kind vm` or `--kind bm` to query one resource type. `hotaisle --json offers` returns normalized `options` with prices in cents and memory/storage in bytes; JSON output from `vm available` and `bm available` keeps its existing response shapes. An eight-GPU row is one indivisible offered configuration, not eight independent rentals.
 
 When no matching capacity is returned, `bm available` and `vm available` explain that no resources are currently available for the selected team. `--json` returns an empty array (`[]`), and `--agent` includes the team, zero count, and explanatory message in Markdown. An empty result is a successful query; authentication and API failures remain errors.
 

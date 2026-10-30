@@ -28,7 +28,7 @@ func TestBareMetalListCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, bareMetalCommands, "list", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result []client.BareMetalServerDetails
 	err = json.Unmarshal([]byte(output), &result)
@@ -54,7 +54,7 @@ func TestBareMetalGetCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, bareMetalCommands, "get", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.BareMetalServerDetails
 	err = json.Unmarshal([]byte(output), &result)
@@ -82,7 +82,7 @@ func TestBareMetalReserveCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, bareMetalCommands, "reserve", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.BareMetalServerReservationResponse
 	err = json.Unmarshal([]byte(output), &result)
@@ -141,7 +141,7 @@ func TestBareMetalAvailableCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, bareMetalCommands, "available", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result []client.AvailableBareMetalTypes
 	err = json.Unmarshal([]byte(output), &result)
@@ -167,7 +167,7 @@ func TestBareMetalPowerStatusCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, bareMetalCommands, "power.status", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.BareMetalServerPowerState
 	err = json.Unmarshal([]byte(output), &result)
@@ -294,7 +294,7 @@ func TestBareMetalReinstallCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, bareMetalCommands, "reinstall", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.BareMetalServerDetails
 	err = json.Unmarshal([]byte(output), &result)
@@ -319,7 +319,7 @@ func TestBareMetalConsoleCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, bareMetalCommands, "console", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.BareMetalServerConsoleURL
 	err = json.Unmarshal([]byte(output), &result)

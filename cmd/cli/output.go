@@ -1,13 +1,16 @@
 package cli
 
 import (
+	"bytes"
 	"context"
+	"encoding/json/jsontext"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/hotaisle/hotaisle-cli/client"
 	"github.com/urfave/cli/v3"
@@ -31,10 +34,6 @@ func invalid(message string) error {
 }
 
 func usageError(ctx context.Context, cmd *cli.Command, err error, _ bool) error {
-	if !structuredOutput(cmd) {
-		_, _ = fmt.Fprintf(cmd.Root().ErrWriter, "Incorrect Usage: %s\n\n", err)
-		_ = cli.ShowSubcommandHelp(cmd)
-	}
 	return problem("invalid_arguments", "Run the command with --help for usage.", err)
 }
 
@@ -106,14 +105,18 @@ func reportError(cmd *cli.Command, err error) int {
 	if cmd.Bool("json") {
 		_ = writeJSON(cmd.ErrWriter, struct {
 			Error errorDetails `json:"error"`
-		}{detail}, true)
+		}{detail})
 		return code
 	}
 	if cmd.Bool("agent") {
 		_ = writeMarkdown(cmd.ErrWriter, "Error", detail)
 		return code
 	}
-	_, _ = fmt.Fprintf(cmd.ErrWriter, "Error: %s\n", detail.Message)
+	message := detail.Message
+	if apiError, ok := errors.AsType[*client.APIError](err); ok {
+		message = strings.Replace(message, apiError.Error(), fmt.Sprintf("API error (status %d): %s", apiError.StatusCode, textAPIMessage(apiError.Message)), 1)
+	}
+	_, _ = fmt.Fprintf(cmd.ErrWriter, "Error: %s\n", message)
 	if detail.Hint != "" {
 		_, _ = fmt.Fprintln(cmd.ErrWriter, detail.Hint)
 	}
@@ -127,16 +130,29 @@ func (app *App) writer() io.Writer {
 	return os.Stdout
 }
 
-func (app *App) printJSON(value any) error {
+func (app *App) printResult(value any) error {
+	if app.AppCli != nil && app.AppCli.Bool("json") {
+		return writeJSON(app.writer(), value)
+	}
 	if app.AppCli != nil && app.AppCli.Bool("agent") {
 		return writeMarkdown(app.writer(), "Result", value)
 	}
-	return writeJSON(app.writer(), value, app.AppCli != nil && app.AppCli.Bool("json"))
+	return writeText(app.writer(), value)
+}
+
+// Use the existing JSON contract as the data source for every presentation.
+// This preserves field omission rules, zero values, and exact numeric types.
+func resultValue(value any) (jsontext.Value, error) {
+	var out bytes.Buffer
+	if err := writeJSON(&out, value); err != nil {
+		return nil, err
+	}
+	return bytes.TrimSpace(out.Bytes()), nil
 }
 
 func (app *App) success(message string) error {
 	if app.AppCli != nil && structuredOutput(app.AppCli) {
-		return app.printJSON(struct {
+		return app.printResult(struct {
 			Success bool   `json:"success"`
 			Message string `json:"message"`
 		}{true, message})
@@ -153,12 +169,12 @@ func (app *App) printList[T any](items []T, message, team string) error {
 	if len(items) == 0 {
 		return app.emptyResult("Result", message, team)
 	}
-	return app.printJSON(items)
+	return app.printResult(items)
 }
 
 func (app *App) emptyResult(title, message, team string) error {
 	if app.AppCli != nil && app.AppCli.Bool("json") {
-		return app.printJSON([]any{})
+		return app.printResult([]any{})
 	}
 	if app.AppCli != nil && app.AppCli.Bool("agent") {
 		return writeMarkdown(app.writer(), title, struct {

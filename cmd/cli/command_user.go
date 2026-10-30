@@ -20,7 +20,7 @@ var userCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(user)
+				return app.printResult(user)
 			},
 		},
 		{
@@ -36,7 +36,7 @@ var userCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(user)
+				return app.printResult(user)
 			},
 		},
 		{
@@ -67,7 +67,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(result)
+						return app.printResult(result)
 					},
 				},
 				{
@@ -112,7 +112,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(key)
+						return app.printResult(key)
 					},
 				},
 				{
@@ -130,7 +130,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(key)
+						return app.printResult(key)
 					},
 				},
 				{
@@ -149,7 +149,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(key)
+						return app.printResult(key)
 					},
 				},
 				{

@@ -105,7 +105,7 @@ func newCommandConfig(app *App) *cli.Command {
 
 func (app *App) configValue(name, value string) error {
 	if app.AppCli != nil && structuredOutput(app.AppCli) {
-		return app.printJSON(map[string]string{name: value})
+		return app.printResult(map[string]string{name: value})
 	}
 	if value == "" {
 		_, err := fmt.Fprintf(app.writer(), "No %s is configured.\n", strings.ReplaceAll(name, "_", " "))

@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/hotaisle/hotaisle-cli/client"
 	"github.com/urfave/cli/v3"
@@ -39,7 +40,7 @@ func newCommandDoctor(app *App) *cli.Command {
 				warnings = append(warnings, "Team balance is at or below the minimum; provisioning may be unavailable. Check hotaisle team balance --handle "+app.defaultTeam())
 			}
 			if structuredOutput(cmd) {
-				return app.printJSON(struct {
+				return app.printResult(struct {
 					Authenticated bool                `json:"authenticated"`
 					Team          string              `json:"team"`
 					SSHKeyCount   int                 `json:"ssh_key_count"`
@@ -47,7 +48,7 @@ func newCommandDoctor(app *App) *cli.Command {
 					Warnings      []string            `json:"warnings"`
 				}{true, app.defaultTeam(), len(keys), balance, warnings})
 			}
-			if _, err := fmt.Fprintf(app.writer(), "Authentication: OK\nTeam: %s\nRegistered SSH keys: %d\nBalance: $%.2f USD\nCurrent spend: $%.2f USD/hour\n", app.defaultTeam(), len(keys), float64(balance.AvailableBalance)/100, float64(balance.HourlyRate)/100); err != nil {
+			if _, err := fmt.Fprintf(app.writer(), "Authentication: OK\nTeam: %s\nRegistered SSH keys: %d\nBalance: %s USD\nCurrent spend: %s USD/hour\n", app.defaultTeam(), len(keys), textMoney(strconv.FormatInt(balance.AvailableBalance, 10)), textMoney(strconv.FormatInt(balance.HourlyRate, 10))); err != nil {
 				return err
 			}
 			for _, warning := range warnings {

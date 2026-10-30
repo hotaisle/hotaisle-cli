@@ -29,7 +29,7 @@ func TestVMListCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, virtualMachineCommands, "list", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result []client.VirtualMachineDetails
 	err = json.Unmarshal([]byte(output), &result)
@@ -55,7 +55,7 @@ func TestVMGetCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, virtualMachineCommands, "get", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.VirtualMachineDetails
 	err = json.Unmarshal([]byte(output), &result)
@@ -83,7 +83,7 @@ func TestVMProvisionCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, virtualMachineCommands, "provision", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.VirtualMachineDetails
 	err = json.Unmarshal([]byte(output), &result)
@@ -109,7 +109,7 @@ func TestVMProvisionCommand_WithGPU(t *testing.T) {
 	cmd, err := getCommand(app, virtualMachineCommands, "provision", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.VirtualMachineDetails
 	err = json.Unmarshal([]byte(output), &result)
@@ -135,7 +135,7 @@ func TestVMProvisionCommand_WithPartialSpecs(t *testing.T) {
 	cmd, err := getCommand(app, virtualMachineCommands, "provision", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.VirtualMachineDetails
 	err = json.Unmarshal([]byte(output), &result)
@@ -227,7 +227,7 @@ func TestVMAvailableCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, virtualMachineCommands, "available", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result []client.AvailableVirtualMachineTypes
 	err = json.Unmarshal([]byte(output), &result)
@@ -253,7 +253,7 @@ func TestVMStateCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, virtualMachineCommands, "state", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.VirtualMachineState
 	err = json.Unmarshal([]byte(output), &result)

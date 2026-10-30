@@ -40,7 +40,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(vm)
+				return app.printResult(vm)
 			},
 		},
 		{
@@ -106,7 +106,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(resp)
+				return app.printResult(resp)
 			},
 		},
 		{
@@ -156,7 +156,7 @@ var virtualMachineCommands = commandDef{
 				if len(available) == 0 {
 					return app.emptyAvailability("virtual machines", cmd.String("team"))
 				}
-				return app.printJSON(available)
+				return app.printResult(available)
 			},
 		},
 		{
@@ -171,7 +171,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(state)
+				return app.printResult(state)
 			},
 		},
 		{

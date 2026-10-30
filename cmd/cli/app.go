@@ -80,7 +80,7 @@ func makeApp() (*App, error) {
 
 	app.AppCli = &cli.Command{
 		Usage:       "Manage Hot Aisle resources from your terminal.",
-		Description: "Start with 'hotaisle quickstart' for the installed version's agent skill.\nLogin: hotaisle login | SSH keys: hotaisle ssh-keys add KEY.pub\nRental options: hotaisle offers | Connect: hotaisle ssh --vm NAME\nUse --agent for Markdown or --json for JSON automation output.",
+		Description: "Start with 'hotaisle quickstart' for the installed version's agent skill.\nLogin: hotaisle login | SSH keys: hotaisle ssh-keys add KEY.pub\nRental options: hotaisle offers | Connect: hotaisle ssh --vm NAME\nOutput defaults to human-readable text. Use --json for JSON or --agent for Markdown.",
 		Version: fmt.Sprintf("%s (commit: %s, branch: %s)\nBuilt by: %s at %s\nGo version: %s",
 			Version, Commit, Branch, BuildBy, BuildTime, GoVersion),
 		EnableShellCompletion: true,
