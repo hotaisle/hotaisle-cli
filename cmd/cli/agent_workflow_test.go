@@ -20,6 +20,45 @@ import (
 
 const publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA test"
 
+func TestQuickstartUsesInstalledVersionOffline(t *testing.T) {
+	home := isolatedHome(t)
+	path := filepath.Join(home, "broken.json")
+	require.NoError(t, os.WriteFile(path, []byte("{broken"), 0o600))
+	t.Setenv("HOTAISLE_CONFIG_FILE", path)
+	version, commit := appcli.Version, appcli.Commit
+	appcli.Version, appcli.Commit = "9.8.7", "test-commit"
+	t.Cleanup(func() { appcli.Version, appcli.Commit = version, commit })
+	for _, args := range [][]string{{"quickstart"}, {"--agent", "quickstart"}, {"skill"}, {"--json", "quickstart"}} {
+		code, stdout, stderr := execute(t, t.Context(), args, noNetwork(t))
+		require.Zero(t, code, stderr)
+		assert.Contains(t, stdout, "9.8.7")
+		assert.Contains(t, stdout, "test-commit")
+		assert.Contains(t, stdout, "ssh-keys")
+		if args[0] == "--json" {
+			var result struct {
+				Version  string `json:"version"`
+				Markdown string `json:"markdown"`
+			}
+			require.NoError(t, json.Unmarshal([]byte(stdout), &result))
+			assert.Equal(t, "9.8.7", result.Version)
+			assert.True(t, strings.HasPrefix(result.Markdown, "---\nname: hotaisle\n"))
+		} else {
+			assert.True(t, strings.HasPrefix(stdout, "---\nname: hotaisle\n"))
+		}
+	}
+	_, err := os.Stat(filepath.Join(home, ".hotaisle"))
+	assert.True(t, os.IsNotExist(err))
+}
+
+func TestProminentCommandsAppearInHelp(t *testing.T) {
+	isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"--help"}, noNetwork(t))
+	require.Zero(t, code, stderr)
+	for _, name := range []string{"login", "ssh-keys", "api-keys", "whoami", "rentals", "offers", "quickstart", "--agent"} {
+		assert.Contains(t, stdout, name)
+	}
+}
+
 func TestTopLevelAccountCommandsUseExistingAPI(t *testing.T) {
 	for _, tc := range []struct {
 		args []string

@@ -56,6 +56,7 @@ type App struct {
 
 func makeCommands(app *App) []*cli.Command {
 	return []*cli.Command{
+		newCommandQuickstart(app),
 		newCommandSetup(app),
 		newCommandDoctor(app),
 		newCommandWhoami(app),
@@ -79,7 +80,7 @@ func makeApp() (*App, error) {
 
 	app.AppCli = &cli.Command{
 		Usage:       "Manage Hot Aisle resources from your terminal.",
-		Description: "Login: hotaisle login | SSH keys: hotaisle ssh-keys add KEY.pub\nRental options: hotaisle offers | Connect: hotaisle ssh --vm NAME\nUse --agent for Markdown or --json for JSON automation output.",
+		Description: "Start with 'hotaisle quickstart' for the installed version's agent skill.\nLogin: hotaisle login | SSH keys: hotaisle ssh-keys add KEY.pub\nRental options: hotaisle offers | Connect: hotaisle ssh --vm NAME\nUse --agent for Markdown or --json for JSON automation output.",
 		Version: fmt.Sprintf("%s (commit: %s, branch: %s)\nBuilt by: %s at %s\nGo version: %s",
 			Version, Commit, Branch, BuildBy, BuildTime, GoVersion),
 		EnableShellCompletion: true,
@@ -139,7 +140,7 @@ func localDocumentation(root *cli.Command) bool {
 		if command == nil {
 			return false
 		}
-		if command.Name == "help" {
+		if command.Name == "help" || command.Name == "quickstart" {
 			return true
 		}
 	}

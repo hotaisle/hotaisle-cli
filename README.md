@@ -7,6 +7,7 @@ A command-line interface tool for [Hot Aisle operations](https://admin.hotaisle.
 After [installation](#installation), run:
 
 ```bash
+hotaisle quickstart
 hotaisle login
 hotaisle doctor
 hotaisle offers
@@ -14,7 +15,7 @@ hotaisle offers
 
 Setup guides you through authentication and team selection, verifies access, and offers to register an SSH public key. Get your initial API key using the [admin TUI](#getting-an-api-key). Token entry in a terminal is hidden. Setup never provisions compute or purchases credits.
 
-`login` is an alias for `setup`.
+`login` is an alias for `setup`. `quickstart` (alias `skill`) prints the Markdown skill embedded in your installed binary with its version and commit, without network access or loading credentials. Save that output as `SKILL.md` in your agent's supported skill directory, or pass it directly to the agent.
 
 | Task | Direct command |
 | --- | --- |

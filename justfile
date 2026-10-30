@@ -163,8 +163,8 @@ build-one out_dir out_filename goos goarch goarm:
 	[ -e "${out_path}.zip" ] && newest_output="${out_path}.zip" || \
 	[ -e "${out_path}" ] && newest_output="${out_path}"
 
-	# Check if rebuild is needed (only if output exists)
-	if [ -n "$newest_output" ] && [ -z "$(find . -name "*.go" -type f -newer "$newest_output" -print -quit 2>/dev/null)" ]; then
+	# Go source and the embedded agent skill are build inputs.
+	if [ -n "$newest_output" ] && [ -z "$(find . -type f \( -name '*.go' -o -path './skills/hotaisle/SKILL.md' \) -newer "$newest_output" -print -quit 2>/dev/null)" ]; then
 		echo "🛑 No changes detected, skipping ${out_path}"
 		exit 0
 	fi
