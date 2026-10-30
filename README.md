@@ -9,7 +9,7 @@ After [installation](#installation), run:
 ```bash
 hotaisle login
 hotaisle doctor
-hotaisle vm available
+hotaisle offers
 ```
 
 Setup guides you through authentication and team selection, verifies access, and offers to register an SSH public key. Get your initial API key using the [admin TUI](#getting-an-api-key). Token entry in a terminal is hidden. Setup never provisions compute or purchases credits.
@@ -22,6 +22,7 @@ Setup guides you through authentication and team selection, verifies access, and
 | Manage API credentials | `hotaisle api-keys --help` |
 | Add an SSH public key | `hotaisle ssh-keys add ~/.ssh/id_ed25519.pub` |
 | Add a key and check an existing VM | `hotaisle ssh-keys add ~/.ssh/id_ed25519.pub --vm YOUR_VM` |
+| List VM and bare metal rental options | `hotaisle offers` or `hotaisle rentals list` |
 | Get an SSH command | `hotaisle ssh --vm YOUR_VM` |
 | Get an SSH address | `hotaisle ssh --server YOUR_SERVER --address` |
 
@@ -143,6 +144,12 @@ The CLI does not automatically retry mutations. Provisioning or rebuild requests
 `ssh-keys add` accepts a positional public key file, `--file PATH` (alias `--key-file`), `--key 'ssh-ed25519 ...'`, or `--stdin`. It reuses an existing account key. Key registration requires an API token with personal owner permission. A key is account-wide, even when `--vm`, `--server`, or `--team` is supplied; those flags check access and identify a target, rather than limiting the key's scope.
 
 Managed instances fetch authorized keys at the next SSH login as `hotaisle`, including running instances. The account must have the team's effective `user` role. No rebuild is needed. Custom SSH configurations and key-service outages can affect propagation; a guest can fall back to cached keys. Targeted registration checks team permissions and resource existence, then refreshes SSH connection details. Its `guest_login_verified:false` field distinguishes API registration from an actual guest login.
+
+## Rental options
+
+`hotaisle offers` combines all currently available VM and bare metal configurations for the selected team. Each row shows the complete GPU bundle (for example, `8x MI300X`), number of available bundles, CPU cores, RAM/disk in GiB, hourly USD price, and minimum reservation minutes. A missing price is shown as `not quoted`. The API does not expose a catalog of sold-out configurations, so the CLI does not invent those options.
+
+Use `--kind vm` or `--kind bm` to query one resource type. `hotaisle --json offers` returns normalized `options` with prices in cents and memory/storage in bytes; the older `vm available` and `bm available` commands keep their existing response shapes. An eight-GPU row is one indivisible offered configuration, not eight independent rentals.
 
 # Contributing
 

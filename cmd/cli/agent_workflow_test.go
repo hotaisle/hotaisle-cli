@@ -118,6 +118,72 @@ func TestDirectSSHAndAddressForBothResourceKinds(t *testing.T) {
 	}
 }
 
+func rentalResponse(t *testing.T, req *http.Request) (*http.Response, error) {
+	t.Helper()
+	assert.Equal(t, http.MethodGet, req.Method)
+	switch req.URL.Path {
+	case "/api/teams/team/virtual_machines/available/":
+		return test.NewJSONResponse(t, 200, []client.AvailableVirtualMachineTypes{{
+			Quantity: 3, OnDemandPrice: 125, MinimumReservationMinutes: 30,
+			Specs: client.VirtualMachineSpecs{GPUs: []client.GPUs{{Model: "MI300X", Count: 1}}, CPUCores: new(uint64(16)), RAMCapacity: new(uint64(64 << 30)), DiskCapacity: new(uint64(512 << 30))},
+		}}), nil
+	case "/api/teams/team/bare_metal/available/":
+		return test.NewJSONResponse(t, 200, []client.AvailableBareMetalTypes{{
+			Quantity: 2, OnDemandPrice: 1000, MinimumReservationMinutes: 480,
+			Specs: client.BareMetalServerSpecs{GPUs: []client.GPUs{{Model: "MI300X", Count: 8}}, CPUCores: 256, RAMCapacity: 1536 << 30, DiskCapacity: 4096 << 30},
+		}}), nil
+	default:
+		t.Fatalf("unexpected rental endpoint: %s", req.URL.Path)
+		return nil, nil
+	}
+}
+
+func TestOffersCombineWholeRentalBundlesAndMinimumRequirements(t *testing.T) {
+	for _, args := range [][]string{{"offers", "--team", "team"}, {"--agent", "rentals", "list", "--team", "team"}, {"--json", "rentals", "--team", "team"}} {
+		isolatedHome(t)
+		code, stdout, stderr := execute(t, t.Context(), args, func(req *http.Request) (*http.Response, error) { return rentalResponse(t, req) })
+		require.Zero(t, code, stderr)
+		assert.Contains(t, stdout, "8x MI300X")
+		assert.Contains(t, stdout, "1x MI300X")
+		assert.Contains(t, stdout, "480")
+		if args[0] == "--json" {
+			var result struct {
+				Currency string `json:"currency"`
+				Options  []struct {
+					GPURequirement   string `json:"gpu_requirement"`
+					HourlyPriceCents int64  `json:"hourly_price_cents"`
+				} `json:"options"`
+			}
+			require.NoError(t, json.Unmarshal([]byte(stdout), &result))
+			assert.Equal(t, "USD", result.Currency)
+			require.Len(t, result.Options, 2)
+			assert.Equal(t, int64(1000), result.Options[1].HourlyPriceCents)
+		} else {
+			assert.Contains(t, stdout, "1.25")
+			assert.Contains(t, stdout, "10.00")
+			assert.Contains(t, stdout, "1536.00")
+			assert.Contains(t, stdout, "complete rental bundle")
+		}
+	}
+}
+
+func TestOffersFilterKindsAndDoNotPresentMissingPricesAsFree(t *testing.T) {
+	isolatedHome(t)
+	calls := 0
+	code, stdout, stderr := execute(t, t.Context(), []string{"--agent", "offers", "--team", "team", "--kind", "bm"}, func(req *http.Request) (*http.Response, error) {
+		calls++
+		assert.Contains(t, req.URL.Path, "bare_metal")
+		return test.NewJSONResponse(t, 200, []client.AvailableBareMetalTypes{{Quantity: 1, Specs: client.BareMetalServerSpecs{GPUs: []client.GPUs{{Model: "MI300X", Count: 8}}}}}), nil
+	})
+	require.Zero(t, code, stderr)
+	assert.Equal(t, 1, calls)
+	assert.Contains(t, stdout, "not quoted")
+	code, stdout, stderr = execute(t, t.Context(), []string{"--agent", "offers", "--team", "team", "--kind", "bogus"}, noNetwork(t))
+	assert.Equal(t, 2, code)
+	assert.Empty(t, stdout)
+	assert.Contains(t, stderr, "--kind")
+}
+
 func TestSSHKeyRegistrationReusesAccountKeys(t *testing.T) {
 	for _, existing := range []bool{false, true} {
 		t.Run(fmt.Sprint(existing), func(t *testing.T) {
@@ -275,4 +341,33 @@ func TestConcurrentKeyRegistrationOnlyReusesThisAccountsKey(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRentalAPIErrorDoesNotEmitAPartialCatalog(t *testing.T) {
+	isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"--agent", "offers", "--team", "team"}, func(req *http.Request) (*http.Response, error) {
+		if strings.Contains(req.URL.Path, "virtual_machines") {
+			return rentalResponse(t, req)
+		}
+		return test.NewEmptyResponse(503), nil
+	})
+	assert.Equal(t, 6, code)
+	assert.Empty(t, stdout)
+	assert.Contains(t, stderr, "temporary_failure")
+}
+
+func TestRentalJSONPreservesMissingPriceAsNull(t *testing.T) {
+	isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "offers", "--team", "team", "--kind", "vm"}, func(*http.Request) (*http.Response, error) {
+		return test.NewJSONResponse(t, 200, []client.AvailableVirtualMachineTypes{{Quantity: 1}}), nil
+	})
+	require.Zero(t, code, stderr)
+	var result struct {
+		Options []struct {
+			Price *int64 `json:"hourly_price_cents"`
+		} `json:"options"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(stdout), &result))
+	require.Len(t, result.Options, 1)
+	assert.Nil(t, result.Options[0].Price)
 }

@@ -61,6 +61,7 @@ func makeCommands(app *App) []*cli.Command {
 		newCommandWhoami(app),
 		newCommandSSHKeys(app),
 		newCommandAPIKeys(app),
+		newCommandRentals(app),
 		newCommandDirectSSH(app),
 		newCommandVirtualMachine(app),
 		newCommandBareMetal(app),
@@ -78,7 +79,7 @@ func makeApp() (*App, error) {
 
 	app.AppCli = &cli.Command{
 		Usage:       "Manage Hot Aisle resources from your terminal.",
-		Description: "Login: hotaisle login | SSH keys: hotaisle ssh-keys add KEY.pub\nConnect: hotaisle ssh --vm NAME\nUse --agent for Markdown or --json for JSON automation output.",
+		Description: "Login: hotaisle login | SSH keys: hotaisle ssh-keys add KEY.pub\nRental options: hotaisle offers | Connect: hotaisle ssh --vm NAME\nUse --agent for Markdown or --json for JSON automation output.",
 		Version: fmt.Sprintf("%s (commit: %s, branch: %s)\nBuilt by: %s at %s\nGo version: %s",
 			Version, Commit, Branch, BuildBy, BuildTime, GoVersion),
 		EnableShellCompletion: true,

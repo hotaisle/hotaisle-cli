@@ -35,17 +35,19 @@ For ephemeral environments, skip setup and set `HOTAISLE_API_TOKEN` and `HOTAISL
 
 ```bash
 # Inspect availability, price, and minimum reservation time before provisioning.
-hotaisle --json vm available
+hotaisle --agent offers
 
 # Substitute a GPU model and count from the returned availability.
-hotaisle --json vm provision --gpu-model YOUR_GPU_MODEL --gpu-count 1
+hotaisle --json vm provision --gpu-model YOUR_GPU_MODEL --gpu-count YOUR_BUNDLE_GPU_COUNT
 
 # Use the returned name, not an invented instance ID.
 hotaisle --json vm wait --vm YOUR_VM --timeout 5m
 hotaisle --json ssh --vm YOUR_VM
 ```
 
-Provisioning is GPU-only. Preserve the VM name returned in `.name` for subsequent commands. Availability responses keep the API's existing capitalized keys (`Quantity`, `Specs`, `OnDemandPrice`, `MinimumReservationMinutes`). Balance and price values are US cents; consult the API schema for each rate period.
+Provisioning is GPU-only. Preserve the VM name returned in `.name` for subsequent commands. `offers` (alias `rentals`, optional `list`) combines VM and bare metal availability, including the complete GPU bundle, CPU/RAM/disk requirements, quantities, hourly prices, and minimum reservation minutes. An `8x MI300X` row is one whole eight-GPU option. Use `--kind vm` or `--kind bm` to query just one type. Sold-out types are not supplied by these availability APIs.
+
+JSON offers use `options`, `gpu_requirement`, `quantity_available`, `hourly_price_cents`, and `minimum_reservation_minutes`, with original `specs` retained. Missing quotes are `null`, not a promise of free compute. RAM and disk are bytes in JSON and GiB in the table. The original `vm available` and `bm available` retain their capitalized API fields (`Quantity`, `Specs`, `OnDemandPrice`, `MinimumReservationMinutes`).
 
 `vm wait` checks the VM's power state, defaults to `running`, and stops on a deadline or failure state. It does not wait for SSH, cloud-init, a model download, or an inference endpoint. Other target power states can be supplied with `--state`; each run has a bounded `--timeout` and configurable `--interval`.
 
