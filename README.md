@@ -118,6 +118,8 @@ Use `hotaisle --agent COMMAND` for Markdown output intended for models. Results 
 
 Put `--json` before the command, for example `hotaisle --json vm start --vm YOUR_VM`. Reads retain their existing shapes. Mutations that previously printed text return `{"success":true,"message":"..."}`. Config getters return an object keyed by the configuration name. JSON documents end with a newline.
 
+An empty, `null`, malformed, or unusable resource object is an `invalid_response` error (exit 1), rather than a successful object filled with default values. Zero balances and other valid zero values remain data. Optional fields such as missing rental price quotes retain their meaningful `null` values.
+
 Failures emit a single JSON document to stderr and leave stdout empty:
 
 ```json

@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -89,11 +90,24 @@ func (c *Client) SetToken(token string) {
 
 // doRequest executes an HTTP request
 func (c *Client) doRequest(ctx context.Context, method, path string, body any, result any) error {
+	response, err := c.request(ctx, method, path, body)
+	if err != nil {
+		return err
+	}
+	return response.decode(result)
+}
+
+type response struct {
+	status int
+	body   []byte
+}
+
+func (c *Client) request(ctx context.Context, method, path string, body any) (response, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
 		if err != nil {
-			return fmt.Errorf("failed to marshal request body: %w", err)
+			return response{}, fmt.Errorf("failed to marshal request body: %w", err)
 		}
 		bodyReader = bytes.NewReader(jsonBody)
 	}
@@ -105,7 +119,7 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body any, r
 	fullURL := c.baseURL + path
 	req, err := http.NewRequestWithContext(ctx, method, fullURL, bodyReader)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return response{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Set headers
@@ -122,7 +136,7 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body any, r
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		return response{}, fmt.Errorf("request failed: %w", err)
 	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
@@ -130,33 +144,103 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body any, r
 
 	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBodyBytes+1))
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return response{}, fmt.Errorf("failed to read response body: %w", err)
 	}
 	if len(respBody) > maxResponseBodyBytes {
-		return fmt.Errorf("response body exceeds %d bytes", maxResponseBodyBytes)
+		return response{}, &ResponseError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("response body exceeds %d bytes", maxResponseBodyBytes)}
 	}
 
 	// Handle error responses
 	if resp.StatusCode >= 400 {
-		return &APIError{
+		message := strings.TrimSpace(string(respBody))
+		if message == "" {
+			message = http.StatusText(resp.StatusCode)
+		}
+		return response{}, &APIError{
 			StatusCode: resp.StatusCode,
-			Message:    string(respBody),
+			Message:    message,
 		}
 	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return response{}, &ResponseError{StatusCode: resp.StatusCode, Message: "unexpected HTTP status"}
+	}
+	return response{status: resp.StatusCode, body: bytes.TrimSpace(respBody)}, nil
+}
 
-	// Handle 204 No Content
-	if resp.StatusCode == http.StatusNoContent || len(respBody) == 0 {
+func (r response) decode(result any) error {
+	// Mutations documented without a response body still receive an explicit
+	// CLI acknowledgement. Data-returning operations must supply actual data.
+	if result == nil {
 		return nil
 	}
-
-	// Unmarshal response
-	if result != nil {
-		if err := json.Unmarshal(respBody, result); err != nil {
-			return fmt.Errorf("failed to unmarshal response: %w", err)
+	body := r.body
+	resourceType := reflect.TypeOf(result).Elem()
+	isList := resourceType.Kind() == reflect.Slice
+	if isList {
+		resourceType = resourceType.Elem()
+	}
+	if len(body) == 0 || bytes.Equal(body, []byte("null")) {
+		if !isList {
+			return &ResponseError{StatusCode: r.status, Message: "expected a resource object, received no data"}
+		}
+		body = []byte("[]")
+	}
+	// Check the wire shape before decoding: null and {} otherwise silently
+	// become zero-valued structs, including null items inside a collection.
+	var objects []map[string]json.RawMessage
+	if isList {
+		if err := json.Unmarshal(body, &objects); err != nil {
+			return &ResponseError{StatusCode: r.status, Message: "expected a JSON array of resource objects"}
+		}
+	} else {
+		var object map[string]json.RawMessage
+		if err := json.Unmarshal(body, &object); err != nil {
+			return &ResponseError{StatusCode: r.status, Message: "expected a JSON resource object"}
+		}
+		objects = append(objects, object)
+	}
+	for _, object := range objects {
+		if len(object) == 0 {
+			return &ResponseError{StatusCode: r.status, Message: "received an empty resource object"}
+		}
+		if !hasResponseField(resourceType, object) {
+			return &ResponseError{StatusCode: r.status, Message: "resource object is missing expected fields"}
 		}
 	}
-
+	if err := json.Unmarshal(body, result); err != nil {
+		return &ResponseError{StatusCode: r.status, Message: "resource data does not match the expected response format"}
+	}
 	return nil
+}
+
+func hasResponseField(resourceType reflect.Type, object map[string]json.RawMessage) bool {
+	for field := range resourceType.Fields() {
+		if field.Anonymous {
+			if hasResponseField(field.Type, object) {
+				return true
+			}
+			continue
+		}
+		name, _, _ := strings.Cut(field.Tag.Get("json"), ",")
+		for key, value := range object {
+			// Preserve encoding/json's existing case-insensitive field matching.
+			if strings.EqualFold(key, name) && !bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ResponseError reports an API response whose status or data cannot be used.
+// It deliberately excludes the response body, which may contain credentials.
+type ResponseError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *ResponseError) Error() string {
+	return fmt.Sprintf("invalid API response (status %d): %s", e.StatusCode, e.Message)
 }
 
 // APIError represents an API error response

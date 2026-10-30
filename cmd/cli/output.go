@@ -86,6 +86,10 @@ func describeError(err error) (errorDetails, int) {
 			detail.Code, exit = "invalid_arguments", 2
 		}
 	}
+	if e, ok := errors.AsType[*client.ResponseError](err); ok {
+		detail.Code, detail.HTTPStatus = "invalid_response", e.StatusCode
+		detail.Hint = "The API returned unusable data. Check resource state before retrying a mutation; report persistent failures."
+	}
 	if errors.Is(err, context.DeadlineExceeded) {
 		detail.Code, exit = "timeout", 7
 		detail.Hint = "Inspect resource state before retrying; a timeout does not cancel provisioning or billing."
