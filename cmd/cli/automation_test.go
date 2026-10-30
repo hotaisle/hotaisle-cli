@@ -367,3 +367,42 @@ func TestDoctorIsReadOnlyAndWarnsAboutMissingSSHKeys(t *testing.T) {
 	_, err := os.Stat(filepath.Join(home, ".hotaisle"))
 	assert.True(t, os.IsNotExist(err))
 }
+
+func TestWaitHandlesProgressTerminalStatesAndDeadline(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		states []string
+		exit   int
+	}{
+		{"progress", []string{"starting", "running"}, 0},
+		{"terminal", []string{"crashed"}, 1},
+		{"deadline", []string{"starting"}, 7},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			isolatedHome(t)
+			calls := 0
+			code, stdout, stderr := execute(t, t.Context(), []string{"--json", "vm", "wait", "--team", "team", "--vm", "vm", "--interval", "1ms", "--timeout", "30ms"}, func(*http.Request) (*http.Response, error) {
+				state := tc.states[min(calls, len(tc.states)-1)]
+				calls++
+				return test.NewJSONResponse(t, 200, client.VirtualMachineState{State: state}), nil
+			})
+			assert.Equal(t, tc.exit, code, stderr)
+			if tc.exit == 0 {
+				assert.Contains(t, stdout, `"state": "running"`)
+			} else {
+				assert.Empty(t, stdout)
+			}
+		})
+	}
+}
+
+func TestWaitCancelsInFlightRequest(t *testing.T) {
+	isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "vm", "wait", "--team", "team", "--vm", "vm", "--timeout", "5ms"}, func(req *http.Request) (*http.Response, error) {
+		<-req.Context().Done()
+		return nil, req.Context().Err()
+	})
+	assert.Equal(t, 7, code)
+	assert.Empty(t, stdout)
+	assert.Contains(t, stderr, `"code": "timeout"`)
+}

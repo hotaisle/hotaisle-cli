@@ -268,5 +268,7 @@ var virtualMachineCommands = commandDef{
 }
 
 func newCommandVirtualMachine(app *App) *cli.Command {
-	return buildCommand(app, virtualMachineCommands)
+	cmd := buildCommand(app, virtualMachineCommands)
+	cmd.Commands = append(cmd.Commands, newCommandVMWait(app))
+	return cmd
 }
