@@ -49,6 +49,10 @@ Use `--agent` to retain Markdown tables or `--json` for structured rental option
 - Rental discovery with GPU bundle requirements, availability, prices, and minimum reservations.
 - Markdown agent output and an embedded skill matching the installed CLI version and commit.
 
+### Dependencies
+
+- Update Biome to 2.6.4 and Ultracite to 8.1.0, and refresh compatible transitive npm dependencies in the lockfile. Apply the updated tools' required Unicode-aware named regex captures and YAML formatting without changing release classification or package contents.
+
 ### Release automation
 
 Changes to existing defaults are marked with both a breaking commit header (`type(scope)!: subject`) and a `BREAKING CHANGE:` migration footer. Release analysis and release notes now recognize `!` headers on their own as well as singular and plural breaking-change footers.

@@ -16,11 +16,11 @@ vendor: "Hot Aisle"
 homepage: "https://github.com/hotaisle/hotaisle-cli"
 license: "BSD-3-Clause"
 contents:
-   - src: ./dist/hotaisle-cli-${VERSION}-linux-${ARCH}
-     dst: /usr/bin/hotaisle
-     expand: true
-     file_info:
-       mode: 0755
+  - src: ./dist/hotaisle-cli-${VERSION}-linux-${ARCH}
+    dst: /usr/bin/hotaisle
+    expand: true
+    file_info:
+      mode: 0755
 rpm:
   signature:
     key_id: ${{ secrets.APT_GPG_KEY_ID }}
