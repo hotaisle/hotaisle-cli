@@ -14,6 +14,21 @@ hotaisle --json doctor
 
 Use a public `.pub` key, never the private key. Setup reuses an already registered key. Without a public key file, setup checks existing keys and reports `ssh_ready:false` plus a next step if none are registered. A successful setup alone does not guarantee that SSH is ready.
 
+`login` is an alias for `setup`. `whoami`, `api-keys`, and `ssh-keys` expose frequently used account tasks directly; the existing nested paths remain available.
+
+## SSH key registration and running instances
+
+```bash
+hotaisle --agent ssh-keys add ~/.ssh/id_ed25519.pub
+hotaisle --agent ssh-keys add ~/.ssh/id_ed25519.pub --team YOUR_TEAM --vm YOUR_VM
+hotaisle ssh --vm YOUR_VM
+hotaisle ssh --server YOUR_SERVER --address
+```
+
+The positional key file can be replaced by `--file`, `--key`, or `--stdin`; choose one source. The command reuses an existing key even when the comment differs. Registration requires an API token with personal owner permission. Targeted registration checks the account's team SSH role and resource existence before making changes, then refreshes connection metadata. `--team` or a target does not restrict the account key to that team or instance.
+
+Managed guests fetch account keys at the next SSH login as `hotaisle`, so running instances do not need a rebuild. The account needs the team's effective `user` role. Custom SSH settings or an unavailable key service can prevent this; guests can fall back to cached keys. The command reports `guest_login_verified:false` because API registration and connection metadata do not establish that the guest accepted the key.
+
 For ephemeral environments, skip setup and set `HOTAISLE_API_TOKEN` and `HOTAISLE_DEFAULT_TEAM`. Read-only commands, including doctor, do not write config. An explicit `--team` overrides the default for VM and bare metal commands. Team administration uses `--handle`, for example `hotaisle --json team balance --handle YOUR_TEAM`.
 
 ## GPU workflow

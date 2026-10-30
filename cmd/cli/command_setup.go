@@ -19,7 +19,7 @@ import (
 
 func newCommandSetup(app *App) *cli.Command {
 	return &cli.Command{
-		Name: "setup", Usage: "Validate credentials, select a team, and configure SSH access.",
+		Name: "setup", Aliases: []string{"login"}, Usage: "Validate credentials, select a team, and configure SSH access.",
 		Description:  "Prompts only in a terminal. Agents can use HOTAISLE_API_TOKEN with --non-interactive --team HANDLE.\nObtain your initial API key through ssh admin.hotaisle.app (personal settings > API keys).",
 		OnUsageError: usageError,
 		Flags: []cli.Flag{
@@ -117,14 +117,11 @@ func (app *App) setup(ctx context.Context, cmd *cli.Command) error {
 		if err != nil {
 			return err
 		}
-		parts := strings.Fields(key)
-		if !slices.ContainsFunc(keys, func(k client.SSHKey) bool {
-			return k.PublicKey == key || (k.Type == parts[0] && k.PublicKey == parts[1]) || strings.HasPrefix(k.PublicKey, parts[0]+" "+parts[1])
-		}) {
-			added, err := app.Client.Api.User().AddSSHKey(ctx, client.SSHKeyRequest{AuthorizedKey: key})
-			if err != nil {
-				return err
-			}
+		added, existing, err := app.registerSSHKey(ctx, key, keys)
+		if err != nil {
+			return err
+		}
+		if !existing {
 			keys = append(keys, *added)
 		}
 	}
@@ -177,7 +174,11 @@ func readPublicKey(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read SSH public key: %w", err)
 	}
-	key := strings.TrimSpace(string(data))
+	return validatePublicKey(string(data))
+}
+
+func validatePublicKey(value string) (string, error) {
+	key := strings.TrimSpace(value)
 	parts := strings.Fields(key)
 	if strings.Contains(key, "PRIVATE KEY") || strings.ContainsAny(key, "\r\n") || len(parts) < 2 {
 		return "", invalid("expected one SSH public key in authorized_keys format; choose the .pub file")

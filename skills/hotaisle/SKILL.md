@@ -16,12 +16,20 @@ Run `hotaisle --json doctor` to check existing credentials, the default team, ba
 For a new environment, obtain the user's initial API key through personal settings in `ssh admin.hotaisle.app`. Use an available secret manager or secure credential input; do not print tokens into the conversation. Supply `HOTAISLE_API_TOKEN`, then run:
 
 ```sh
-hotaisle --json setup --non-interactive --team TEAM_HANDLE --ssh-key-file ~/.ssh/id_ed25519.pub
+hotaisle --agent login --non-interactive --team TEAM_HANDLE --ssh-key-file ~/.ssh/id_ed25519.pub
 ```
 
 Alternatively pipe the token into `hotaisle --json setup --token-stdin --non-interactive --team TEAM_HANDLE`. Setup saves the token and default team to the selected config file. For ephemeral credentials, set `HOTAISLE_API_TOKEN` and `HOTAISLE_DEFAULT_TEAM` and skip persistence. `--config-file PATH` selects a separate config for both reads and writes.
 
-Only register public keys. Setup reuses an existing key and reports `ssh_ready:false` if no keys are registered. Multiple accessible teams require an explicit choice. Team administration uses `--handle`; VM and bare metal commands use `--team` or the configured default.
+`login` is an alias for `setup`. Use `hotaisle whoami` to inspect identity and teams; `hotaisle api-keys` exposes API credential management directly. Multiple accessible teams require an explicit choice. Team administration uses `--handle`; VM and bare metal commands use `--team` or the configured default.
+
+## SSH keys, including running instances
+
+Register only public keys with `hotaisle --agent ssh-keys add ~/.ssh/id_ed25519.pub`. `--file`, `--key`, and `--stdin` are alternative inputs; select exactly one. Existing account keys are reused, including when their comments differ. Registration requires a token with personal owner permission.
+
+To also check a specific existing VM: `hotaisle --agent ssh-keys add ~/.ssh/id_ed25519.pub --team TEAM_HANDLE --vm NAME`. Use `--server NAME` for bare metal. The command checks team SSH permissions and resource existence before registration, then refreshes connection metadata. Account keys are not restricted to the named instance or team.
+
+Managed instances fetch account keys at the next SSH login as `hotaisle`, including running instances; rebuilding is unnecessary. The account needs the team's effective `user` role. Custom guest SSH configurations or an unavailable key service may prevent propagation; guests can fall back to cached keys. `guest_login_verified:false` means the CLI has not authenticated to the guest. Verify the actual connection separately when needed. Listing an account key or receiving SSH metadata alone does not prove that a guest accepted it.
 
 ## Provision and connect
 

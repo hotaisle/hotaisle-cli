@@ -1,14 +1,48 @@
 package cli_test
 
 import (
+	"bytes"
+	"encoding/json/v2"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/hotaisle/hotaisle-cli/client"
+	appcli "github.com/hotaisle/hotaisle-cli/cmd/cli"
 	"github.com/hotaisle/hotaisle-cli/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA test"
+
+func TestTopLevelAccountCommandsUseExistingAPI(t *testing.T) {
+	for _, tc := range []struct {
+		args []string
+		path string
+	}{
+		{[]string{"whoami"}, "/api/user/"},
+		{[]string{"ssh-keys", "list"}, "/api/user/ssh_keys/"},
+		{[]string{"api-keys", "list"}, "/api/user/api_keys/"},
+	} {
+		t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
+			isolatedHome(t)
+			code, _, stderr := execute(t, t.Context(), tc.args, func(req *http.Request) (*http.Response, error) {
+				assert.Equal(t, tc.path, req.URL.Path)
+				assert.Equal(t, http.MethodGet, req.Method)
+				if tc.args[0] == "whoami" {
+					return test.NewJSONResponse(t, 200, client.GetUserResponse{}), nil
+				}
+				return test.NewJSONResponse(t, 200, []any{}), nil
+			})
+			require.Zero(t, code, stderr)
+		})
+	}
+}
 
 func TestAgentOutputPreservesNumbersAndEscapesMarkdown(t *testing.T) {
 	isolatedHome(t)
@@ -25,7 +59,7 @@ func TestAgentOutputPreservesNumbersAndEscapesMarkdown(t *testing.T) {
 
 func TestAgentErrorsUseMarkdownAndCategorizedExitCodes(t *testing.T) {
 	isolatedHome(t)
-	code, stdout, stderr := execute(t, t.Context(), []string{"--agent", "user", "get"}, func(*http.Request) (*http.Response, error) {
+	code, stdout, stderr := execute(t, t.Context(), []string{"--agent", "whoami"}, func(*http.Request) (*http.Response, error) {
 		return test.NewEmptyResponse(403), nil
 	})
 	assert.Equal(t, 3, code)
@@ -33,12 +67,20 @@ func TestAgentErrorsUseMarkdownAndCategorizedExitCodes(t *testing.T) {
 	assert.Contains(t, stderr, "# Hot Aisle Error")
 	assert.Contains(t, stderr, "authentication")
 	assert.Contains(t, stderr, "403")
-	for _, args := range [][]string{{"--agent", "--json", "user", "get"}, {"--agent", "ssh"}, {"--agent", "--unknown"}, {"--agent", "help", "--unknown"}, {"--agent", "vm", "help", "unknown"}} {
+	for _, args := range [][]string{{"--agent", "--json", "whoami"}, {"--agent", "ssh"}, {"--agent", "--unknown"}, {"--agent", "help", "--unknown"}, {"--agent", "vm", "help", "unknown"}} {
 		code, stdout, stderr := execute(t, t.Context(), args, noNetwork(t))
 		assert.Equal(t, 2, code, stderr)
 		assert.Empty(t, stdout)
 		assert.NotContains(t, stderr, "Incorrect Usage")
 	}
+}
+
+func TestAgentLoginNeverPromptsAndUsesSetup(t *testing.T) {
+	isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"--agent", "login"}, noNetwork(t))
+	assert.Equal(t, 3, code)
+	assert.Empty(t, stdout)
+	assert.Contains(t, stderr, "no API token configured")
 }
 
 func TestDirectSSHAndAddressForBothResourceKinds(t *testing.T) {
@@ -73,5 +115,164 @@ func TestDirectSSHAndAddressForBothResourceKinds(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestSSHKeyRegistrationReusesAccountKeys(t *testing.T) {
+	for _, existing := range []bool{false, true} {
+		t.Run(fmt.Sprint(existing), func(t *testing.T) {
+			home := isolatedHome(t)
+			file := filepath.Join(home, "key.pub")
+			require.NoError(t, os.WriteFile(file, []byte(publicKey), 0o600))
+			posts := 0
+			code, stdout, stderr := execute(t, t.Context(), []string{"--json", "ssh-keys", "add", file}, func(req *http.Request) (*http.Response, error) {
+				assert.Equal(t, "/api/user/ssh_keys/", req.URL.Path)
+				key := client.SSHKey{Type: "ssh-ed25519", PublicKey: strings.Fields(publicKey)[1], Fingerprint: "SHA256:test", Comment: "different comment"}
+				if req.Method == http.MethodPost {
+					posts++
+					var body client.SSHKeyRequest
+					data, err := io.ReadAll(req.Body)
+					require.NoError(t, err)
+					require.NoError(t, json.Unmarshal(data, &body))
+					assert.Equal(t, publicKey, body.AuthorizedKey)
+					return test.NewJSONResponse(t, 200, key), nil
+				}
+				keys := []client.SSHKey{}
+				if existing {
+					keys = append(keys, key)
+				}
+				return test.NewJSONResponse(t, 200, keys), nil
+			})
+			require.Zero(t, code, stderr)
+			if existing {
+				assert.Zero(t, posts)
+			} else {
+				assert.Equal(t, 1, posts)
+			}
+			assert.Contains(t, stdout, `"already_registered": `+fmt.Sprint(existing))
+			assert.Contains(t, stdout, "including running instances")
+			assert.Contains(t, stdout, `"guest_login_verified": false`)
+		})
+	}
+}
+
+func TestSSHKeyRegistrationChecksExistingInstanceBeforeMutationAndRefreshesConnection(t *testing.T) {
+	isolatedHome(t)
+	requests := []string{}
+	code, stdout, stderr := execute(t, t.Context(), []string{"--agent", "ssh-keys", "add", "--key", publicKey, "--team", "team", "--vm", "running-vm"}, func(req *http.Request) (*http.Response, error) {
+		requests = append(requests, req.Method+" "+req.URL.Path)
+		switch req.URL.Path {
+		case "/api/user/":
+			return test.NewJSONResponse(t, 200, client.GetUserResponse{Teams: []client.UserTeam{{Handle: "team", EffectiveRoles: []string{"user"}}}}), nil
+		case "/api/teams/team/virtual_machines/running-vm/":
+			return test.NewJSONResponse(t, 200, client.VirtualMachineDetails{Name: "running-vm", SSHAccess: &client.ExternalService{DNSName: "vm.example.com", Port: 22}}), nil
+		case "/api/user/ssh_keys/":
+			if req.Method == http.MethodGet {
+				return test.NewJSONResponse(t, 200, []client.SSHKey{}), nil
+			}
+			return test.NewJSONResponse(t, 200, client.SSHKey{Fingerprint: "SHA256:test"}), nil
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.Path)
+			return nil, nil
+		}
+	})
+	require.Zero(t, code, stderr)
+	assert.Equal(t, []string{"GET /api/user/", "GET /api/teams/team/virtual_machines/running-vm/", "GET /api/user/ssh_keys/", "POST /api/user/ssh_keys/", "GET /api/teams/team/virtual_machines/running-vm/"}, requests)
+	assert.Contains(t, stdout, "vm.example.com")
+	assert.Contains(t, stdout, "guest_login_verified")
+	assert.Contains(t, stdout, "No rebuild is required")
+}
+
+func TestSSHKeyRegistrationDoesNotGrantTeamAccess(t *testing.T) {
+	isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "ssh-keys", "add", "--key", publicKey, "--team", "team", "--vm", "vm"}, func(req *http.Request) (*http.Response, error) {
+		assert.Equal(t, "/api/user/", req.URL.Path)
+		return test.NewJSONResponse(t, 200, client.GetUserResponse{Teams: []client.UserTeam{{Handle: "team", EffectiveRoles: []string{"reader"}}}}), nil
+	})
+	assert.Equal(t, 3, code)
+	assert.Empty(t, stdout)
+	assert.Contains(t, stderr, "user role")
+}
+
+func TestSSHKeyRegistrationRejectsPrivateKeysAndAmbiguousInputs(t *testing.T) {
+	isolatedHome(t)
+	for _, args := range [][]string{
+		{"--key", "-----BEGIN OPENSSH PRIVATE KEY----- secret"},
+		{"--key", publicKey, "--file", "key.pub"},
+		{"--key", publicKey, "--vm", "vm", "--server", "server"},
+		{},
+	} {
+		code, stdout, stderr := execute(t, t.Context(), append([]string{"--json", "ssh-keys", "add"}, args...), noNetwork(t))
+		assert.Equal(t, 2, code)
+		assert.Empty(t, stdout)
+		assert.NotContains(t, stderr, "secret")
+	}
+}
+
+func TestSSHKeyStdinAndOwnerPermissionHint(t *testing.T) {
+	isolatedHome(t)
+	var out bytes.Buffer
+	cmd := appcli.NewCommand(client.WithHTTPClient(test.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		if req.Method == http.MethodGet {
+			return test.NewJSONResponse(t, 200, []client.SSHKey{}), nil
+		}
+		return test.NewEmptyResponse(403), nil
+	})))
+	cmd.Reader = strings.NewReader(publicKey)
+	cmd.Writer, cmd.ErrWriter = &out, &out
+	err := cmd.Run(t.Context(), []string{"hotaisle", "--json", "ssh-keys", "add", "--stdin"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "403")
+	assert.Empty(t, out.String())
+	code, _, stderr := execute(t, t.Context(), []string{"--agent", "ssh-keys", "add", "--key", publicKey}, func(req *http.Request) (*http.Response, error) {
+		if req.Method == http.MethodGet {
+			return test.NewJSONResponse(t, 200, []client.SSHKey{}), nil
+		}
+		return test.NewEmptyResponse(403), nil
+	})
+	assert.Equal(t, 3, code)
+	assert.Contains(t, stderr, "personal owner permission")
+}
+
+func TestMissingInstanceStopsKeyRegistrationBeforeMutation(t *testing.T) {
+	isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "ssh-keys", "add", "--key", publicKey, "--team", "team", "--vm", "missing"}, func(req *http.Request) (*http.Response, error) {
+		assert.Equal(t, http.MethodGet, req.Method)
+		if req.URL.Path == "/api/user/" {
+			return test.NewJSONResponse(t, 200, client.GetUserResponse{Teams: []client.UserTeam{{Handle: "team", EffectiveRoles: []string{"user"}}}}), nil
+		}
+		assert.Equal(t, "/api/teams/team/virtual_machines/missing/", req.URL.Path)
+		return test.NewEmptyResponse(404), nil
+	})
+	assert.Equal(t, 4, code)
+	assert.Empty(t, stdout)
+	assert.Contains(t, stderr, "not_found")
+}
+
+func TestConcurrentKeyRegistrationOnlyReusesThisAccountsKey(t *testing.T) {
+	for _, owned := range []bool{true, false} {
+		t.Run(fmt.Sprint(owned), func(t *testing.T) {
+			isolatedHome(t)
+			reads := 0
+			code, stdout, stderr := execute(t, t.Context(), []string{"--json", "ssh-keys", "add", "--key", publicKey}, func(req *http.Request) (*http.Response, error) {
+				if req.Method == http.MethodPost {
+					return test.NewEmptyResponse(409), nil
+				}
+				reads++
+				keys := []client.SSHKey{}
+				if owned && reads == 2 {
+					keys = append(keys, client.SSHKey{Type: "ssh-ed25519", PublicKey: strings.Fields(publicKey)[1], Fingerprint: "SHA256:test"})
+				}
+				return test.NewJSONResponse(t, 200, keys), nil
+			})
+			assert.Equal(t, 2, reads)
+			if owned {
+				assert.Zero(t, code, stderr)
+				assert.Contains(t, stdout, `"already_registered": true`)
+			} else {
+				assert.Equal(t, 5, code)
+				assert.Empty(t, stdout)
+			}
+		})
 	}
 }

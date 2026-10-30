@@ -7,12 +7,23 @@ A command-line interface tool for [Hot Aisle operations](https://admin.hotaisle.
 After [installation](#installation), run:
 
 ```bash
-hotaisle setup
+hotaisle login
 hotaisle doctor
 hotaisle vm available
 ```
 
 Setup guides you through authentication and team selection, verifies access, and offers to register an SSH public key. Get your initial API key using the [admin TUI](#getting-an-api-key). Token entry in a terminal is hidden. Setup never provisions compute or purchases credits.
+
+`login` is an alias for `setup`.
+
+| Task | Direct command |
+| --- | --- |
+| Inspect identity and teams | `hotaisle whoami` |
+| Manage API credentials | `hotaisle api-keys --help` |
+| Add an SSH public key | `hotaisle ssh-keys add ~/.ssh/id_ed25519.pub` |
+| Add a key and check an existing VM | `hotaisle ssh-keys add ~/.ssh/id_ed25519.pub --vm YOUR_VM` |
+| Get an SSH command | `hotaisle ssh --vm YOUR_VM` |
+| Get an SSH address | `hotaisle ssh --server YOUR_SERVER --address` |
 
 For agents and CI, supply `HOTAISLE_API_TOKEN` through your secret manager, then run:
 
@@ -126,6 +137,12 @@ Failures emit a single JSON document to stderr and leave stdout empty:
 | 130 | Canceled |
 
 The CLI does not automatically retry mutations. Provisioning or rebuild requests can continue after an HTTP timeout; inspect `vm list` and `vm state` before retrying. `vm stop` continues billing; `vm delete` ends it, subject to minimum reservation charges.
+
+## SSH keys for running instances
+
+`ssh-keys add` accepts a positional public key file, `--file PATH` (alias `--key-file`), `--key 'ssh-ed25519 ...'`, or `--stdin`. It reuses an existing account key. Key registration requires an API token with personal owner permission. A key is account-wide, even when `--vm`, `--server`, or `--team` is supplied; those flags check access and identify a target, rather than limiting the key's scope.
+
+Managed instances fetch authorized keys at the next SSH login as `hotaisle`, including running instances. The account must have the team's effective `user` role. No rebuild is needed. Custom SSH configurations and key-service outages can affect propagation; a guest can fall back to cached keys. Targeted registration checks team permissions and resource existence, then refreshes SSH connection details. Its `guest_login_verified:false` field distinguishes API registration from an actual guest login.
 
 # Contributing
 
