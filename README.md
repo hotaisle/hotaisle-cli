@@ -27,6 +27,8 @@ Setup automatically selects a team when exactly one is accessible. Multiple team
 
 Setup saves credentials and the default team to the selected configuration file. For ephemeral credentials without writing a file, set both `HOTAISLE_API_TOKEN` and `HOTAISLE_DEFAULT_TEAM`, and use resource commands directly.
 
+See the [agent guide](docs/agents.md), [GPU inference walkthrough](docs/inference.md), and distributable [agent skill](skills/hotaisle/SKILL.md).
+
 # Installation
 
 ## Binary Releases
