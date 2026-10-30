@@ -67,7 +67,7 @@ func describeError(err error) (errorDetails, int) {
 		switch {
 		case e.StatusCode == 401 || e.StatusCode == 403:
 			detail.Code, exit = "authentication", 3
-			detail.Hint = "Check API token and team permissions."
+			detail.Hint = "Run hotaisle setup; check API token and team permissions."
 		case e.StatusCode == 404:
 			detail.Code, exit = "not_found", 4
 		case e.StatusCode == 409:

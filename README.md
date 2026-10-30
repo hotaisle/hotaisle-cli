@@ -2,6 +2,31 @@
 
 A command-line interface tool for [Hot Aisle operations](https://admin.hotaisle.app/api/docs/). After installation, you can run `hotaisle` from the command line for a list of commands.
 
+## Quickstart
+
+After [installation](#installation), run:
+
+```bash
+hotaisle setup
+hotaisle doctor
+hotaisle vm available
+```
+
+Setup guides you through authentication and team selection, verifies access, and offers to register an SSH public key. Get your initial API key using the [admin TUI](#getting-an-api-key). Token entry in a terminal is hidden. Setup never provisions compute or purchases credits.
+
+For agents and CI, supply `HOTAISLE_API_TOKEN` through your secret manager, then run:
+
+```bash
+hotaisle --json setup --non-interactive --team YOUR_TEAM \
+  --ssh-key-file ~/.ssh/id_ed25519.pub
+hotaisle --json doctor
+hotaisle --json vm available
+```
+
+Setup automatically selects a team when exactly one is accessible. Multiple teams require an explicit choice. Prompts are disabled for piped input, `--non-interactive`, and `--json`. To read a token from a secret manager's stdout instead, pipe it into `hotaisle --json setup --token-stdin --non-interactive --team YOUR_TEAM`.
+
+Setup saves credentials and the default team to the selected configuration file. For ephemeral credentials without writing a file, set both `HOTAISLE_API_TOKEN` and `HOTAISLE_DEFAULT_TEAM`, and use resource commands directly.
+
 # Installation
 
 ## Binary Releases
@@ -86,7 +111,7 @@ Failures emit a single JSON document to stderr and leave stdout empty:
 
 | Exit | Meaning |
 | --- | --- |
-| 0 | Success |
+| 0 | Success; doctor warnings appear in its `warnings` array |
 | 1 | Other failure, including an unexpected resource state |
 | 2 | Invalid arguments or configuration |
 | 3 | Missing credentials, authentication failure, or denied access |

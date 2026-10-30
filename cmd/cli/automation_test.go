@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json/v2"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -53,7 +54,7 @@ func saveConfig(t *testing.T, path, token, team string) {
 }
 
 func TestHelpAndVersionDoNotReadOrWriteConfig(t *testing.T) {
-	for _, args := range [][]string{{"--help"}, {"--version"}, {"vm", "provision", "--help"}, {"help", "vm"}} {
+	for _, args := range [][]string{{"--help"}, {"--version"}, {"vm", "provision", "--help"}, {"help", "setup"}} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
 			home := isolatedHome(t)
 			t.Setenv("HOTAISLE_CONFIG_FILE", filepath.Join(home, "broken.json"))
@@ -210,4 +211,159 @@ func TestExplicitTeamOverridesEnvironment(t *testing.T) {
 		return test.NewJSONResponse(t, 200, []client.VirtualMachineDetails{}), nil
 	})
 	require.Zero(t, code, stderr)
+}
+
+func TestSetupRequiresCredentialsWithoutPrompting(t *testing.T) {
+	home := isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "setup", "--non-interactive"}, noNetwork(t))
+	assert.Equal(t, 3, code)
+	assert.Empty(t, stdout)
+	assert.Contains(t, stderr, "no API token configured")
+	_, err := os.Stat(filepath.Join(home, ".hotaisle"))
+	assert.True(t, os.IsNotExist(err))
+}
+
+func TestSetupRegistersPublicKeyOnlyWhenMissing(t *testing.T) {
+	for _, existing := range []bool{false, true} {
+		t.Run(fmt.Sprint(existing), func(t *testing.T) {
+			home := isolatedHome(t)
+			t.Setenv("HOTAISLE_API_TOKEN", "token")
+			key := "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA example"
+			keyPath := filepath.Join(home, "test.pub")
+			require.NoError(t, os.WriteFile(keyPath, []byte(key+"\n"), 0o600))
+			posts := 0
+			code, stdout, stderr := execute(t, t.Context(), []string{"--json", "setup", "--non-interactive", "--ssh-key-file", keyPath}, func(req *http.Request) (*http.Response, error) {
+				if req.URL.Path == "/api/user/ssh_keys/" {
+					saved := client.SSHKey{Type: "ssh-ed25519", PublicKey: strings.Fields(key)[1]}
+					if req.Method == http.MethodPost {
+						posts++
+						data, err := io.ReadAll(req.Body)
+						require.NoError(t, err)
+						var body client.SSHKeyRequest
+						require.NoError(t, json.Unmarshal(data, &body))
+						assert.Equal(t, key, body.AuthorizedKey)
+						return test.NewJSONResponse(t, 200, saved), nil
+					}
+					keys := []client.SSHKey{}
+					if existing {
+						keys = append(keys, saved)
+					}
+					return test.NewJSONResponse(t, 200, keys), nil
+				}
+				return setupResponse(t, req, []client.UserTeam{{Handle: "team"}})
+			})
+			require.Zero(t, code, stderr)
+			assert.Contains(t, stdout, `"ssh_ready": true`)
+			if existing {
+				assert.Zero(t, posts)
+			} else {
+				assert.Equal(t, 1, posts)
+			}
+		})
+	}
+}
+
+func TestSetupRejectsPrivateKeysWithoutWritingConfig(t *testing.T) {
+	home := isolatedHome(t)
+	t.Setenv("HOTAISLE_API_TOKEN", "token")
+	keyPath := filepath.Join(home, "private-key")
+	require.NoError(t, os.WriteFile(keyPath, []byte("-----BEGIN OPENSSH PRIVATE KEY-----\nsecret-private-content"), 0o600))
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "setup", "--non-interactive", "--ssh-key-file", keyPath}, func(req *http.Request) (*http.Response, error) {
+		assert.Equal(t, http.MethodGet, req.Method)
+		return setupResponse(t, req, []client.UserTeam{{Handle: "team"}})
+	})
+	assert.Equal(t, 2, code)
+	assert.Empty(t, stdout)
+	assert.NotContains(t, stderr, "secret-private-content")
+	_, err := os.Stat(filepath.Join(home, ".hotaisle"))
+	assert.True(t, os.IsNotExist(err))
+}
+
+func TestSetupAuthenticationFailurePreservesConfig(t *testing.T) {
+	home := isolatedHome(t)
+	path := filepath.Join(home, ".hotaisle", "config.json")
+	saveConfig(t, path, "stored-token", "stored-team")
+	before, err := os.ReadFile(path)
+	require.NoError(t, err)
+	t.Setenv("HOTAISLE_API_TOKEN", "invalid-token")
+	code, _, _ := execute(t, t.Context(), []string{"--json", "setup", "--non-interactive"}, func(*http.Request) (*http.Response, error) {
+		return test.NewEmptyResponse(401), nil
+	})
+	assert.Equal(t, 3, code)
+	after, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Equal(t, before, after)
+}
+
+func setupResponse(t *testing.T, req *http.Request, teams []client.UserTeam) (*http.Response, error) {
+	t.Helper()
+	switch req.URL.Path {
+	case "/api/user/":
+		return test.NewJSONResponse(t, 200, client.GetUserResponse{Teams: teams}), nil
+	case "/api/user/ssh_keys/":
+		return test.NewJSONResponse(t, 200, []client.SSHKey{}), nil
+	default:
+		t.Fatalf("unexpected request: %s %s", req.Method, req.URL.Path)
+		return nil, nil
+	}
+}
+
+func TestSetupUsesEnvironmentAndSelectsOnlyTeam(t *testing.T) {
+	home := isolatedHome(t)
+	t.Setenv("HOTAISLE_API_TOKEN", "secret-token")
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "setup", "--non-interactive"}, func(req *http.Request) (*http.Response, error) {
+		assert.Equal(t, "secret-token", req.Header.Get("Authorization"))
+		return setupResponse(t, req, []client.UserTeam{{Handle: "team"}})
+	})
+	require.Zero(t, code, stderr)
+	assert.NotContains(t, stdout+stderr, "secret-token")
+	assert.Contains(t, stdout, `"team": "team"`)
+	assert.Contains(t, stdout, `"ssh_ready": false`)
+	data, err := os.ReadFile(filepath.Join(home, ".hotaisle/config.json"))
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "secret-token")
+}
+
+func TestSetupNeverGuessesBetweenTeams(t *testing.T) {
+	home := isolatedHome(t)
+	t.Setenv("HOTAISLE_API_TOKEN", "secret-token")
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "setup", "--non-interactive"}, func(req *http.Request) (*http.Response, error) {
+		return setupResponse(t, req, []client.UserTeam{{Handle: "one"}, {Handle: "two"}})
+	})
+	assert.Equal(t, 2, code)
+	assert.Empty(t, stdout)
+	assert.Contains(t, stderr, "one, two")
+	_, err := os.Stat(filepath.Join(home, ".hotaisle"))
+	assert.True(t, os.IsNotExist(err))
+}
+
+func TestSetupReadsTokenFromStdin(t *testing.T) {
+	isolatedHome(t)
+	var stdout, stderr bytes.Buffer
+	cmd := appcli.NewCommand(client.WithHTTPClient(test.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		assert.Equal(t, "stdin-secret", req.Header.Get("Authorization"))
+		return setupResponse(t, req, []client.UserTeam{{Handle: "team"}})
+	})))
+	cmd.Reader = strings.NewReader("stdin-secret\n")
+	cmd.Writer, cmd.ErrWriter = &stdout, &stderr
+	require.NoError(t, cmd.Run(t.Context(), []string{"hotaisle", "--json", "setup", "--token-stdin", "--non-interactive"}))
+	assert.NotContains(t, stdout.String()+stderr.String(), "stdin-secret")
+}
+
+func TestDoctorIsReadOnlyAndWarnsAboutMissingSSHKeys(t *testing.T) {
+	home := isolatedHome(t)
+	t.Setenv("HOTAISLE_API_TOKEN", "token")
+	t.Setenv("HOTAISLE_DEFAULT_TEAM", "team")
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "doctor"}, func(req *http.Request) (*http.Response, error) {
+		assert.Equal(t, http.MethodGet, req.Method)
+		if strings.HasSuffix(req.URL.Path, "/balance/") {
+			return test.NewJSONResponse(t, 200, client.BalanceInfo{AvailableBalance: 2000}), nil
+		}
+		return setupResponse(t, req, []client.UserTeam{{Handle: "team"}})
+	})
+	require.Zero(t, code, stderr)
+	assert.Contains(t, stdout, `"ssh_key_count": 0`)
+	assert.Contains(t, stdout, "Register an SSH public key")
+	_, err := os.Stat(filepath.Join(home, ".hotaisle"))
+	assert.True(t, os.IsNotExist(err))
 }

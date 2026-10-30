@@ -60,6 +60,8 @@ func makeCommands(app *App) []*cli.Command {
 		newCommandTeam(app),
 		newCommandBareMetal(app),
 		newCommandVirtualMachine(app),
+		newCommandSetup(app),
+		newCommandDoctor(app),
 	}
 }
 
@@ -70,7 +72,8 @@ func makeApp() (*App, error) {
 	app.Client = api.NewClient(app.Config.ApiToken, Version)
 
 	app.AppCli = &cli.Command{
-		Usage: "Manage Hot Aisle resources from your terminal.",
+		Usage:       "Manage Hot Aisle resources from your terminal.",
+		Description: "Get started with 'hotaisle setup', or use HOTAISLE_API_TOKEN and run 'hotaisle doctor'.\nUse --json for automation. See https://github.com/hotaisle/hotaisle-cli#quickstart.",
 		Version: fmt.Sprintf("%s (commit: %s, branch: %s)\nBuilt by: %s at %s\nGo version: %s",
 			Version, Commit, Branch, BuildBy, BuildTime, GoVersion),
 		EnableShellCompletion: true,

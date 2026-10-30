@@ -87,7 +87,7 @@ func TestMakeAppCommands(t *testing.T) {
 	assert.NotNil(t, app)
 
 	assert.NotNil(t, app.AppCli.Commands)
-	assert.Len(t, app.AppCli.Commands, 5)
+	assert.Len(t, app.AppCli.Commands, 7)
 
 	expectedCommands := []string{"config", "user", "team", "bm", "vm"}
 	commandNames := []string{}
@@ -156,7 +156,7 @@ func TestMakeCommands(t *testing.T) {
 
 	commands := makeCommands(app)
 	assert.NotNil(t, commands)
-	assert.Len(t, commands, 5)
+	assert.Len(t, commands, 7)
 
 	expectedCommands := []string{"config", "user", "team", "bm", "vm"}
 	commandNames := []string{}
