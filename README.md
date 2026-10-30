@@ -23,7 +23,7 @@ hotaisle --json doctor
 hotaisle --json vm available
 ```
 
-Setup automatically selects a team when exactly one is accessible. Multiple teams require an explicit choice. Prompts are disabled for piped input, `--non-interactive`, and `--json`. To read a token from a secret manager's stdout instead, pipe it into `hotaisle --json setup --token-stdin --non-interactive --team YOUR_TEAM`.
+Setup automatically selects a team when exactly one is accessible. Multiple teams require an explicit choice. Prompts are disabled for piped input, `--non-interactive`, `--json`, and `--agent`. To read a token from a secret manager's stdout instead, pipe it into `hotaisle --json setup --token-stdin --non-interactive --team YOUR_TEAM`.
 
 Setup saves credentials and the default team to the selected configuration file. For ephemeral credentials without writing a file, set both `HOTAISLE_API_TOKEN` and `HOTAISLE_DEFAULT_TEAM`, and use resource commands directly.
 
@@ -93,13 +93,15 @@ When you log in to the admin TUI via `ssh admin.hotaisle.app`, check the breadcr
 
 ## Configuration and compatibility
 
-Existing commands, GPU provisioning flags, config keys, and default result formats remain supported. Reads continue to return their existing JSON shapes; mutations retain their existing text messages unless `--json` is supplied. Normal failures retain exit code 1. No major version bump is needed for these additions; future incompatible changes must use the repository's Conventional Commit breaking-change mechanism.
+Existing commands, GPU provisioning flags, config keys, and default result formats remain supported. Reads continue to return their existing JSON shapes; mutations retain their existing text messages unless `--json` or `--agent` is supplied. Normal failures retain exit code 1. No major version bump is needed for these additions; future incompatible changes must use the repository's Conventional Commit breaking-change mechanism.
 
 The default config is `~/.hotaisle/config.json`. `--config-file PATH` (or `-c PATH`) overrides `HOTAISLE_CONFIG_FILE`, which overrides the default path. Both reads and writes use the selected file. Missing files are created only when saving configuration; help and version work even when configuration is invalid.
 
 `HOTAISLE_API_TOKEN` overrides the saved token for API requests without persisting it. `HOTAISLE_DEFAULT_TEAM` overrides the saved default team; an explicit resource `--team` overrides both. The existing `config set token` still saves the environment token, and `config get token` still prints the saved secret. Avoid including that output in agent transcripts or logs.
 
 ## Automation output
+
+Use `hotaisle --agent COMMAND` for Markdown output intended for models. Results use tables, exact JSON literals within cells, and escaped multiline text. Errors use Markdown on stderr with the same fields and exit codes as JSON mode. This mode never prompts. `--agent` and `--json` are mutually exclusive.
 
 Put `--json` before the command, for example `hotaisle --json vm start --vm YOUR_VM`. Reads retain their existing shapes. Mutations that previously printed text return `{"success":true,"message":"..."}`. Config getters return an object keyed by the configuration name. JSON documents end with a newline.
 

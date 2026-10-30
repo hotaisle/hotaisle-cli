@@ -89,7 +89,7 @@ func TestMakeAppCommands(t *testing.T) {
 	assert.NotNil(t, app.AppCli.Commands)
 	assert.Len(t, app.AppCli.Commands, 7)
 
-	expectedCommands := []string{"config", "user", "team", "bm", "vm"}
+	expectedCommands := []string{"config", "user", "team", "bm", "vm", "setup", "doctor"}
 	commandNames := []string{}
 	for _, cmd := range app.AppCli.Commands {
 		commandNames = append(commandNames, cmd.Name)
@@ -109,11 +109,14 @@ func TestMakeAppConfigFileFlag(t *testing.T) {
 	assert.NotNil(t, app)
 
 	assert.NotNil(t, app.AppCli.Flags)
-	assert.Len(t, app.AppCli.Flags, 2)
-
-	flag := app.AppCli.Flags[1]
-	stringFlag, ok := flag.(*cli.StringFlag)
-	assert.True(t, ok)
+	assert.Len(t, app.AppCli.Flags, 3)
+	var stringFlag *cli.StringFlag
+	for _, flag := range app.AppCli.Flags {
+		if candidate, ok := flag.(*cli.StringFlag); ok && candidate.Name == "config-file" {
+			stringFlag = candidate
+		}
+	}
+	require.NotNil(t, stringFlag)
 	assert.Equal(t, "config-file", stringFlag.Name)
 	assert.Contains(t, stringFlag.Value, config.Pretty)
 }

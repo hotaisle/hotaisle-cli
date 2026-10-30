@@ -129,7 +129,7 @@ func newCommandSSH(app *App, bareMetal bool) *cli.Command {
 				return invalid("invalid SSH host, port, or user; inspect the resource's ssh_access field")
 			}
 			args := []string{"ssh", "-p", strconv.FormatInt(access.Port, 10), "--", user + "@" + host}
-			if cmd.Bool("json") {
+			if structuredOutput(cmd) {
 				return app.printJSON(struct {
 					Host string   `json:"host"`
 					Port int64    `json:"port"`

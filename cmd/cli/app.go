@@ -44,6 +44,7 @@ func Execute(ctx context.Context, args []string, stdout, stderr io.Writer, opts 
 func NewCommand(opts ...client.Option) *cli.Command {
 	app, _ := makeApp()
 	app.Client = api.NewClient("", Version, opts...)
+	addHelpCommands(app.AppCli)
 	return app.AppCli
 }
 
@@ -55,13 +56,13 @@ type App struct {
 
 func makeCommands(app *App) []*cli.Command {
 	return []*cli.Command{
-		newCommandConfig(app),
-		newCommandUser(app),
-		newCommandTeam(app),
-		newCommandBareMetal(app),
-		newCommandVirtualMachine(app),
 		newCommandSetup(app),
 		newCommandDoctor(app),
+		newCommandVirtualMachine(app),
+		newCommandBareMetal(app),
+		newCommandTeam(app),
+		newCommandUser(app),
+		newCommandConfig(app),
 	}
 }
 
@@ -73,7 +74,7 @@ func makeApp() (*App, error) {
 
 	app.AppCli = &cli.Command{
 		Usage:       "Manage Hot Aisle resources from your terminal.",
-		Description: "Get started with 'hotaisle setup', or use HOTAISLE_API_TOKEN and run 'hotaisle doctor'.\nUse --json for automation. See https://github.com/hotaisle/hotaisle-cli#quickstart.",
+		Description: "Get started with 'hotaisle setup', or use HOTAISLE_API_TOKEN and run 'hotaisle doctor'.\nUse --agent for Markdown or --json for JSON automation output.",
 		Version: fmt.Sprintf("%s (commit: %s, branch: %s)\nBuilt by: %s at %s\nGo version: %s",
 			Version, Commit, Branch, BuildBy, BuildTime, GoVersion),
 		EnableShellCompletion: true,
@@ -84,7 +85,10 @@ func makeApp() (*App, error) {
 			return cli.ShowRootCommandHelp(cmd)
 		},
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-			if !cmd.Args().Present() || cmd.Args().First() == "help" {
+			if cmd.Bool("json") && cmd.Bool("agent") {
+				return ctx, invalid("choose either --json or --agent")
+			}
+			if localDocumentation(cmd) {
 				return ctx, nil
 			}
 			path := cmd.String("config-file")
@@ -94,7 +98,7 @@ func makeApp() (*App, error) {
 			}
 			app.Config = cfg
 			app.Client.Api.SetToken(app.token())
-			if cmd.Bool("json") {
+			if structuredOutput(cmd) {
 				slog.SetDefault(slog.New(slog.NewJSONHandler(cmd.ErrWriter, &slog.HandlerOptions{Level: slog.LevelError})))
 			} else if err := setupLogging(cfg.LogLevel); err != nil {
 				return ctx, err
@@ -105,6 +109,7 @@ func makeApp() (*App, error) {
 		OnUsageError:   usageError,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "json", Usage: "Emit JSON results and structured errors with categorized exit codes"},
+			&cli.BoolFlag{Name: "agent", Usage: "Emit Markdown results and errors, never prompt, and use categorized exit codes"},
 			&cli.StringFlag{
 				Name:    "config-file",
 				Aliases: []string{"c"},
@@ -117,6 +122,51 @@ func makeApp() (*App, error) {
 	}
 
 	return app, nil
+}
+
+func localDocumentation(root *cli.Command) bool {
+	if !root.Args().Present() {
+		return true
+	}
+	command := root
+	for _, name := range root.Args().Slice() {
+		command = command.Command(name)
+		if command == nil {
+			return false
+		}
+		if command.Name == "help" {
+			return true
+		}
+	}
+	return false
+}
+
+// Supply help commands explicitly so their errors follow the same output
+// contract as every other command, including nested help and aliases.
+func addHelpCommands(parent *cli.Command) {
+	for _, child := range parent.Commands {
+		addHelpCommands(child)
+	}
+	if len(parent.Commands) == 0 {
+		return
+	}
+	parent.Commands = append(parent.Commands, &cli.Command{
+		Name: "help", Aliases: []string{"h"}, Usage: "Show commands or help for a command.",
+		ArgsUsage: "[command...]", OnUsageError: usageError,
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			target := parent
+			for _, name := range cmd.Args().Slice() {
+				target = target.Command(name)
+				if target == nil {
+					return invalid("unknown help topic: " + name)
+				}
+			}
+			if target == cmd.Root() {
+				return cli.ShowRootCommandHelp(target)
+			}
+			return cli.ShowSubcommandHelp(target)
+		},
+	})
 }
 
 func (app *App) token() string {

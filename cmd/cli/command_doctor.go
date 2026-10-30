@@ -38,7 +38,7 @@ func newCommandDoctor(app *App) *cli.Command {
 			if balance.AvailableBalance <= balance.MinimumBalance {
 				warnings = append(warnings, "Team balance is at or below the minimum; provisioning may be unavailable. Check hotaisle team balance --handle "+app.defaultTeam())
 			}
-			if cmd.Bool("json") {
+			if structuredOutput(cmd) {
 				return app.printJSON(struct {
 					Authenticated bool                `json:"authenticated"`
 					Team          string              `json:"team"`

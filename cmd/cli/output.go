@@ -31,11 +31,15 @@ func invalid(message string) error {
 }
 
 func usageError(ctx context.Context, cmd *cli.Command, err error, _ bool) error {
-	if !cmd.Bool("json") {
+	if !structuredOutput(cmd) {
 		_, _ = fmt.Fprintf(cmd.Root().ErrWriter, "Incorrect Usage: %s\n\n", err)
 		_ = cli.ShowSubcommandHelp(cmd)
 	}
 	return problem("invalid_arguments", "Run the command with --help for usage.", err)
+}
+
+func structuredOutput(cmd *cli.Command) bool {
+	return cmd.Bool("json") || cmd.Bool("agent")
 }
 
 type errorDetails struct {
@@ -99,6 +103,10 @@ func reportError(cmd *cli.Command, err error) int {
 		}{detail}, true)
 		return code
 	}
+	if cmd.Bool("agent") {
+		_ = writeMarkdown(cmd.ErrWriter, "Error", detail)
+		return code
+	}
 	_, _ = fmt.Fprintf(cmd.ErrWriter, "Error: %s\n", detail.Message)
 	if detail.Hint != "" {
 		_, _ = fmt.Fprintln(cmd.ErrWriter, detail.Hint)
@@ -114,11 +122,14 @@ func (app *App) writer() io.Writer {
 }
 
 func (app *App) printJSON(value any) error {
+	if app.AppCli != nil && app.AppCli.Bool("agent") {
+		return writeMarkdown(app.writer(), "Result", value)
+	}
 	return writeJSON(app.writer(), value, app.AppCli != nil && app.AppCli.Bool("json"))
 }
 
 func (app *App) success(message string) error {
-	if app.AppCli != nil && app.AppCli.Bool("json") {
+	if app.AppCli != nil && structuredOutput(app.AppCli) {
 		return app.printJSON(struct {
 			Success bool   `json:"success"`
 			Message string `json:"message"`

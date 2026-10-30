@@ -115,7 +115,7 @@ func newCommandConfig(app *App) *cli.Command {
 }
 
 func (app *App) configValue(name, value string) error {
-	if app.AppCli != nil && app.AppCli.Bool("json") {
+	if app.AppCli != nil && structuredOutput(app.AppCli) {
 		return app.printJSON(map[string]string{name: value})
 	}
 	_, err := fmt.Fprint(app.writer(), value)
@@ -123,7 +123,7 @@ func (app *App) configValue(name, value string) error {
 }
 
 func (app *App) configSaved() error {
-	if app.AppCli != nil && app.AppCli.Bool("json") {
+	if app.AppCli != nil && structuredOutput(app.AppCli) {
 		return app.success("Configuration saved")
 	}
 	return nil

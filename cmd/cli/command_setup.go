@@ -34,7 +34,7 @@ func newCommandSetup(app *App) *cli.Command {
 
 func interactiveInput(cmd *cli.Command) (*os.File, bool) {
 	file, ok := cmd.Root().Reader.(*os.File)
-	return file, ok && term.IsTerminal(int(file.Fd())) && !cmd.Bool("non-interactive") && !cmd.Bool("json")
+	return file, ok && term.IsTerminal(int(file.Fd())) && !cmd.Bool("non-interactive") && !structuredOutput(cmd)
 }
 
 func prompt(reader *bufio.Reader, writer io.Writer, message string) (string, error) {
@@ -136,7 +136,7 @@ func (app *App) setup(ctx context.Context, cmd *cli.Command) error {
 	if len(keys) == 0 {
 		next = append([]string{"Register an SSH public key before provisioning: hotaisle setup --ssh-key-file ~/.ssh/id_ed25519.pub"}, next...)
 	}
-	if cmd.Bool("json") {
+	if structuredOutput(cmd) {
 		return app.printJSON(struct {
 			Success  bool     `json:"success"`
 			Team     string   `json:"team"`
