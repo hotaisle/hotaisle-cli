@@ -58,6 +58,7 @@ func makeCommands(app *App) []*cli.Command {
 	return []*cli.Command{
 		newCommandSetup(app),
 		newCommandDoctor(app),
+		newCommandDirectSSH(app),
 		newCommandVirtualMachine(app),
 		newCommandBareMetal(app),
 		newCommandTeam(app),

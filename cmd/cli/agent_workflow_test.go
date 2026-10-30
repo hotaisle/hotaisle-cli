@@ -40,3 +40,38 @@ func TestAgentErrorsUseMarkdownAndCategorizedExitCodes(t *testing.T) {
 		assert.NotContains(t, stderr, "Incorrect Usage")
 	}
 }
+
+func TestDirectSSHAndAddressForBothResourceKinds(t *testing.T) {
+	for _, flag := range []string{"--vm", "--server"} {
+		for _, mode := range []string{"command", "address", "agent"} {
+			t.Run(flag+"_"+mode, func(t *testing.T) {
+				isolatedHome(t)
+				args := []string{"ssh", "--team", "team", flag, "instance"}
+				if mode == "address" {
+					args = append(args, "--address")
+				}
+				if mode == "agent" {
+					args = append([]string{"--agent"}, args...)
+				}
+				code, stdout, stderr := execute(t, t.Context(), args, func(req *http.Request) (*http.Response, error) {
+					kind := "virtual_machines"
+					if flag == "--server" {
+						kind = "bare_metal"
+					}
+					assert.Contains(t, req.URL.Path, "/teams/team/"+kind+"/")
+					return test.NewJSONResponse(t, 200, map[string]any{"ssh_access": client.ExternalService{IPAddress: "2001:db8::1", Port: 2222}}), nil
+				})
+				require.Zero(t, code, stderr)
+				switch mode {
+				case "address":
+					assert.Equal(t, "ssh://hotaisle@[2001:db8::1]:2222\n", stdout)
+				case "command":
+					assert.Equal(t, "ssh -p 2222 -- hotaisle@2001:db8::1\n", stdout)
+				default:
+					assert.Contains(t, stdout, "argv")
+					assert.Contains(t, stdout, "2222")
+				}
+			})
+		}
+	}
+}

@@ -27,14 +27,14 @@ hotaisle --json vm provision --gpu-model YOUR_GPU_MODEL --gpu-count 1
 
 # Use the returned name, not an invented instance ID.
 hotaisle --json vm wait --vm YOUR_VM --timeout 5m
-hotaisle --json vm ssh --vm YOUR_VM
+hotaisle --json ssh --vm YOUR_VM
 ```
 
 Provisioning is GPU-only. Preserve the VM name returned in `.name` for subsequent commands. Availability responses keep the API's existing capitalized keys (`Quantity`, `Specs`, `OnDemandPrice`, `MinimumReservationMinutes`). Balance and price values are US cents; consult the API schema for each rate period.
 
 `vm wait` checks the VM's power state, defaults to `running`, and stops on a deadline or failure state. It does not wait for SSH, cloud-init, a model download, or an inference endpoint. Other target power states can be supplied with `--state`; each run has a bounded `--timeout` and configurable `--interval`.
 
-`vm ssh` prints a command without executing it. In JSON mode, use `host`, `port`, `user`, and `argv`; pass `argv` directly to a process API instead of constructing shell code. Bare metal resources support the same helper via `bm ssh --server YOUR_SERVER`. The default SSH user is `hotaisle`.
+`ssh --vm NAME` and `ssh --server NAME` print commands without executing them. `--address` returns an `ssh://` URL, including IPv6 brackets and nonstandard ports. In JSON mode, use `host`, `port`, `user`, and `argv`; pass `argv` directly to a process API instead of constructing shell code. The older `vm ssh` and `bm ssh` helpers remain supported. The default SSH user is `hotaisle`.
 
 ## Recovery and teardown
 

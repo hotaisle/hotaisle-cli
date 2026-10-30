@@ -28,7 +28,7 @@ Only register public keys. Setup reuses an existing key and reports `ssh_ready:f
 1. Inspect `hotaisle --json vm available` and `hotaisle --json team balance --handle TEAM_HANDLE`. Availability fields retain their capitalization: `Quantity`, `Specs`, `OnDemandPrice`, `MinimumReservationMinutes`. Check cost and minimum reservation time against the user's authorized scope.
 2. Use a returned GPU model and an explicit count: `hotaisle --json vm provision --gpu-model MODEL --gpu-count COUNT`. This service provisions GPU resources. Save the returned `.name`.
 3. Run `hotaisle --json vm wait --vm NAME --timeout 5m`. This checks power state only. Separately verify SSH, cloud-init, model startup, and endpoint health as needed.
-4. Get connection metadata with `hotaisle --json vm ssh --vm NAME`, or `bm ssh --server NAME` for bare metal. Use its `argv` array when launching SSH. The helper prints details and does not execute SSH; the default login user is `hotaisle`.
+4. Get a command with `hotaisle ssh --vm NAME`, or `hotaisle ssh --server NAME` for bare metal. Add `--address` for an `ssh://` URL. In JSON mode, pass the returned `argv` array directly to a process API rather than building shell code. These helpers print details without opening a connection. The existing `vm ssh` and `bm ssh` paths still work; the default login user is `hotaisle`.
 
 Do not provision, rebuild, delete, or purchase credits beyond the user's authorization. `--user-data-url` can trigger a rebuild and take longer than an HTTP request. Never blindly retry provisioning after a timeout: list resources and inspect state first to avoid duplicate allocations.
 
