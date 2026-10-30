@@ -2,6 +2,7 @@
 
 - Always follow the instructions in this `AGENTS.md` file.
 - Always use Conventional Commits for commit messages.
+- Changes to existing defaults or output contracts must use a breaking Conventional Commit (`type(scope)!: subject`) with a `BREAKING CHANGE:` footer explaining the migration. Add the user-visible change and migration steps to `CHANGELOG.md`; keep the footer useful in generated release notes.
 - Never commit directly to `main`, `master`, or any repository's default branch. Always create or switch to a descriptive non-default branch first, including for `commit`, `add and commit`, `commit all`, and `release` requests.
 - Before staging changes or creating a commit, run `git branch --show-current` and verify the result is the intended non-default branch. If on a default branch or detached HEAD, create and switch to a branch before proceeding.
 - Never include Codex, Claude, or other AI-assistant branding in branch names, commit messages, PR titles, PR bodies, or other generated labels.

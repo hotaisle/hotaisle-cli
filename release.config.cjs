@@ -1,11 +1,19 @@
 "use strict";
+const parserOpts = {
+  breakingHeaderPattern: /^(\w+)(?:\(([^)]+)\))?!: (.+)$/,
+  headerCorrespondence: ["type", "scope", "subject"],
+  headerPattern: /^(\w+)(?:\(([^)]+)\))?!?: (.+)$/,
+  noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"],
+};
+
 module.exports = {
   branches: ["main"],
   plugins: [
-    "@semantic-release/commit-analyzer",
+    ["@semantic-release/commit-analyzer", { parserOpts }],
     [
       "@semantic-release/release-notes-generator",
       {
+        parserOpts,
         writerOpts: {
           transform(commit, context) {
             const sections = {

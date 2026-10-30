@@ -302,8 +302,8 @@ brew-formula:
 		package/brew-formula.rb
 
 # CI/CD
-ci: deps js-deps vet lint lsp js-check test security dist nfpm
-release: deps js-check security dist nfpm
+ci: deps js-deps vet lint lsp js-check release-check test security dist nfpm
+release: deps js-check release-check security dist nfpm
 
 # Run the application
 run *args: build
@@ -360,6 +360,10 @@ js-deps:
 # Fail on every Biome and Ultracite diagnostic
 js-check:
 	npm run check
+
+# Verify breaking-commit analysis and generated migration notes without publishing.
+release-check:
+	npm run test:release
 
 # Apply every available safe JavaScript fix
 js-fix:

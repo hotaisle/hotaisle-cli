@@ -3,11 +3,14 @@
   "private": true,
   "scripts": {
     "check": "ultracite check",
-    "fix": "ultracite fix"
+    "fix": "ultracite fix",
+    "test:release": "node --test release.config.test.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/exec": "7.1.0",
+    "@semantic-release/release-notes-generator": "14.1.1",
     "semantic-release": "25.0.9",
     "ultracite": "8.0.1"
   }

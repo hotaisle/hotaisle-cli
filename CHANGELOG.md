@@ -48,3 +48,9 @@ Use `--agent` to retain Markdown tables or `--json` for structured rental option
 - Direct SSH commands and `ssh://` addresses for VMs and bare metal servers.
 - Rental discovery with GPU bundle requirements, availability, prices, and minimum reservations.
 - Markdown agent output and an embedded skill matching the installed CLI version and commit.
+
+### Release automation
+
+Changes to existing defaults are marked with both a breaking commit header (`type(scope)!: subject`) and a `BREAKING CHANGE:` migration footer. Release analysis and release notes now recognize `!` headers on their own as well as singular and plural breaking-change footers.
+
+Breaking changes select a major release, including before 1.0. Under the current versioning policy, a major bump from `v0.10.8` produces `v1.0.0`. These migration notes remain prominent in the generated release notes. CI and release builds now check commit classification and breaking-change notes before publishing.
