@@ -10,6 +10,8 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+const noRentalOptionsMessage = "No rental options are currently available for this team. Please try again later."
+
 type rentalOption struct {
 	Kind                      string        `json:"kind"`
 	GPURequirement            string        `json:"gpu_requirement"`
@@ -108,18 +110,19 @@ func (app *App) listRentals(ctx context.Context, cmd *cli.Command) error {
 		return app.printRentalTable(team, options)
 	}
 	var out strings.Builder
-	fmt.Fprintf(&out, "# Rental options\n\nTeam: %s. Prices are USD per hour. Each row is one complete rental bundle.\n\n", markdownCode(team))
+	fmt.Fprintf(&out, "# Rental options\n\nTeam: %s", markdownCode(team))
 	if len(options) == 0 {
-		out.WriteString("No rental options are currently available for this team.\n")
+		out.WriteString("\n\n" + noRentalOptionsMessage + "\n")
 	} else {
+		out.WriteString(". Prices are USD per hour. Each row is one complete rental bundle.\n\n")
 		out.WriteString("| Kind | GPU requirement | Available bundles | CPU cores | RAM (GiB) | Disk (GiB) | USD/hour | Minimum reservation (minutes) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n")
 		for _, option := range options {
 			cells := option.cells()
 			cells[1] = markdownCode(cells[1])
 			fmt.Fprintf(&out, "| %s |\n", strings.Join(cells, " | "))
 		}
+		out.WriteString("\nThese are currently available configurations, not a catalog of sold-out types. Do not assume an 8-GPU bundle can be rented one GPU at a time.\n")
 	}
-	out.WriteString("\nThese are currently available configurations, not a catalog of sold-out types. Do not assume an 8-GPU bundle can be rented one GPU at a time.\n")
 	_, err = fmt.Fprint(app.writer(), out.String())
 	return err
 }
@@ -139,7 +142,7 @@ func (app *App) printRentalTable(team string, options []rentalOption) error {
 	var out strings.Builder
 	fmt.Fprintf(&out, "Rental options\nTeam: %s\n\n", terminalCell(team))
 	if len(options) == 0 {
-		out.WriteString("No rental options are currently available for this team.\n")
+		out.WriteString(noRentalOptionsMessage + "\n")
 	} else {
 		rows := make([][]string, 0, len(options))
 		for _, option := range options {
@@ -150,8 +153,8 @@ func (app *App) printRentalTable(team string, options []rentalOption) error {
 			rows, []bool{false, false, true, true, true, true, true, true},
 		)
 		table.write(&out, "")
+		out.WriteString("\nPrices are USD per hour for one complete rental bundle.\nAvailability excludes sold-out configurations; GPU bundles are rented whole.\n")
 	}
-	out.WriteString("\nPrices are USD per hour for one complete rental bundle.\nAvailability excludes sold-out configurations; GPU bundles are rented whole.\n")
 	_, err := fmt.Fprint(app.writer(), out.String())
 	return err
 }

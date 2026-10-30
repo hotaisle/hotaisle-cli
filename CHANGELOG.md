@@ -41,6 +41,8 @@ The default `rentals` / `offers` output is now a compact terminal table with dyn
 
 Use `--agent` to retain Markdown tables or `--json` for structured rental options.
 
+Empty rental searches show the team and the message "No rental options are currently available for this team. Please try again later." without pricing or bundle notes. Those notes appear only when rental options are returned, in both terminal and agent output.
+
 ### Added
 
 - Direct account commands: `login`, `whoami`, `ssh-keys`, and `api-keys`, while preserving the existing nested commands.
