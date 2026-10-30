@@ -61,6 +61,8 @@ Empty resource, availability, team, member, invitation, and key lists return `[]
 
 Read stderr and the exit code separately from stdout. The [output contract](../README.md#automation-output) documents error categories and exit codes.
 
+`team purchase-credits` can return checkout details or report `approval_requested:true` (HTTP 202). An approval request does not add credits; wait for approval before relying on the balance.
+
 - Authentication or permission failures: verify the token and its team roles; rerun setup with the intended team.
 - Multiple teams: pass `setup --team HANDLE`; setup will not guess.
 - Capacity or resource conflicts: inspect availability and the resource state before choosing another configuration.

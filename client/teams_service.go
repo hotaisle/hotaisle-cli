@@ -82,8 +82,17 @@ func (s *TeamsService) PurchaseCredits(ctx context.Context, teamHandle string, r
 		"team": teamHandle,
 	})
 	var result PurchaseTeamCreditsResponse
-	err := s.client.doRequest(ctx, http.MethodPost, path, req, &result)
-	return &result, err
+	response, err := s.client.request(ctx, http.MethodPost, path, req)
+	if err != nil {
+		return nil, err
+	}
+	if response.status == http.StatusAccepted {
+		return &PurchaseTeamCreditsResponse{ApprovalRequested: true}, nil
+	}
+	if err := response.decode(&result); err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 // GetTeamInvitations retrieves pending invitations for a team

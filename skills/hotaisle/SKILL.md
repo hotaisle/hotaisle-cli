@@ -46,6 +46,8 @@ Do not provision, rebuild, delete, or purchase credits beyond the user's authori
 
 Agent/JSON exit codes: 2 invalid input/config, 3 authentication/permission, 4 not found, 5 conflict, 6 temporary network/server failure or rate limiting, 7 timeout, 130 cancellation; 1 covers other failures. JSON errors use `{"error":{"code":...,"message":...,"hint":...,"http_status":...,"retryable":...}}`; Markdown errors expose the same fields. Retry read-only temporary failures with backoff and a deadline. Check whether mutations succeeded before retrying them. Terminal VM states and deadlines end `vm wait`; they do not cancel provisioning or billing.
 
+`team purchase-credits` returns checkout details or `approval_requested:true` when the API requests payment approval (HTTP 202). Approval requested does not mean credits were added; wait for approval before relying on the balance.
+
 `vm stop` continues billing. `vm delete` deletes data and ends billing, subject to minimum reservation charges. Delete only when that matches the user's intended cleanup, and report any remaining allocated resources.
 
 For inference deployment details and model-specific compatibility, consult the [inference walkthrough](https://github.com/hotaisle/hotaisle-cli/blob/main/docs/inference.md). Do not infer an exact model identifier, GPU count, runtime image, or supported architecture from a marketing model name.

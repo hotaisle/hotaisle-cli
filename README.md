@@ -122,6 +122,8 @@ Empty lists of resources, teams, members, invitations, and keys return `[]` in J
 
 An empty, `null`, malformed, or unusable resource object is an `invalid_response` error (exit 1), rather than a successful object filled with default values. Zero balances and other valid zero values remain data. Optional fields such as missing rental price quotes retain their meaningful `null` values.
 
+`team purchase-credits` returns checkout details when payment can proceed. If the API instead requests payment approval (HTTP 202), the CLI explicitly reports `approval_requested:true` in structured output and explains that credits have not been added.
+
 Failures emit a single JSON document to stderr and leave stdout empty:
 
 ```json

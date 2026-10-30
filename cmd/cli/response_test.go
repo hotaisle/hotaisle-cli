@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hotaisle/hotaisle-cli/client"
 	"github.com/hotaisle/hotaisle-cli/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -107,6 +108,7 @@ func TestDataCommandsRejectMissingOrMalformedObjects(t *testing.T) {
 		{"team", "balance", "--handle", "team"},
 		{"team", "members", "list", "--handle", "team"},
 		{"team", "members", "update", "--handle", "team", "--email", "user@example.com", "--role", "user"},
+		{"team", "purchase-credits", "--handle", "team", "--cents", "2500"},
 		{"vm", "get", "--vm", "vm"},
 		{"vm", "provision", "--gpu-model", "MI300X", "--gpu-count", "8"},
 		{"vm", "state", "--vm", "vm"},
@@ -222,6 +224,49 @@ func TestNoContentMutationsAlwaysAcknowledgeSuccessAndReportErrors(t *testing.T)
 				})
 			}
 		}
+	}
+}
+
+func TestCreditPurchaseDistinguishesCheckoutFromApprovalRequest(t *testing.T) {
+	for _, status := range []int{200, 202} {
+		for _, mode := range []string{"default", "json", "agent"} {
+			t.Run(fmt.Sprintf("%d/%s", status, mode), func(t *testing.T) {
+				isolatedHome(t)
+				args := outputMode(mode, []string{"team", "purchase-credits", "--handle", "team", "--cents", "2500"})
+				code, stdout, stderr := execute(t, t.Context(), args, func(req *http.Request) (*http.Response, error) {
+					var body client.PurchaseTeamCreditsRequest
+					require.NoError(t, json.UnmarshalRead(req.Body, &body))
+					assert.Equal(t, int64(2500), body.Cents)
+					if status == 202 {
+						return test.NewEmptyResponse(status), nil
+					}
+					return responseBody(status, `{"checkout_url":"https://example.com/checkout","expires_at":"2030-01-01T00:00:00Z"}`), nil
+				})
+				require.Zero(t, code, stderr)
+				assert.Empty(t, stderr)
+				if status == 202 {
+					assert.Contains(t, stdout, "Payment approval requested")
+					assert.NotContains(t, stdout, "checkout_url")
+					assert.NotContains(t, stdout, "0001-")
+					if mode != "default" {
+						assert.Contains(t, stdout, "approval_requested")
+					}
+				} else if mode == "agent" {
+					assert.Contains(t, stdout, "https://example.com/checkout")
+				} else {
+					assert.JSONEq(t, `{"checkout_url":"https://example.com/checkout","expires_at":"2030-01-01T00:00:00Z"}`, stdout)
+				}
+			})
+		}
+	}
+	for _, amount := range []string{"0", "-1", "1.5", "abc", "999999999999999999999999999999"} {
+		t.Run(amount, func(t *testing.T) {
+			isolatedHome(t)
+			code, stdout, stderr := execute(t, t.Context(), []string{"--json", "team", "purchase-credits", "--handle", "team", "--cents", amount}, noNetwork(t))
+			assert.Equal(t, 2, code)
+			assert.Empty(t, stdout)
+			assert.Contains(t, stderr, "positive whole number")
+		})
 	}
 }
 

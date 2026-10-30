@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/hotaisle/hotaisle-cli/client"
 
@@ -125,10 +126,25 @@ var teamCommands = commandDef{
 				{Name: "cents", Usage: "Amount in cents", Required: true},
 			},
 			Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
+				cents, err := strconv.ParseInt(cmd.String("cents"), 10, 64)
+				if err != nil || cents <= 0 {
+					return invalid("--cents must be a positive whole number of cents")
+				}
 				resp, err := app.Client.Api.Teams().PurchaseCredits(ctx, cmd.String("handle"), client.PurchaseTeamCreditsRequest{
-					Cents: int64(cmd.Int("cents")),
+					Cents: cents,
 				})
 				if err != nil {
+					return err
+				}
+				if resp.ApprovalRequested {
+					message := "Payment approval requested. Credits have not been added; wait for approval before continuing."
+					if structuredOutput(cmd) {
+						return app.printJSON(struct {
+							ApprovalRequested bool   `json:"approval_requested"`
+							Message           string `json:"message"`
+						}{true, message})
+					}
+					_, err := fmt.Fprintln(app.writer(), message)
 					return err
 				}
 				return app.printJSON(resp)
