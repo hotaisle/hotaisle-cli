@@ -35,8 +35,7 @@ func Execute(ctx context.Context, args []string, stdout, stderr io.Writer, opts 
 	cmd := NewCommand(opts...)
 	cmd.Writer, cmd.ErrWriter = stdout, stderr
 	if err := cmd.Run(ctx, args); err != nil {
-		_, _ = fmt.Fprintf(cmd.ErrWriter, "Error: %v\n", err)
-		return 1
+		return reportError(cmd, err)
 	}
 	return 0
 }
@@ -75,7 +74,12 @@ func makeApp() (*App, error) {
 		Version: fmt.Sprintf("%s (commit: %s, branch: %s)\nBuilt by: %s at %s\nGo version: %s",
 			Version, Commit, Branch, BuildBy, BuildTime, GoVersion),
 		EnableShellCompletion: true,
-		DefaultCommand:        "help",
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			if cmd.Args().Present() {
+				return invalid("unknown command: " + cmd.Args().First())
+			}
+			return cli.ShowRootCommandHelp(cmd)
+		},
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 			if !cmd.Args().Present() || cmd.Args().First() == "help" {
 				return ctx, nil
@@ -83,16 +87,21 @@ func makeApp() (*App, error) {
 			path := cmd.String("config-file")
 			cfg, err := config.Load(&path)
 			if err != nil {
-				return ctx, fmt.Errorf("load configuration: %w", err)
+				return ctx, problem("configuration", "Check --config-file or HOTAISLE_CONFIG_FILE; help works without a valid config.", err)
 			}
 			app.Config = cfg
 			app.Client.Api.SetToken(app.token())
-			if err := setupLogging(cfg.LogLevel); err != nil {
+			if cmd.Bool("json") {
+				slog.SetDefault(slog.New(slog.NewJSONHandler(cmd.ErrWriter, &slog.HandlerOptions{Level: slog.LevelError})))
+			} else if err := setupLogging(cfg.LogLevel); err != nil {
 				return ctx, err
 			}
 			return ctx, nil
 		},
+		ExitErrHandler: func(context.Context, *cli.Command, error) {},
+		OnUsageError:   usageError,
 		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "json", Usage: "Emit JSON results and structured errors with categorized exit codes"},
 			&cli.StringFlag{
 				Name:    "config-file",
 				Aliases: []string{"c"},

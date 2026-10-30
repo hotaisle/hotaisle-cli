@@ -25,7 +25,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(servers)
+				return app.printJSON(servers)
 			},
 		},
 		{
@@ -40,7 +40,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(server)
+				return app.printJSON(server)
 			},
 		},
 		{
@@ -78,7 +78,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(resp)
+				return app.printJSON(resp)
 			},
 		},
 		{
@@ -96,8 +96,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("Server updated successfully")
-				return nil
+				return app.success("Server updated successfully")
 			},
 		},
 		{
@@ -112,8 +111,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("Server deleted successfully")
-				return nil
+				return app.success("Server deleted successfully")
 			},
 		},
 		{
@@ -127,7 +125,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(available)
+				return app.printJSON(available)
 			},
 		},
 		{
@@ -146,7 +144,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(state)
+						return app.printJSON(state)
 					},
 				},
 				{
@@ -161,8 +159,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Power on command sent")
-						return nil
+						return app.success("Power on command sent")
 					},
 				},
 				{
@@ -177,8 +174,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Graceful shutdown command sent")
-						return nil
+						return app.success("Graceful shutdown command sent")
 					},
 				},
 				{
@@ -193,8 +189,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Force shutdown command sent")
-						return nil
+						return app.success("Force shutdown command sent")
 					},
 				},
 				{
@@ -209,8 +204,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Warm reboot command sent")
-						return nil
+						return app.success("Warm reboot command sent")
 					},
 				},
 				{
@@ -225,8 +219,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Cold reboot command sent")
-						return nil
+						return app.success("Cold reboot command sent")
 					},
 				},
 				{
@@ -241,8 +234,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("AC reset command sent")
-						return nil
+						return app.success("AC reset command sent")
 					},
 				},
 			},
@@ -259,7 +251,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(server)
+				return app.printJSON(server)
 			},
 		},
 		{
@@ -274,7 +266,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(url)
+				return app.printJSON(url)
 			},
 		},
 		{
@@ -293,8 +285,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Support access enabled")
-						return nil
+						return app.success("Support access enabled")
 					},
 				},
 				{
@@ -309,8 +300,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Support access disabled")
-						return nil
+						return app.success("Support access disabled")
 					},
 				},
 			},

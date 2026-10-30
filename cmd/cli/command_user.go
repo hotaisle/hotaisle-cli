@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hotaisle/hotaisle-cli/client"
 
@@ -21,7 +20,7 @@ var userCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(user)
+				return app.printJSON(user)
 			},
 		},
 		{
@@ -37,7 +36,7 @@ var userCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(user)
+				return app.printJSON(user)
 			},
 		},
 		{
@@ -52,7 +51,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(keys)
+						return app.printJSON(keys)
 					},
 				},
 				{
@@ -68,7 +67,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(result)
+						return app.printJSON(result)
 					},
 				},
 				{
@@ -82,8 +81,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("SSH key deleted successfully")
-						return nil
+						return app.success("SSH key deleted successfully")
 					},
 				},
 			},
@@ -100,7 +98,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(keys)
+						return app.printJSON(keys)
 					},
 				},
 				{
@@ -114,7 +112,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(key)
+						return app.printJSON(key)
 					},
 				},
 				{
@@ -132,7 +130,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(key)
+						return app.printJSON(key)
 					},
 				},
 				{
@@ -151,7 +149,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(key)
+						return app.printJSON(key)
 					},
 				},
 				{
@@ -165,8 +163,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("API key deleted successfully")
-						return nil
+						return app.success("API key deleted successfully")
 					},
 				},
 			},

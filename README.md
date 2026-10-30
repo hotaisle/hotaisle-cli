@@ -64,11 +64,39 @@ Download the appropriate rpm package from the [Releases page](https://github.com
 
 When you log in to the admin TUI via `ssh admin.hotaisle.app`, check the breadcrumbs at the top; you’ll likely start in the team settings. Press Esc, then use the arrow keys to move up to your name to edit your personal settings, including API keys.
 
-## Configuration
+## Configuration and compatibility
+
+Existing commands, GPU provisioning flags, config keys, and default result formats remain supported. Reads continue to return their existing JSON shapes; mutations retain their existing text messages unless `--json` is supplied. Normal failures retain exit code 1. No major version bump is needed for these additions; future incompatible changes must use the repository's Conventional Commit breaking-change mechanism.
 
 The default config is `~/.hotaisle/config.json`. `--config-file PATH` (or `-c PATH`) overrides `HOTAISLE_CONFIG_FILE`, which overrides the default path. Both reads and writes use the selected file. Missing files are created only when saving configuration; help and version work even when configuration is invalid.
 
 `HOTAISLE_API_TOKEN` overrides the saved token for API requests without persisting it. `HOTAISLE_DEFAULT_TEAM` overrides the saved default team; an explicit resource `--team` overrides both. The existing `config set token` still saves the environment token, and `config get token` still prints the saved secret. Avoid including that output in agent transcripts or logs.
+
+## Automation output
+
+Put `--json` before the command, for example `hotaisle --json vm start --vm YOUR_VM`. Reads retain their existing shapes. Mutations that previously printed text return `{"success":true,"message":"..."}`. Config getters return an object keyed by the configuration name. JSON documents end with a newline.
+
+Failures emit a single JSON document to stderr and leave stdout empty:
+
+```json
+{"error":{"code":"authentication","message":"...","hint":"...","http_status":401,"retryable":false}}
+```
+
+`hint` and `http_status` are present when applicable. Exit codes in JSON mode are:
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | Success |
+| 1 | Other failure, including an unexpected resource state |
+| 2 | Invalid arguments or configuration |
+| 3 | Missing credentials, authentication failure, or denied access |
+| 4 | Resource not found (HTTP 404) |
+| 5 | Resource conflict (HTTP 409) |
+| 6 | Temporary network/server failure or rate limiting |
+| 7 | Deadline exceeded |
+| 130 | Canceled |
+
+The CLI does not automatically retry mutations. Provisioning or rebuild requests can continue after an HTTP timeout; inspect `vm list` and `vm state` before retrying. `vm stop` continues billing; `vm delete` ends it, subject to minimum reservation charges.
 
 # Contributing
 

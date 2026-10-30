@@ -3,7 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"io"
 	"strings"
 
 	"github.com/urfave/cli/v3"
@@ -38,7 +38,7 @@ type flagDef struct {
 //	                if err != nil {
 //	                    return err
 //	                }
-//	                return printJSON(resources)
+//	                return app.printJSON(resources)
 //	            },
 //	        },
 //	        {
@@ -54,7 +54,7 @@ type flagDef struct {
 //	                if err != nil {
 //	                    return err
 //	                }
-//	                return printJSON(resource)
+//	                return app.printJSON(resource)
 //	            },
 //	        },
 //	    },
@@ -123,21 +123,30 @@ func splitPath(path string) []string {
 	return result
 }
 
-// printJSON marshals a value to pretty-printed JSON and prints it
-func printJSON(v any) error {
+func writeJSON(w io.Writer, v any, newline bool) error {
 	prettyJSON, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
 	}
-	fmt.Print(string(prettyJSON))
-	return nil
+	if newline {
+		prettyJSON = append(prettyJSON, '\n')
+	}
+	_, err = w.Write(prettyJSON)
+	return err
 }
 
 // buildCommand recursively builds a cli.Command from a commandDef
 func buildCommand(app *App, def commandDef) *cli.Command {
 	cmd := &cli.Command{
-		Name:  def.Name,
-		Usage: def.Usage,
+		Name:         def.Name,
+		Usage:        def.Usage,
+		OnUsageError: usageError,
+		Action: func(ctx context.Context, command *cli.Command) error {
+			if command.Args().Present() {
+				return invalid("unknown command: " + command.Args().First())
+			}
+			return cli.ShowSubcommandHelp(command)
+		},
 		Before: func(ctx context.Context, command *cli.Command) (context.Context, error) {
 			for _, flag := range def.Flags {
 				if flag.Name == "team" && !command.IsSet("team") && app.defaultTeam() != "" {

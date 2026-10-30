@@ -109,9 +109,9 @@ func TestMakeAppConfigFileFlag(t *testing.T) {
 	assert.NotNil(t, app)
 
 	assert.NotNil(t, app.AppCli.Flags)
-	assert.Len(t, app.AppCli.Flags, 1)
+	assert.Len(t, app.AppCli.Flags, 2)
 
-	flag := app.AppCli.Flags[0]
+	flag := app.AppCli.Flags[1]
 	stringFlag, ok := flag.(*cli.StringFlag)
 	assert.True(t, ok)
 	assert.Equal(t, "config-file", stringFlag.Name)
@@ -207,6 +207,6 @@ func TestMakeAppDefaultValues(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, app)
 
-	assert.Equal(t, "help", app.AppCli.DefaultCommand)
+	assert.NotNil(t, app.AppCli.Action)
 	assert.True(t, app.AppCli.EnableShellCompletion)
 }

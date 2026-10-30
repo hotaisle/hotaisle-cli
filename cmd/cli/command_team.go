@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hotaisle/hotaisle-cli/client"
 
@@ -21,7 +20,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(teams)
+				return app.printJSON(teams)
 			},
 		},
 		{
@@ -41,7 +40,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(team)
+				return app.printJSON(team)
 			},
 		},
 		{
@@ -55,7 +54,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(team)
+				return app.printJSON(team)
 			},
 		},
 		{
@@ -75,7 +74,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(team)
+				return app.printJSON(team)
 			},
 		},
 		{
@@ -86,7 +85,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(invitations)
+				return app.printJSON(invitations)
 			},
 		},
 		{
@@ -100,7 +99,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(team)
+				return app.printJSON(team)
 			},
 		},
 		{
@@ -114,7 +113,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(balance)
+				return app.printJSON(balance)
 			},
 		},
 		{
@@ -131,7 +130,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(resp)
+				return app.printJSON(resp)
 			},
 		},
 		{
@@ -149,7 +148,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(team.Members)
+						return app.printJSON(team.Members)
 					},
 				},
 				{
@@ -163,7 +162,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(invitations)
+						return app.printJSON(invitations)
 					},
 				},
 				{
@@ -184,8 +183,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Invitation sent successfully")
-						return nil
+						return app.success("Invitation sent successfully")
 					},
 				},
 				{
@@ -203,7 +201,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(member)
+						return app.printJSON(member)
 					},
 				},
 				{
@@ -218,8 +216,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Member removed successfully")
-						return nil
+						return app.success("Member removed successfully")
 					},
 				},
 			},

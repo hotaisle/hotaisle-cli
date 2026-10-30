@@ -25,7 +25,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(vms)
+				return app.printJSON(vms)
 			},
 		},
 		{
@@ -40,7 +40,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(vm)
+				return app.printJSON(vm)
 			},
 		},
 		{
@@ -106,7 +106,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(resp)
+				return app.printJSON(resp)
 			},
 		},
 		{
@@ -124,8 +124,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM updated successfully")
-				return nil
+				return app.success("VM updated successfully")
 			},
 		},
 		{
@@ -140,8 +139,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM deleted successfully")
-				return nil
+				return app.success("VM deleted successfully")
 			},
 		},
 		{
@@ -155,7 +153,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(available)
+				return app.printJSON(available)
 			},
 		},
 		{
@@ -170,7 +168,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(state)
+				return app.printJSON(state)
 			},
 		},
 		{
@@ -185,8 +183,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM start command sent")
-				return nil
+				return app.success("VM start command sent")
 			},
 		},
 		{
@@ -201,8 +198,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM stop command sent")
-				return nil
+				return app.success("VM stop command sent")
 			},
 		},
 		{
@@ -217,8 +213,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM shutdown command sent")
-				return nil
+				return app.success("VM shutdown command sent")
 			},
 		},
 		{
@@ -233,8 +228,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM reboot command sent")
-				return nil
+				return app.success("VM reboot command sent")
 			},
 		},
 		{
@@ -249,8 +243,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM hard-reset command sent")
-				return nil
+				return app.success("VM hard-reset command sent")
 			},
 		},
 		{
@@ -268,8 +261,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM rebuild command sent")
-				return nil
+				return app.success("VM rebuild command sent")
 			},
 		},
 	},

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json/v2"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -73,7 +74,7 @@ func TestConfigOverridesSupplyCredentialsAndTeam(t *testing.T) {
 			saveConfig(t, filepath.Join(home, ".hotaisle/config.json"), "default-token", "default-team")
 			custom := filepath.Join(home, "custom.json")
 			saveConfig(t, custom, "custom-token", "custom-team")
-			args := []string{}
+			args := []string{"--json"}
 			expectedToken, expectedTeam := "custom-token", "custom-team"
 			switch source {
 			case "flag":
@@ -86,12 +87,13 @@ func TestConfigOverridesSupplyCredentialsAndTeam(t *testing.T) {
 				expectedToken, expectedTeam = "env-token", "env-team"
 			}
 			args = append(args, "vm", "list")
-			code, _, stderr := execute(t, t.Context(), args, func(req *http.Request) (*http.Response, error) {
+			code, stdout, stderr := execute(t, t.Context(), args, func(req *http.Request) (*http.Response, error) {
 				assert.Equal(t, expectedToken, req.Header.Get("Authorization"))
 				assert.Equal(t, "/api/teams/"+expectedTeam+"/virtual_machines/", req.URL.Path)
 				return test.NewJSONResponse(t, 200, []client.VirtualMachineDetails{}), nil
 			})
 			require.Zero(t, code, stderr)
+			assert.JSONEq(t, "[]", stdout)
 			assert.Empty(t, stderr)
 		})
 	}
@@ -104,8 +106,9 @@ func TestConfigWritesSelectedFileAndPreservesDefault(t *testing.T) {
 	before, err := os.ReadFile(defaultPath)
 	require.NoError(t, err)
 	custom := filepath.Join(home, "new", "custom.json")
-	code, _, stderr := execute(t, t.Context(), []string{"-c", custom, "config", "set", "default-team", "custom-team"}, noNetwork(t))
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "-c", custom, "config", "set", "default-team", "custom-team"}, noNetwork(t))
 	require.Zero(t, code, stderr)
+	assert.Contains(t, stdout, `"success": true`)
 	data, err := os.ReadFile(custom)
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "custom-team")
@@ -114,13 +117,83 @@ func TestConfigWritesSelectedFileAndPreservesDefault(t *testing.T) {
 	assert.Equal(t, before, after)
 }
 
+func TestJSONMutationsAndLegacyOutput(t *testing.T) {
+	for _, machine := range []bool{false, true} {
+		t.Run(fmt.Sprint(machine), func(t *testing.T) {
+			isolatedHome(t)
+			t.Setenv("HOTAISLE_API_TOKEN", "token")
+			args := []string{"vm", "start", "--team", "team", "--vm", "vm-1"}
+			if machine {
+				args = append([]string{"--json"}, args...)
+			}
+			code, stdout, stderr := execute(t, t.Context(), args, func(req *http.Request) (*http.Response, error) {
+				assert.Equal(t, http.MethodPost, req.Method)
+				return test.NewEmptyResponse(204), nil
+			})
+			require.Zero(t, code, stderr)
+			if machine {
+				assert.JSONEq(t, `{"success":true,"message":"VM start command sent"}`, stdout)
+			} else {
+				assert.Equal(t, "VM start command sent\n", stdout)
+			}
+		})
+	}
+}
+
+func TestJSONErrorsUseStderrAndCategorizedExitCodes(t *testing.T) {
+	for _, tc := range []struct {
+		status, exit int
+		kind         string
+	}{
+		{400, 2, "invalid_arguments"},
+		{401, 3, "authentication"},
+		{403, 3, "authentication"},
+		{404, 4, "not_found"},
+		{409, 5, "conflict"},
+		{422, 2, "invalid_arguments"},
+		{429, 6, "temporary_failure"},
+		{503, 6, "temporary_failure"},
+	} {
+		t.Run(http.StatusText(tc.status), func(t *testing.T) {
+			isolatedHome(t)
+			code, stdout, stderr := execute(t, t.Context(), []string{"--json", "user", "get"}, func(*http.Request) (*http.Response, error) {
+				return test.NewJSONResponse(t, tc.status, map[string]string{"error": "request failed"}), nil
+			})
+			assert.Equal(t, tc.exit, code)
+			assert.Empty(t, stdout)
+			var body struct {
+				Error struct {
+					Code       string `json:"code"`
+					HTTPStatus int    `json:"http_status"`
+				} `json:"error"`
+			}
+			require.NoError(t, json.Unmarshal([]byte(stderr), &body))
+			assert.Equal(t, tc.kind, body.Error.Code)
+			assert.Equal(t, tc.status, body.Error.HTTPStatus)
+		})
+	}
+}
+
+func TestJSONUsageErrorsDoNotPrintHelpToStdout(t *testing.T) {
+	for _, args := range [][]string{{"--json", "vm", "get"}, {"--json", "vm", "get", "--unknown"}, {"--json", "--unknown"}, {"--json", "unknown"}, {"--json", "vm", "unknown"}} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			isolatedHome(t)
+			code, stdout, stderr := execute(t, t.Context(), args, noNetwork(t))
+			assert.Equal(t, 2, code, stderr)
+			assert.Empty(t, stdout)
+			var body map[string]any
+			require.NoError(t, json.Unmarshal([]byte(stderr), &body))
+		})
+	}
+}
+
 func TestEnvironmentOverridesAreNotSavedByOtherConfigCommands(t *testing.T) {
 	home := isolatedHome(t)
 	path := filepath.Join(home, ".hotaisle", "config.json")
 	saveConfig(t, path, "stored-token", "stored-team")
 	t.Setenv("HOTAISLE_API_TOKEN", "ephemeral-token")
 	t.Setenv("HOTAISLE_DEFAULT_TEAM", "ephemeral-team")
-	code, _, stderr := execute(t, t.Context(), []string{"config", "set", "log-level", "debug"}, noNetwork(t))
+	code, _, stderr := execute(t, t.Context(), []string{"--json", "config", "set", "log-level", "debug"}, noNetwork(t))
 	require.Zero(t, code, stderr)
 	data, err := os.ReadFile(path)
 	require.NoError(t, err)
@@ -132,7 +205,7 @@ func TestEnvironmentOverridesAreNotSavedByOtherConfigCommands(t *testing.T) {
 func TestExplicitTeamOverridesEnvironment(t *testing.T) {
 	isolatedHome(t)
 	t.Setenv("HOTAISLE_DEFAULT_TEAM", "env-team")
-	code, _, stderr := execute(t, t.Context(), []string{"vm", "list", "--team", "explicit-team"}, func(req *http.Request) (*http.Response, error) {
+	code, _, stderr := execute(t, t.Context(), []string{"--json", "vm", "list", "--team", "explicit-team"}, func(req *http.Request) (*http.Response, error) {
 		assert.Equal(t, "/api/teams/explicit-team/virtual_machines/", req.URL.Path)
 		return test.NewJSONResponse(t, 200, []client.VirtualMachineDetails{}), nil
 	})
