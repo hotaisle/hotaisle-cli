@@ -406,3 +406,30 @@ func TestWaitCancelsInFlightRequest(t *testing.T) {
 	assert.Empty(t, stdout)
 	assert.Contains(t, stderr, `"code": "timeout"`)
 }
+
+func TestSSHUsesAdvertisedHostPortAndHotAisleUser(t *testing.T) {
+	for _, resource := range []string{"vm", "bm"} {
+		t.Run(resource, func(t *testing.T) {
+			isolatedHome(t)
+			flag := "--vm"
+			if resource == "bm" {
+				flag = "--server"
+			}
+			code, stdout, stderr := execute(t, t.Context(), []string{"--json", resource, "ssh", "--team", "team", flag, "resource"}, func(*http.Request) (*http.Response, error) {
+				return test.NewJSONResponse(t, 200, map[string]any{"ssh_access": client.ExternalService{DNSName: "ssh.example.com", Port: 2222}}), nil
+			})
+			require.Zero(t, code, stderr)
+			assert.JSONEq(t, `{"host":"ssh.example.com","port":2222,"user":"hotaisle","argv":["ssh","-p","2222","--","hotaisle@ssh.example.com"]}`, stdout)
+		})
+	}
+}
+
+func TestSSHRejectsShellSyntaxInConnectionMetadata(t *testing.T) {
+	isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "vm", "ssh", "--team", "team", "--vm", "vm"}, func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"ssh_access":{"dns_name":"host;echo bad","port":22}}`)), Header: make(http.Header)}, nil
+	})
+	assert.Equal(t, 2, code)
+	assert.Empty(t, stdout)
+	assert.Contains(t, stderr, "invalid SSH")
+}

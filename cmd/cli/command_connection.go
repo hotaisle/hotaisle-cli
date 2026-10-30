@@ -2,7 +2,11 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -77,5 +81,64 @@ func (app *App) waitForVM(ctx context.Context, team, name, target string, interv
 			return nil, fmt.Errorf("waiting for VM %s (last state: %s): %w", name, last, ctx.Err())
 		case <-ticks:
 		}
+	}
+}
+
+var (
+	sshHost = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9.-]*$`)
+	sshUser = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_-]*$`)
+)
+
+func newCommandSSH(app *App, bareMetal bool) *cli.Command {
+	name := "vm"
+	if bareMetal {
+		name = "server"
+	}
+	flags := append(resourceFlags(name), &cli.StringFlag{Name: "user", Value: "hotaisle", Usage: "SSH login user"})
+	return &cli.Command{
+		Name: "ssh", Usage: "Print an SSH command, or JSON connection details; does not open a connection.",
+		Flags: flags, OnUsageError: usageError,
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			team, err := app.resourceTeam(cmd)
+			if err != nil {
+				return err
+			}
+			var access *client.ExternalService
+			if bareMetal {
+				server, err := app.Client.Api.BareMetal().Get(ctx, team, cmd.String(name))
+				if err != nil {
+					return err
+				}
+				access = server.SSHAccess
+			} else {
+				vm, err := app.Client.Api.VirtualMachines().Get(ctx, team, cmd.String(name))
+				if err != nil {
+					return err
+				}
+				access = vm.SSHAccess
+			}
+			if access == nil {
+				return problem("resource_state", "Check resource status and registered SSH keys, then retry once provisioning completes.", errors.New("SSH connection details are not available yet"))
+			}
+			host := access.DNSName
+			if host == "" {
+				host = access.IPAddress
+			}
+			user := cmd.String("user")
+			if (!sshHost.MatchString(host) && net.ParseIP(host) == nil) || access.Port < 1 || access.Port > 65535 || !sshUser.MatchString(user) {
+				return invalid("invalid SSH host, port, or user; inspect the resource's ssh_access field")
+			}
+			args := []string{"ssh", "-p", strconv.FormatInt(access.Port, 10), "--", user + "@" + host}
+			if cmd.Bool("json") {
+				return app.printJSON(struct {
+					Host string   `json:"host"`
+					Port int64    `json:"port"`
+					User string   `json:"user"`
+					Argv []string `json:"argv"`
+				}{host, access.Port, user, args})
+			}
+			_, err = fmt.Fprintln(app.writer(), strings.Join(args, " "))
+			return err
+		},
 	}
 }

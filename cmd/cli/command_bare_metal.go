@@ -309,5 +309,7 @@ var bareMetalCommands = commandDef{
 }
 
 func newCommandBareMetal(app *App) *cli.Command {
-	return buildCommand(app, bareMetalCommands)
+	cmd := buildCommand(app, bareMetalCommands)
+	cmd.Commands = append(cmd.Commands, newCommandSSH(app, true))
+	return cmd
 }
