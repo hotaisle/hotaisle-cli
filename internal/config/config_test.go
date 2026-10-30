@@ -22,9 +22,9 @@ func TestLoadFirstTime(t *testing.T) {
 	assert.NotNil(t, cfg)
 	assert.Equal(t, "info", cfg.LogLevel)
 
-	// Config file should exist after loading fresh
+	// Reading configuration must not create files.
 	_, err = os.Stat(filepath.Join(tmp, ".hotaisle", "config.json"))
-	assert.Nil(t, err)
+	assert.True(t, os.IsNotExist(err))
 }
 
 func TestLoadFirstTimeAndSave(t *testing.T) {

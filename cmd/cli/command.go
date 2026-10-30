@@ -138,6 +138,14 @@ func buildCommand(app *App, def commandDef) *cli.Command {
 	cmd := &cli.Command{
 		Name:  def.Name,
 		Usage: def.Usage,
+		Before: func(ctx context.Context, command *cli.Command) (context.Context, error) {
+			for _, flag := range def.Flags {
+				if flag.Name == "team" && !command.IsSet("team") && app.defaultTeam() != "" {
+					return ctx, command.Set("team", app.defaultTeam())
+				}
+			}
+			return ctx, nil
+		},
 	}
 
 	if len(def.Flags) > 0 {

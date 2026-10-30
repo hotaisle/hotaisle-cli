@@ -64,6 +64,12 @@ Download the appropriate rpm package from the [Releases page](https://github.com
 
 When you log in to the admin TUI via `ssh admin.hotaisle.app`, check the breadcrumbs at the top; you’ll likely start in the team settings. Press Esc, then use the arrow keys to move up to your name to edit your personal settings, including API keys.
 
+## Configuration
+
+The default config is `~/.hotaisle/config.json`. `--config-file PATH` (or `-c PATH`) overrides `HOTAISLE_CONFIG_FILE`, which overrides the default path. Both reads and writes use the selected file. Missing files are created only when saving configuration; help and version work even when configuration is invalid.
+
+`HOTAISLE_API_TOKEN` overrides the saved token for API requests without persisting it. `HOTAISLE_DEFAULT_TEAM` overrides the saved default team; an explicit resource `--team` overrides both. The existing `config set token` still saves the environment token, and `config get token` still prints the saved secret. Avoid including that output in agent transcripts or logs.
+
 # Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.

@@ -141,8 +141,8 @@ func TestMakeAppWithInvalidConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	app, err := makeApp()
-	assert.Error(t, err)
-	assert.Nil(t, app)
+	assert.NoError(t, err) // Configuration is loaded only when a command needs it.
+	assert.NotNil(t, app)
 }
 
 func TestMakeCommands(t *testing.T) {
