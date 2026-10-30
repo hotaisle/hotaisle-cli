@@ -144,3 +144,29 @@ func (app *App) success(message string) error {
 	_, err := fmt.Fprintln(app.writer(), message)
 	return err
 }
+
+func (app *App) emptyAvailability(resource, team string) error {
+	return app.emptyResult("Availability", fmt.Sprintf("No %s are currently available for team %q.", resource, team), team)
+}
+
+func (app *App) printList[T any](items []T, message, team string) error {
+	if len(items) == 0 {
+		return app.emptyResult("Result", message, team)
+	}
+	return app.printJSON(items)
+}
+
+func (app *App) emptyResult(title, message, team string) error {
+	if app.AppCli != nil && app.AppCli.Bool("json") {
+		return app.printJSON([]any{})
+	}
+	if app.AppCli != nil && app.AppCli.Bool("agent") {
+		return writeMarkdown(app.writer(), title, struct {
+			Count   int    `json:"count"`
+			Team    string `json:"team,omitempty"`
+			Message string `json:"message"`
+		}{0, team, message})
+	}
+	_, err := fmt.Fprintln(app.writer(), message)
+	return err
+}

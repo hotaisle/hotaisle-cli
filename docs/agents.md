@@ -51,6 +51,8 @@ Provisioning is GPU-only. Preserve the VM name returned in `.name` for subsequen
 
 JSON offers use `options`, `gpu_requirement`, `quantity_available`, `hourly_price_cents`, and `minimum_reservation_minutes`, with original `specs` retained. Missing quotes are `null`, not a promise of free compute. RAM and disk are bytes in JSON and GiB in the table. The original `vm available` and `bm available` retain their capitalized API fields (`Quantity`, `Specs`, `OnDemandPrice`, `MinimumReservationMinutes`).
 
+Empty resource, availability, team, member, invitation, and key lists return `[]` in JSON mode. Default output explains the empty result; agent output includes a zero count and message. This is a successful query, distinct from an authentication or API error. Missing or malformed resource objects fail with `invalid_response` (exit 1); inspect state before retrying a mutation. Valid zero balances remain successful data.
+
 `vm wait` checks the VM's power state, defaults to `running`, and stops on a deadline or failure state. It does not wait for SSH, cloud-init, a model download, or an inference endpoint. Other target power states can be supplied with `--state`; each run has a bounded `--timeout` and configurable `--interval`.
 
 `ssh --vm NAME` and `ssh --server NAME` print commands without executing them. `--address` returns an `ssh://` URL, including IPv6 brackets and nonstandard ports. In JSON mode, use `host`, `port`, `user`, and `argv`; pass `argv` directly to a process API instead of constructing shell code. The older `vm ssh` and `bm ssh` helpers remain supported. The default SSH user is `hotaisle`.

@@ -51,7 +51,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(keys)
+						return app.printList(keys, "No SSH keys are registered. Add one with hotaisle ssh-keys add KEY.pub.", "")
 					},
 				},
 				{
@@ -98,7 +98,7 @@ var userCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(keys)
+						return app.printList(keys, "No API keys were found.", "")
 					},
 				},
 				{

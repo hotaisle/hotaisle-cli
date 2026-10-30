@@ -38,6 +38,8 @@ Managed instances fetch account keys at the next SSH login as `hotaisle`, includ
 3. Run `hotaisle --json vm wait --vm NAME --timeout 5m`. This checks power state only. Separately verify SSH, cloud-init, model startup, and endpoint health as needed.
 4. Get a command with `hotaisle ssh --vm NAME`, or `hotaisle ssh --server NAME` for bare metal. Add `--address` for an `ssh://` URL. In JSON mode, pass the returned `argv` array directly to a process API rather than building shell code. These helpers print details without opening a connection. The existing `vm ssh` and `bm ssh` paths still work; the default login user is `hotaisle`.
 
+Empty resource, availability, team, member, invitation, and key lists are `[]` with `--json`; default output explains the empty result, and `--agent` includes a zero count and message. An empty list is a successful query, not an authentication failure or evidence that a team is misconfigured. Missing or malformed resource objects instead fail with `invalid_response` (exit 1). Valid zero balances remain data; missing rental price quotes remain `null`.
+
 Do not provision, rebuild, delete, or purchase credits beyond the user's authorization. `--user-data-url` can trigger a rebuild and take longer than an HTTP request. Never blindly retry provisioning after a timeout: list resources and inspect state first to avoid duplicate allocations.
 
 ## Errors and cleanup

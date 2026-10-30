@@ -25,7 +25,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(vms)
+				return app.printList(vms, fmt.Sprintf("No virtual machines were found for team %q.", cmd.String("team")), cmd.String("team"))
 			},
 		},
 		{
@@ -152,6 +152,9 @@ var virtualMachineCommands = commandDef{
 				available, err := app.Client.Api.VirtualMachines().GetAvailable(ctx, cmd.String("team"))
 				if err != nil {
 					return err
+				}
+				if len(available) == 0 {
+					return app.emptyAvailability("virtual machines", cmd.String("team"))
 				}
 				return app.printJSON(available)
 			},

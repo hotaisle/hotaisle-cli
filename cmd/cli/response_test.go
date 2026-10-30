@@ -24,6 +24,72 @@ func outputMode(mode string, args []string) []string {
 	return append([]string{"--" + mode}, args...)
 }
 
+func TestEmptyCollectionsAcrossCommandsAndOutputModes(t *testing.T) {
+	commands := []struct {
+		args    []string
+		message string
+	}{
+		{[]string{"vm", "list", "--team", "team"}, "No virtual machines were found"},
+		{[]string{"bm", "list", "--team", "team"}, "No bare metal servers were found"},
+		{[]string{"team", "list"}, "You do not belong to any teams"},
+		{[]string{"team", "invitations"}, "You have no pending team invitations"},
+		{[]string{"team", "members", "invitations", "--handle", "team"}, "No pending invitations were found"},
+		{[]string{"user", "ssh-keys", "list"}, "No SSH keys are registered"},
+		{[]string{"ssh-keys", "list"}, "No SSH keys are registered"},
+		{[]string{"ssh-key", "list"}, "No SSH keys are registered"},
+		{[]string{"user", "api-keys", "list"}, "No API keys were found"},
+		{[]string{"api-keys", "list"}, "No API keys were found"},
+		{[]string{"api-key", "list"}, "No API keys were found"},
+	}
+	for _, command := range commands {
+		for _, reply := range []struct {
+			status int
+			body   string
+		}{{200, "null"}, {200, "[]"}, {200, ""}, {200, " \n\t "}, {204, ""}} {
+			for _, mode := range []string{"default", "json", "agent"} {
+				t.Run(strings.Join(command.args, " ")+fmt.Sprintf("/%d/%q/%s", reply.status, reply.body, mode), func(t *testing.T) {
+					isolatedHome(t)
+					code, stdout, stderr := execute(t, t.Context(), outputMode(mode, command.args), func(*http.Request) (*http.Response, error) {
+						return responseBody(reply.status, reply.body), nil
+					})
+					require.Zero(t, code, stderr)
+					assert.Empty(t, stderr)
+					if mode == "json" {
+						assert.Equal(t, "[]\n", stdout)
+					} else {
+						assert.Contains(t, stdout, command.message)
+						assert.NotContains(t, stdout, "null")
+						if mode == "agent" {
+							assert.Contains(t, stdout, "count")
+						}
+					}
+				})
+			}
+		}
+	}
+}
+
+func TestEmptyTeamMembersRequireAnExistingTeam(t *testing.T) {
+	for _, mode := range []string{"default", "json", "agent"} {
+		for _, body := range []string{`{"handle":"team","members":null}`, `{"handle":"team","members":[]}`, `{"handle":"team"}`} {
+			t.Run(mode+"/"+body, func(t *testing.T) {
+				isolatedHome(t)
+				args := outputMode(mode, []string{"team", "members", "list", "--handle", "team"})
+				code, stdout, stderr := execute(t, t.Context(), args, func(*http.Request) (*http.Response, error) {
+					return responseBody(200, body), nil
+				})
+				require.Zero(t, code, stderr)
+				assert.Empty(t, stderr)
+				if mode == "json" {
+					assert.Equal(t, "[]\n", stdout)
+				} else {
+					assert.Contains(t, stdout, "No members were found")
+				}
+			})
+		}
+	}
+}
+
 func TestDataCommandsRejectMissingOrMalformedObjects(t *testing.T) {
 	commands := [][]string{
 		{"user", "get"},
@@ -83,6 +149,22 @@ func TestDataCommandsRejectMissingOrMalformedObjects(t *testing.T) {
 					}
 				})
 			}
+		}
+	}
+}
+
+func TestMalformedCollectionsAreErrorsRatherThanEmptyResults(t *testing.T) {
+	for _, body := range []string{"{}", "[null]", "[{}]", `["item"]`, `[{"error":"failure"}]`, `{"items":[]}`, "[", "false"} {
+		for _, mode := range []string{"default", "json", "agent"} {
+			t.Run(body+"/"+mode, func(t *testing.T) {
+				isolatedHome(t)
+				code, stdout, stderr := execute(t, t.Context(), outputMode(mode, []string{"team", "list"}), func(*http.Request) (*http.Response, error) {
+					return responseBody(200, body), nil
+				})
+				assert.Equal(t, 1, code)
+				assert.Empty(t, stdout)
+				assert.Contains(t, stderr, "invalid API response")
+			})
 		}
 	}
 }
@@ -162,6 +244,26 @@ func TestResponseValidationPreservesCaseInsensitiveFields(t *testing.T) {
 	require.Zero(t, code, stderr)
 	assert.Empty(t, stderr)
 	assert.Contains(t, stdout, `"name": "vm"`)
+}
+
+func TestEmptyRentalOptionsAreExplicitInEachOutputMode(t *testing.T) {
+	for _, body := range []string{"null", "[]", ""} {
+		for _, mode := range []string{"default", "json", "agent"} {
+			t.Run(body+"/"+mode, func(t *testing.T) {
+				isolatedHome(t)
+				code, stdout, stderr := execute(t, t.Context(), outputMode(mode, []string{"offers", "--team", "team"}), func(*http.Request) (*http.Response, error) {
+					return responseBody(200, body), nil
+				})
+				require.Zero(t, code, stderr)
+				assert.Empty(t, stderr)
+				if mode == "json" {
+					assert.JSONEq(t, `{"team":"team","currency":"USD","options":[]}`, stdout)
+				} else {
+					assert.Contains(t, stdout, "No rental options are currently available")
+				}
+			})
+		}
+	}
 }
 
 func TestUnexpectedHTTPStatusAndInvalidFieldTypesAreErrors(t *testing.T) {

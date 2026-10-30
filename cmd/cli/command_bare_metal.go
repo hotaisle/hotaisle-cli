@@ -25,7 +25,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(servers)
+				return app.printList(servers, fmt.Sprintf("No bare metal servers were found for team %q.", cmd.String("team")), cmd.String("team"))
 			},
 		},
 		{
@@ -124,6 +124,9 @@ var bareMetalCommands = commandDef{
 				available, err := app.Client.Api.BareMetal().GetAvailable(ctx, cmd.String("team"))
 				if err != nil {
 					return err
+				}
+				if len(available) == 0 {
+					return app.emptyAvailability("bare metal servers", cmd.String("team"))
 				}
 				return app.printJSON(available)
 			},

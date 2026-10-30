@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hotaisle/hotaisle-cli/client"
 
@@ -20,7 +21,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(teams)
+				return app.printList(teams, "You do not belong to any teams.", "")
 			},
 		},
 		{
@@ -85,7 +86,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return app.printJSON(invitations)
+				return app.printList(invitations, "You have no pending team invitations.", "")
 			},
 		},
 		{
@@ -148,7 +149,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(team.Members)
+						return app.printList(team.Members, fmt.Sprintf("No members were found for team %q.", cmd.String("handle")), cmd.String("handle"))
 					},
 				},
 				{
@@ -162,7 +163,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return app.printJSON(invitations)
+						return app.printList(invitations, fmt.Sprintf("No pending invitations were found for team %q.", cmd.String("handle")), cmd.String("handle"))
 					},
 				},
 				{
