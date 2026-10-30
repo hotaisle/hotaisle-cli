@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 	"strings"
 
@@ -33,7 +32,6 @@ var configCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						slog.Debug("Config set", "token", partialToken(token))
 						return app.configSaved()
 					},
 				},
@@ -50,7 +48,6 @@ var configCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						slog.Info("Config set", "log-level", logLevel)
 						return app.configSaved()
 					},
 				},
@@ -67,7 +64,6 @@ var configCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						slog.Info("Config set", "default-team", team)
 						return app.configSaved()
 					},
 				},
@@ -103,13 +99,6 @@ var configCommands = commandDef{
 	},
 }
 
-func partialToken(token string) string {
-	if token == "" {
-		return ""
-	}
-	return "[redacted]"
-}
-
 func newCommandConfig(app *App) *cli.Command {
 	return buildCommand(app, configCommands)
 }
@@ -118,13 +107,14 @@ func (app *App) configValue(name, value string) error {
 	if app.AppCli != nil && structuredOutput(app.AppCli) {
 		return app.printJSON(map[string]string{name: value})
 	}
+	if value == "" {
+		_, err := fmt.Fprintf(app.writer(), "No %s is configured.\n", strings.ReplaceAll(name, "_", " "))
+		return err
+	}
 	_, err := fmt.Fprint(app.writer(), value)
 	return err
 }
 
 func (app *App) configSaved() error {
-	if app.AppCli != nil && structuredOutput(app.AppCli) {
-		return app.success("Configuration saved")
-	}
-	return nil
+	return app.success("Configuration saved")
 }

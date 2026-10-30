@@ -291,6 +291,38 @@ func TestResponseValidationPreservesCaseInsensitiveFields(t *testing.T) {
 	assert.Contains(t, stdout, `"name": "vm"`)
 }
 
+func TestUnsetConfigAndSavedConfigHaveExplicitTerminalResponses(t *testing.T) {
+	for _, key := range []string{"token", "default-team"} {
+		t.Run(key, func(t *testing.T) {
+			isolatedHome(t)
+			code, stdout, stderr := execute(t, t.Context(), []string{"config", "get", key}, noNetwork(t))
+			require.Zero(t, code, stderr)
+			assert.Empty(t, stderr)
+			assert.Contains(t, stdout, "is configured.")
+			assert.Contains(t, stdout, "No ")
+		})
+	}
+	isolatedHome(t)
+	code, stdout, stderr := execute(t, t.Context(), []string{"config", "set", "default-team", "team"}, noNetwork(t))
+	require.Zero(t, code, stderr)
+	assert.Equal(t, "Configuration saved\n", stdout)
+	assert.Empty(t, stderr)
+}
+
+func TestConfigTokenSaveAcknowledgementDoesNotExposeCredentials(t *testing.T) {
+	for _, mode := range []string{"default", "json", "agent"} {
+		t.Run(mode, func(t *testing.T) {
+			isolatedHome(t)
+			t.Setenv("HOTAISLE_API_TOKEN", "secret-api-token")
+			code, stdout, stderr := execute(t, t.Context(), outputMode(mode, []string{"config", "set", "token"}), noNetwork(t))
+			require.Zero(t, code, stderr)
+			assert.Contains(t, stdout, "Configuration saved")
+			assert.NotContains(t, stdout, "secret-api-token")
+			assert.Empty(t, stderr)
+		})
+	}
+}
+
 func TestEmptyRentalOptionsAreExplicitInEachOutputMode(t *testing.T) {
 	for _, body := range []string{"null", "[]", ""} {
 		for _, mode := range []string{"default", "json", "agent"} {
