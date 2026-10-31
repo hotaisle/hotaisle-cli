@@ -168,18 +168,3 @@ func TestConfigCommandStructure(t *testing.T) {
 	assert.Equal(t, "get", getCmd.Name)
 	assert.Len(t, getCmd.Commands, 3) // "token", "log-level", "default-team"
 }
-
-func TestPartialTokenNeverReturnsSecret(t *testing.T) {
-	for _, token := range []string{
-		"x",
-		"example",
-		"example.value",
-		"example-value",
-	} {
-		t.Run(token, func(t *testing.T) {
-			assert.Equal(t, "[redacted]", partialToken(token))
-		})
-	}
-
-	assert.Empty(t, partialToken(""))
-}

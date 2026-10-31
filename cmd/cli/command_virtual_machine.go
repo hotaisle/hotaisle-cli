@@ -25,7 +25,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(vms)
+				return app.printList(vms, fmt.Sprintf("No virtual machines were found for team %q.", cmd.String("team")), cmd.String("team"))
 			},
 		},
 		{
@@ -40,7 +40,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(vm)
+				return app.printResult(vm)
 			},
 		},
 		{
@@ -106,7 +106,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(resp)
+				return app.printResult(resp)
 			},
 		},
 		{
@@ -124,8 +124,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM updated successfully")
-				return nil
+				return app.success("VM updated successfully")
 			},
 		},
 		{
@@ -140,8 +139,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM deleted successfully")
-				return nil
+				return app.success("VM deleted successfully")
 			},
 		},
 		{
@@ -155,7 +153,10 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(available)
+				if len(available) == 0 {
+					return app.emptyAvailability("virtual machines", cmd.String("team"))
+				}
+				return app.printResult(available)
 			},
 		},
 		{
@@ -170,7 +171,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(state)
+				return app.printResult(state)
 			},
 		},
 		{
@@ -185,8 +186,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM start command sent")
-				return nil
+				return app.success("VM start command sent")
 			},
 		},
 		{
@@ -201,8 +201,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM stop command sent")
-				return nil
+				return app.success("VM stop command sent")
 			},
 		},
 		{
@@ -217,8 +216,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM shutdown command sent")
-				return nil
+				return app.success("VM shutdown command sent")
 			},
 		},
 		{
@@ -233,8 +231,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM reboot command sent")
-				return nil
+				return app.success("VM reboot command sent")
 			},
 		},
 		{
@@ -249,8 +246,7 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM hard-reset command sent")
-				return nil
+				return app.success("VM hard-reset command sent")
 			},
 		},
 		{
@@ -268,13 +264,14 @@ var virtualMachineCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("VM rebuild command sent")
-				return nil
+				return app.success("VM rebuild command sent")
 			},
 		},
 	},
 }
 
 func newCommandVirtualMachine(app *App) *cli.Command {
-	return buildCommand(app, virtualMachineCommands)
+	cmd := buildCommand(app, virtualMachineCommands)
+	cmd.Commands = append(cmd.Commands, newCommandVMWait(app), newCommandSSH(app, false))
+	return cmd
 }

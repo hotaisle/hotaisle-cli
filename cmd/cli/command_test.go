@@ -8,6 +8,7 @@ import (
 	"github.com/hotaisle/hotaisle-cli/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v3"
 )
 
@@ -34,6 +35,13 @@ func executeCommand(t *testing.T, cmd *cli.Command) string {
 	return test.CaptureStdout(t, func() error {
 		return cmd.Action(context.Background(), cmd)
 	})
+}
+
+func executeJSONCommand(t *testing.T, app *App, cmd *cli.Command) string {
+	t.Helper()
+	app.AppCli = &cli.Command{Flags: []cli.Flag{&cli.BoolFlag{Name: "json"}}}
+	require.NoError(t, app.AppCli.Set("json", "true"))
+	return executeCommand(t, cmd)
 }
 
 // TestBuildCommandWithDefaultTeam tests that buildCommand modifies the team flag when DefaultTeam is set

@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/hotaisle/hotaisle-cli/client"
 
@@ -21,7 +22,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(teams)
+				return app.printList(teams, "You do not belong to any teams.", "")
 			},
 		},
 		{
@@ -41,7 +42,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(team)
+				return app.printResult(team)
 			},
 		},
 		{
@@ -55,7 +56,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(team)
+				return app.printResult(team)
 			},
 		},
 		{
@@ -75,7 +76,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(team)
+				return app.printResult(team)
 			},
 		},
 		{
@@ -86,7 +87,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(invitations)
+				return app.printList(invitations, "You have no pending team invitations.", "")
 			},
 		},
 		{
@@ -100,7 +101,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(team)
+				return app.printResult(team)
 			},
 		},
 		{
@@ -114,7 +115,7 @@ var teamCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(balance)
+				return app.printResult(balance)
 			},
 		},
 		{
@@ -125,13 +126,28 @@ var teamCommands = commandDef{
 				{Name: "cents", Usage: "Amount in cents", Required: true},
 			},
 			Action: func(app *App, ctx context.Context, cmd *cli.Command) error {
+				cents, err := strconv.ParseInt(cmd.String("cents"), 10, 64)
+				if err != nil || cents <= 0 {
+					return invalid("--cents must be a positive whole number of cents")
+				}
 				resp, err := app.Client.Api.Teams().PurchaseCredits(ctx, cmd.String("handle"), client.PurchaseTeamCreditsRequest{
-					Cents: int64(cmd.Int("cents")),
+					Cents: cents,
 				})
 				if err != nil {
 					return err
 				}
-				return printJSON(resp)
+				if resp.ApprovalRequested {
+					message := "Payment approval requested. Credits have not been added; wait for approval before continuing."
+					if structuredOutput(cmd) {
+						return app.printResult(struct {
+							ApprovalRequested bool   `json:"approval_requested"`
+							Message           string `json:"message"`
+						}{true, message})
+					}
+					_, err := fmt.Fprintln(app.writer(), message)
+					return err
+				}
+				return app.printResult(resp)
 			},
 		},
 		{
@@ -149,7 +165,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(team.Members)
+						return app.printList(team.Members, fmt.Sprintf("No members were found for team %q.", cmd.String("handle")), cmd.String("handle"))
 					},
 				},
 				{
@@ -163,7 +179,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(invitations)
+						return app.printList(invitations, fmt.Sprintf("No pending invitations were found for team %q.", cmd.String("handle")), cmd.String("handle"))
 					},
 				},
 				{
@@ -184,8 +200,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Invitation sent successfully")
-						return nil
+						return app.success("Invitation sent successfully")
 					},
 				},
 				{
@@ -203,7 +218,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(member)
+						return app.printResult(member)
 					},
 				},
 				{
@@ -218,8 +233,7 @@ var teamCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Member removed successfully")
-						return nil
+						return app.success("Member removed successfully")
 					},
 				},
 			},

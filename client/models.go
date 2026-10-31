@@ -95,8 +95,9 @@ type PurchaseTeamCreditsRequest struct {
 
 // PurchaseTeamCreditsResponse represents the response to a credits purchase request
 type PurchaseTeamCreditsResponse struct {
-	CheckoutURL string    `json:"checkout_url"`
-	ExpiresAt   time.Time `json:"expires_at"`
+	CheckoutURL       string    `json:"checkout_url,omitzero"`
+	ExpiresAt         time.Time `json:"expires_at,omitzero"`
+	ApprovalRequested bool      `json:"approval_requested,omitzero"`
 }
 
 // SSHKey represents an SSH public key associated with a user

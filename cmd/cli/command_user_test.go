@@ -42,7 +42,7 @@ func TestUserGetCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "get", nil)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 	slog.Info(output)
 
 	var result client.GetUserResponse
@@ -88,7 +88,7 @@ func TestUserGetCommand_EmptyTeams(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "get", nil)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.GetUserResponse
 	err = json.Unmarshal([]byte(output), &result)
@@ -157,7 +157,7 @@ func TestUserGetCommand_MultipleTeams(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "get", nil)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.GetUserResponse
 	err = json.Unmarshal([]byte(output), &result)
@@ -188,7 +188,7 @@ func TestUserUpdateCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "update", map[string]string{"name": "Updated Name"})
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.User
 	err = json.Unmarshal([]byte(output), &result)
@@ -221,7 +221,7 @@ func TestUserSSHKeysListCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "ssh-keys.list", nil)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result []client.SSHKey
 	err = json.Unmarshal([]byte(output), &result)
@@ -250,7 +250,7 @@ func TestUserSSHKeysAddCommand_Success(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.SSHKey
 	err = json.Unmarshal([]byte(output), &result)
@@ -297,7 +297,7 @@ func TestUserAPIKeysListCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "api-keys.list", nil)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result []client.UserAPIKey
 	err = json.Unmarshal([]byte(output), &result)
@@ -324,7 +324,7 @@ func TestUserAPIKeysGetCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, userCommands, "api-keys.get", map[string]string{"prefix": "abc123"})
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.UserAPIKey
 	err = json.Unmarshal([]byte(output), &result)
@@ -354,7 +354,7 @@ func TestUserAPIKeysCreateCommand_Success(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.UserAPIKeyWithToken
 	err = json.Unmarshal([]byte(output), &result)
@@ -384,7 +384,7 @@ func TestUserAPIKeysUpdateCommand_Success(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.UserAPIKey
 	err = json.Unmarshal([]byte(output), &result)

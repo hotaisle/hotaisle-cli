@@ -163,8 +163,8 @@ build-one out_dir out_filename goos goarch goarm:
 	[ -e "${out_path}.zip" ] && newest_output="${out_path}.zip" || \
 	[ -e "${out_path}" ] && newest_output="${out_path}"
 
-	# Check if rebuild is needed (only if output exists)
-	if [ -n "$newest_output" ] && [ -z "$(find . -name "*.go" -type f -newer "$newest_output" -print -quit 2>/dev/null)" ]; then
+	# Go source and the embedded agent skill are build inputs.
+	if [ -n "$newest_output" ] && [ -z "$(find . -type f \( -name '*.go' -o -path './skills/hotaisle/SKILL.md' \) -newer "$newest_output" -print -quit 2>/dev/null)" ]; then
 		echo "🛑 No changes detected, skipping ${out_path}"
 		exit 0
 	fi
@@ -302,8 +302,8 @@ brew-formula:
 		package/brew-formula.rb
 
 # CI/CD
-ci: deps js-deps vet lint lsp js-check test security dist nfpm
-release: deps js-check security dist nfpm
+ci: deps js-deps vet lint lsp js-check release-check test security dist nfpm
+release: deps js-check release-check security dist nfpm
 
 # Run the application
 run *args: build
@@ -360,6 +360,10 @@ js-deps:
 # Fail on every Biome and Ultracite diagnostic
 js-check:
 	npm run check
+
+# Verify breaking-commit analysis and generated migration notes without publishing.
+release-check:
+	npm run test:release
 
 # Apply every available safe JavaScript fix
 js-fix:

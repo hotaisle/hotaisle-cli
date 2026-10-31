@@ -34,7 +34,7 @@ func TestTeamListCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, teamCommands, "list", nil)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result []client.UserTeam
 	err = json.Unmarshal([]byte(output), &result)
@@ -62,7 +62,7 @@ func TestTeamCreateCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, teamCommands, "create", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.UserTeamWithMembers
 	err = json.Unmarshal([]byte(output), &result)
@@ -90,7 +90,7 @@ func TestTeamGetCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, teamCommands, "get", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.UserTeamDetails
 	err = json.Unmarshal([]byte(output), &result)
@@ -118,7 +118,7 @@ func TestTeamBalanceCommand_Success(t *testing.T) {
 	cmd, err := getCommand(app, teamCommands, "balance", flags)
 	assert.NoError(t, err)
 
-	output := executeCommand(t, cmd)
+	output := executeJSONCommand(t, app, cmd)
 
 	var result client.BalanceInfo
 	err = json.Unmarshal([]byte(output), &result)

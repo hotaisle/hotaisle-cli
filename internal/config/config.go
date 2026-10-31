@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -19,6 +20,7 @@ type Config struct {
 	LogLevel    string `json:"log_level,omitempty" default:"info"`
 	ApiToken    string `json:"api_token"`
 	DefaultTeam string `json:"default_team"`
+	path        string
 }
 
 func NewConfig() *Config {
@@ -34,13 +36,22 @@ func defaultConfigDir() (string, error) {
 	}
 
 	dir := filepath.Join(home, Directory)
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return "", err
-	}
-	if err := os.Chmod(dir, 0o700); err != nil { // #nosec G302 -- directories require owner execute permission
-		return "", err
-	}
 	return dir, nil
+}
+
+// ResolvePath expands the default path and a leading ~/ without writing files.
+func ResolvePath(path string) (string, error) {
+	if path == "" || path == Pretty {
+		return defaultConfigPath()
+	}
+	if strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(home, path[2:]), nil
+	}
+	return filepath.Clean(path), nil
 }
 
 func defaultConfigPath() (string, error) {
@@ -62,22 +73,23 @@ func Load(path *string) (*Config, error) {
 		}
 		path = &defaultPath
 	}
+	resolved, err := ResolvePath(*path)
+	if err != nil {
+		return nil, err
+	}
+	config.path = resolved
+	path = &resolved
 
 	slog.Debug("Loading config", "path", *path)
 	configData, err := os.ReadFile(*path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			slog.Debug("Config file does not exist, saving defaults to file", "path", *path)
-			err := Save(config)
-			if err != nil {
-				return nil, err
-			}
 			return config, nil
 		}
 		slog.Debug("Failed to read config file", "path", *path, "error", err)
 		return nil, err
 	}
-	if err := json.Unmarshal(configData, &config); err != nil {
+	if err := json.Unmarshal(configData, config); err != nil {
 		slog.Debug("Failed to parse config", "path", *path, "error", err)
 		return nil, err
 	}
@@ -88,18 +100,32 @@ func Save(cfg *Config) error {
 	if cfg == nil {
 		return errors.New("nil config")
 	}
-	dir, err := defaultConfigDir()
-	if err != nil {
+	path := cfg.path
+	var err error
+	if path == "" {
+		path, err = defaultConfigPath()
+		if err != nil {
+			return err
+		}
+	}
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
+	}
+	defaultPath, err := defaultConfigPath()
+	if err == nil && path == defaultPath {
+		if err := os.Chmod(dir, 0o700); err != nil { // #nosec G302 -- directories require owner execute permission
+			return err
+		}
 	}
 	b, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err
 	}
-	return writeConfig(dir, b)
+	return writeConfig(dir, filepath.Base(path), b)
 }
 
-func writeConfig(dir string, data []byte) (err error) {
+func writeConfig(dir, name string, data []byte) (err error) {
 	root, err := os.OpenRoot(dir)
 	if err != nil {
 		return err
@@ -109,7 +135,7 @@ func writeConfig(dir string, data []byte) (err error) {
 			err = closeErr
 		}
 	}()
-	file, err := root.OpenFile(File, os.O_WRONLY|os.O_CREATE, 0o600)
+	file, err := root.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0o600)
 	if err != nil {
 		return err
 	}

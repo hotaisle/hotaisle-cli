@@ -25,7 +25,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(servers)
+				return app.printList(servers, fmt.Sprintf("No bare metal servers were found for team %q.", cmd.String("team")), cmd.String("team"))
 			},
 		},
 		{
@@ -40,7 +40,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(server)
+				return app.printResult(server)
 			},
 		},
 		{
@@ -78,7 +78,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(resp)
+				return app.printResult(resp)
 			},
 		},
 		{
@@ -96,8 +96,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("Server updated successfully")
-				return nil
+				return app.success("Server updated successfully")
 			},
 		},
 		{
@@ -112,8 +111,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				fmt.Println("Server deleted successfully")
-				return nil
+				return app.success("Server deleted successfully")
 			},
 		},
 		{
@@ -127,7 +125,10 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(available)
+				if len(available) == 0 {
+					return app.emptyAvailability("bare metal servers", cmd.String("team"))
+				}
+				return app.printResult(available)
 			},
 		},
 		{
@@ -146,7 +147,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						return printJSON(state)
+						return app.printResult(state)
 					},
 				},
 				{
@@ -161,8 +162,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Power on command sent")
-						return nil
+						return app.success("Power on command sent")
 					},
 				},
 				{
@@ -177,8 +177,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Graceful shutdown command sent")
-						return nil
+						return app.success("Graceful shutdown command sent")
 					},
 				},
 				{
@@ -193,8 +192,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Force shutdown command sent")
-						return nil
+						return app.success("Force shutdown command sent")
 					},
 				},
 				{
@@ -209,8 +207,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Warm reboot command sent")
-						return nil
+						return app.success("Warm reboot command sent")
 					},
 				},
 				{
@@ -225,8 +222,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Cold reboot command sent")
-						return nil
+						return app.success("Cold reboot command sent")
 					},
 				},
 				{
@@ -241,8 +237,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("AC reset command sent")
-						return nil
+						return app.success("AC reset command sent")
 					},
 				},
 			},
@@ -259,7 +254,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(server)
+				return app.printResult(server)
 			},
 		},
 		{
@@ -274,7 +269,7 @@ var bareMetalCommands = commandDef{
 				if err != nil {
 					return err
 				}
-				return printJSON(url)
+				return app.printResult(url)
 			},
 		},
 		{
@@ -293,8 +288,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Support access enabled")
-						return nil
+						return app.success("Support access enabled")
 					},
 				},
 				{
@@ -309,8 +303,7 @@ var bareMetalCommands = commandDef{
 						if err != nil {
 							return err
 						}
-						fmt.Println("Support access disabled")
-						return nil
+						return app.success("Support access disabled")
 					},
 				},
 			},
@@ -319,5 +312,7 @@ var bareMetalCommands = commandDef{
 }
 
 func newCommandBareMetal(app *App) *cli.Command {
-	return buildCommand(app, bareMetalCommands)
+	cmd := buildCommand(app, bareMetalCommands)
+	cmd.Commands = append(cmd.Commands, newCommandSSH(app, true))
+	return cmd
 }

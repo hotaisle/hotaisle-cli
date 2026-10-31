@@ -1,11 +1,20 @@
 "use strict";
+const parserOpts = {
+  breakingHeaderPattern:
+    /^(?<type>\w+)(?:\((?<scope>[^)]+)\))?!: (?<subject>.+)$/u,
+  headerCorrespondence: ["type", "scope", "subject"],
+  headerPattern: /^(?<type>\w+)(?:\((?<scope>[^)]+)\))?!?: (?<subject>.+)$/u,
+  noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"],
+};
+
 module.exports = {
   branches: ["main"],
   plugins: [
-    "@semantic-release/commit-analyzer",
+    ["@semantic-release/commit-analyzer", { parserOpts }],
     [
       "@semantic-release/release-notes-generator",
       {
+        parserOpts,
         writerOpts: {
           transform(commit, context) {
             const sections = {
@@ -21,7 +30,7 @@ module.exports = {
               style: "Styles",
               test: "Tests",
             };
-            const subjectIssues = new Set(commit.subject?.match(/#\d+/g));
+            const subjectIssues = new Set(commit.subject?.match(/#\d+/gu));
             return {
               ...commit,
               notes: commit.notes.map((note) => ({
@@ -34,7 +43,7 @@ module.exports = {
               scope: commit.scope === "*" ? "" : commit.scope,
               shortHash: commit.hash.slice(0, 7),
               subject: commit.subject?.replace(
-                /#(\d+)/g,
+                /#(?<issue>\d+)/gu,
                 `[#$1](${context.host}/${context.owner}/${context.repository}/issues/$1)`
               ),
               type: Object.hasOwn(sections, commit.type)

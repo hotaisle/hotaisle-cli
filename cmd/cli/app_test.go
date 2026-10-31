@@ -87,9 +87,9 @@ func TestMakeAppCommands(t *testing.T) {
 	assert.NotNil(t, app)
 
 	assert.NotNil(t, app.AppCli.Commands)
-	assert.Len(t, app.AppCli.Commands, 5)
+	assert.Len(t, app.AppCli.Commands, 13)
 
-	expectedCommands := []string{"config", "user", "team", "bm", "vm"}
+	expectedCommands := []string{"config", "user", "team", "bm", "vm", "setup", "doctor", "ssh-keys", "api-keys", "whoami", "ssh", "rentals", "quickstart"}
 	commandNames := []string{}
 	for _, cmd := range app.AppCli.Commands {
 		commandNames = append(commandNames, cmd.Name)
@@ -109,11 +109,14 @@ func TestMakeAppConfigFileFlag(t *testing.T) {
 	assert.NotNil(t, app)
 
 	assert.NotNil(t, app.AppCli.Flags)
-	assert.Len(t, app.AppCli.Flags, 1)
-
-	flag := app.AppCli.Flags[0]
-	stringFlag, ok := flag.(*cli.StringFlag)
-	assert.True(t, ok)
+	assert.Len(t, app.AppCli.Flags, 3)
+	var stringFlag *cli.StringFlag
+	for _, flag := range app.AppCli.Flags {
+		if candidate, ok := flag.(*cli.StringFlag); ok && candidate.Name == "config-file" {
+			stringFlag = candidate
+		}
+	}
+	require.NotNil(t, stringFlag)
 	assert.Equal(t, "config-file", stringFlag.Name)
 	assert.Contains(t, stringFlag.Value, config.Pretty)
 }
@@ -141,8 +144,8 @@ func TestMakeAppWithInvalidConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	app, err := makeApp()
-	assert.Error(t, err)
-	assert.Nil(t, app)
+	assert.NoError(t, err) // Configuration is loaded only when a command needs it.
+	assert.NotNil(t, app)
 }
 
 func TestMakeCommands(t *testing.T) {
@@ -156,7 +159,7 @@ func TestMakeCommands(t *testing.T) {
 
 	commands := makeCommands(app)
 	assert.NotNil(t, commands)
-	assert.Len(t, commands, 5)
+	assert.Len(t, commands, 13)
 
 	expectedCommands := []string{"config", "user", "team", "bm", "vm"}
 	commandNames := []string{}
@@ -207,6 +210,6 @@ func TestMakeAppDefaultValues(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, app)
 
-	assert.Equal(t, "help", app.AppCli.DefaultCommand)
+	assert.NotNil(t, app.AppCli.Action)
 	assert.True(t, app.AppCli.EnableShellCompletion)
 }
