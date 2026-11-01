@@ -2,9 +2,17 @@
 
 ## Unreleased
 
+### Release tooling
+
+- Replace the Node/npm release toolchain with a Go release planner and `gh` publishing in GitHub Actions. Publishing remains in CI, using the existing GitHub App token, package repository updates, and artifact attestation.
+- Preserve major releases for breaking headers and migration footers (including before 1.0), minor releases for features, and a patch release for other nonempty change sets. Keep prominent migration notes and links to commits and issues.
+- Remove semantic-release, Biome, Ultracite, their npm dependency tree and lockfile, Node setup steps, and npm Dependabot configuration. Validate workflows with pinned actionlint and test release policy with Go.
+
 ### Dependencies
 
 - Upgrade the YAML test dependency (`go.yaml.in/yaml/v3`) from 3.0.5 to 3.0.6.
+
+## 1.0.0
 
 ### Breaking changes: CLI output defaults
 

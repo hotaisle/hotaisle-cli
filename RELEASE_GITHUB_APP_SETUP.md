@@ -1,6 +1,6 @@
 # Release GitHub App Setup
 
-The release workflow uses a GitHub App installation token instead of a personal access token. The app exists only to let `.github/workflows/release.yml` publish the semantic-release tag and GitHub release for `hotaisle-cli`, upload release artifacts, then push generated package metadata to the release support repositories.
+The release workflow uses a GitHub App installation token instead of a personal access token. The app lets `.github/workflows/release.yml` publish the next tag and GitHub release for `hotaisle-cli` through `gh`, upload release artifacts, then push generated package metadata to the release support repositories. Version selection and release notes come from the Go release planner. All publishing happens in GitHub Actions after a push to `main`.
 
 ## Required Access
 
@@ -84,9 +84,10 @@ After the app is installed and the variable and secret are configured:
 2. Confirm the `repositories` list matches the four repositories above.
 3. Merge a normal release PR into `main`.
 4. Confirm the release workflow can:
-   - Run semantic-release on the `main` push.
+   - Plan the next version and migration notes from Git history using Go.
+   - Build the release artifacts in CI.
    - Create the next tag in `hotaisle-cli`.
-   - Create the GitHub release.
+   - Create the GitHub release with `gh`, targeting the exact commit that was built.
    - Upload release artifacts.
    - Push the Homebrew formula update.
    - Push APT repository metadata.
