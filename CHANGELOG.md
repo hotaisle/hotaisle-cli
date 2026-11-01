@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Dependencies
+
+- Upgrade the YAML test dependency (`go.yaml.in/yaml/v3`) from 3.0.5 to 3.0.6.
+
 ### Breaking changes: CLI output defaults
 
 Command results now default to human-readable text, including when piped or redirected. This changes the JSON defaults in the 0.10.x releases. Scripts must explicitly request `--json` after upgrading.
