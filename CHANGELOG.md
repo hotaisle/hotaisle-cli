@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Download the pinned APT repository tooling from Debian's official archive after the previous GitLab package site disappeared. Verify the archive checksum, use compatible Ubuntu 26.04 runners, and test package version retention in CI. Install this tooling before publishing a release so download or installation failures are caught before the tag and artifacts are published.
+
 ### Release tooling
 
 - Replace the Node/npm release toolchain with a Go release planner and `gh` publishing in GitHub Actions. Publishing remains in CI, using the existing GitHub App token, package repository updates, and artifact attestation.

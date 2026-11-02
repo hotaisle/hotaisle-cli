@@ -95,7 +95,9 @@ git push origin main
 
 ### 6. Create Repository Files
 
-Use the morph027/apt-repo-action@v3 action.
+The release workflow uses the pinned `import.sh` and `repo.sh` scripts from `morph027/apt-repo-action`. Both CI and release install reprepro 5.5.1-1 through [the shared APT tooling action](.github/actions/install-apt-tools/action.yml), using Debian's official archive and a pinned SHA-256 checksum. This package requires Ubuntu 26.04 libraries on the publishing runner.
+
+CI checks that the installed tool retains multiple package versions and honors its configured limit. Release installs the tooling before publishing the tag and artifacts; the production repository retains the ten newest versions with `LIMIT: 10`.
 
 ## User Installation Instructions
 

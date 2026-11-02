@@ -1,0 +1,5 @@
+# actionlint v1.7.12 predates the GitHub-hosted Ubuntu 26.04 runner.
+# https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2604-Readme.md
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
