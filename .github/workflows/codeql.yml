@@ -46,6 +46,7 @@ jobs:
           cache: true
 
       - name: Initialize CodeQL
+        if: ${{ matrix.language != 'javascript-typescript' }}
         uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           languages: ${{ matrix.language }}
@@ -56,6 +57,17 @@ jobs:
         run: go build ./...
 
       - name: Analyze
+        if: ${{ matrix.language != 'javascript-typescript' }}
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           category: "/language:${{ matrix.language }}"
+
+      # Keep this existing check name compatible with repository branch rules.
+      - name: Verify JavaScript tooling has been removed
+        if: ${{ matrix.language == 'javascript-typescript' }}
+        run: |
+          sources="$(git ls-files -- '*.js' '*.cjs' '*.mjs' '*.jsx' '*.ts' '*.tsx' '*.cts' '*.mts')"
+          if [[ -n "$sources" ]]; then
+            printf 'JavaScript/TypeScript sources require a configured analyzer:\n%s\n' "$sources" >&2
+            exit 1
+          fi

@@ -19,8 +19,8 @@ jobs:
     if: ${{ github.event_name == 'push' && !github.event.act }} # skip during local actions testing and manual attestation
     runs-on: ubuntu-latest
     outputs:
-      released: ${{ steps.semantic-release.outputs.released }}
-      new_tag: ${{ steps.semantic-release.outputs.new_tag }}
+      released: ${{ steps.publish.outputs.released }}
+      new_tag: ${{ steps.plan.outputs.new_tag }}
     permissions:
       contents: read
     steps:
@@ -32,18 +32,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 26.13.0
-          cache: npm
-
-      - name: Install release dependencies
-        run: |
-          npm ci --ignore-scripts
-          npm audit --audit-level=critical
-          # release.config.cjs explicitly excludes npm publishing; remove that unused dependency subtree.
-          rm -rf node_modules/@semantic-release/npm node_modules/npm
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -58,7 +46,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-bin-
 
+      - name: Plan release
+        id: plan
+        run: |
+          go run ./cmd/release-plan \
+            --repository "$GITHUB_REPOSITORY" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Build release artifacts
+        if: ${{ steps.plan.outputs.release_needed == 'true' }}
+        env:
+          VERSION: ${{ steps.plan.outputs.new_tag }}
+        run: just release
+
       - name: Create release token
+        if: ${{ steps.plan.outputs.release_needed == 'true' }}
         id: release-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
@@ -68,14 +71,24 @@ jobs:
           repositories: hotaisle-cli
           permission-contents: write
 
-      - name: Create tag and GitHub release
-        id: semantic-release
+      - name: Publish tag, artifacts, and GitHub release
+        if: ${{ steps.plan.outputs.release_needed == 'true' }}
+        id: publish
         env:
-          GITHUB_TOKEN: ${{ steps.release-token.outputs.token }}
-        run: ./node_modules/.bin/semantic-release
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+          NEW_TAG: ${{ steps.plan.outputs.new_tag }}
+          RELEASE_SHA: ${{ steps.plan.outputs.commit }}
+        run: |
+          gh release create "$NEW_TAG" dist/*.tar.gz dist/*.zip dist-pkg/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$RELEASE_SHA" \
+            --title "$NEW_TAG" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --latest
+          echo "released=true" >> "$GITHUB_OUTPUT"
 
       - name: Create Homebrew repository token
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         id: homebrew-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
@@ -86,7 +99,7 @@ jobs:
           permission-contents: write
 
       - name: Checkout Homebrew tap
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: hotaisle/homebrew-tap
@@ -95,16 +108,16 @@ jobs:
           persist-credentials: false
 
       - name: Generate Homebrew formula
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         env:
-          NEW_TAG: ${{ steps.semantic-release.outputs.new_tag }}
+          NEW_TAG: ${{ steps.plan.outputs.new_tag }}
         run: |
           VERSION="$NEW_TAG" just brew-formula > homebrew-tap/Formula/hotaisle.rb
 
       - name: Push formula to Homebrew tap
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         env:
-          NEW_TAG: ${{ steps.semantic-release.outputs.new_tag }}
+          NEW_TAG: ${{ steps.plan.outputs.new_tag }}
           REPO_TOKEN: ${{ steps.homebrew-token.outputs.token }}
         run: |
           cd homebrew-tap
@@ -117,7 +130,7 @@ jobs:
           git push "https://x-access-token:${REPO_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/homebrew-tap.git" HEAD:main
 
       - name: Create APT repository token
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         id: apt-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
@@ -128,7 +141,7 @@ jobs:
           permission-contents: write
 
       - name: Checkout APT repository
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: hotaisle/apt-repo
@@ -137,13 +150,13 @@ jobs:
           persist-credentials: false
 
       - name: Copy packages to APT repository directory
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         run: |
           mkdir -p dist-deb
           cp dist-pkg/*.deb dist-deb
 
       - name: Checkout pinned APT repository builder
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: morph027/apt-repo-action
@@ -152,7 +165,7 @@ jobs:
           persist-credentials: false
 
       - name: Install pinned APT repository tooling
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         run: |
           REPREPRO_DEB=/tmp/reprepro_5.5.1-1_amd64.deb
           wget --quiet --https-only \
@@ -165,7 +178,7 @@ jobs:
           install -m 0755 "$(go env GOPATH)/bin/nfpm" /tmp/nfpm
 
       - name: Import existing APT packages
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         working-directory: dist-deb
         env:
           IMPORT_FROM_REPO: |
@@ -176,7 +189,7 @@ jobs:
         run: ../.apt-repo-action/import.sh
 
       - name: Create APT repository
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         id: create-apt-repo
         env:
           REPO_NAME: apt-repo
@@ -190,9 +203,9 @@ jobs:
         run: .apt-repo-action/repo.sh
 
       - name: Push to APT repository
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         env:
-          NEW_TAG: ${{ steps.semantic-release.outputs.new_tag }}
+          NEW_TAG: ${{ steps.plan.outputs.new_tag }}
           REPO_TOKEN: ${{ steps.apt-token.outputs.token }}
           APT_REPO_DIR: ${{ steps.create-apt-repo.outputs.dir }}
         run: |
@@ -209,7 +222,7 @@ jobs:
           git push "https://x-access-token:${REPO_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/apt-repo.git" HEAD:main
 
       - name: Create RPM repository token
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         id: rpm-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
@@ -220,7 +233,7 @@ jobs:
           permission-contents: write
 
       - name: Checkout RPM repository
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: hotaisle/rpm-repo
@@ -229,7 +242,7 @@ jobs:
           persist-credentials: false
 
       - name: Create RPM repository
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         env:
           APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
           APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
@@ -250,9 +263,9 @@ jobs:
             --detach-sign --armor rpm-repo/repodata/repomd.xml
 
       - name: Push to RPM repository
-        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        if: ${{ steps.publish.outputs.released == 'true' }}
         env:
-          NEW_TAG: ${{ steps.semantic-release.outputs.new_tag }}
+          NEW_TAG: ${{ steps.plan.outputs.new_tag }}
           REPO_TOKEN: ${{ steps.rpm-token.outputs.token }}
         run: |
           cd rpm-repo

@@ -135,6 +135,7 @@ deps:
 		"mvdan.cc/gofumpt@v0.12.0"
 		"golang.org/x/vuln/cmd/govulncheck@v1.9.0"
 		"github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.48.0"
+		"github.com/rhysd/actionlint/cmd/actionlint@v1.7.12"
 	)
 
 	printf '%s\n' "${tools[@]}" | xargs -P 0 -I {} bash -c 'install_tool "$@"' _ {}
@@ -302,8 +303,8 @@ brew-formula:
 		package/brew-formula.rb
 
 # CI/CD
-ci: deps js-deps vet lint lsp js-check release-check test security dist nfpm
-release: deps js-check release-check security dist nfpm
+ci: deps vet lint lsp workflow-check release-check test security dist nfpm
+release: deps workflow-check release-check security dist nfpm
 
 # Run the application
 run *args: build
@@ -353,21 +354,13 @@ lsp:
 		exit 1
 	fi
 
-# Install locked JavaScript development dependencies
-js-deps:
-	npm ci --ignore-scripts
-
-# Fail on every Biome and Ultracite diagnostic
-js-check:
-	npm run check
+# Validate GitHub Actions workflows and their shell commands
+workflow-check:
+	{{gobin}}/actionlint
 
 # Verify breaking-commit analysis and generated migration notes without publishing.
 release-check:
-	npm run test:release
-
-# Apply every available safe JavaScript fix
-js-fix:
-	npm run fix
+	{{go}} test ./internal/release
 
 # Run security scan
 security:

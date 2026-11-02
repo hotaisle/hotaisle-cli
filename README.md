@@ -179,7 +179,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 Our release process is automated with GitHub Actions ensuring that all tests pass before a release is published and that the CLI is built for all supported platforms. We've removed the human factor from the release process, so you don't have to worry about the security of it. The main branch can only accept PRs from maintainers with verified commits.
 
 PRs run tests.
-Merge PR to main, runs a binary build, tag and GH release.
+Merging a PR into `main` triggers the GitHub Actions release workflow. A Go planner reads the highest reachable stable version tag and subsequent commit messages, selects the next version, and generates release notes. Features select a minor version; breaking headers or `BREAKING CHANGE:` / `BREAKING CHANGES:` footers select a major version, including before 1.0. Other nonempty change sets select a patch version. No new commits means no new release.
+
+CI builds the artifacts and uses `gh` with the existing GitHub App token to publish the tag and release at the exact built commit. It then updates the Homebrew, APT, and RPM repositories and attests the published artifacts. The repository's build and release tooling uses Go and Just; it has no npm dependencies.
+
+Run `just release-check` to test version selection and migration notes, and `just workflow-check` to validate GitHub Actions with actionlint. To preview a release locally, run `go run ./cmd/release-plan --notes-file /tmp/hotaisle-release-notes.md`. The planner only reads Git history and writes the requested preview files. Publishing runs exclusively in CI; `just release` only builds and checks artifacts.
+
+The existing `Analyze (javascript-typescript)` status check is retained for compatibility with repository branch rules. It verifies that no JavaScript or TypeScript sources remain; the other CodeQL checks continue analyzing the workflows, Go code, and Homebrew formula.
 
 ## Project Structure
 ```
