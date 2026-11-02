@@ -17,7 +17,7 @@ concurrency:
 jobs:
   build:
     if: ${{ github.event_name == 'push' && !github.event.act }} # skip during local actions testing and manual attestation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       released: ${{ steps.publish.outputs.released }}
       new_tag: ${{ steps.plan.outputs.new_tag }}
@@ -53,6 +53,10 @@ jobs:
             --repository "$GITHUB_REPOSITORY" \
             --notes-file "$RUNNER_TEMP/release-notes.md" \
             --github-output "$GITHUB_OUTPUT"
+
+      - name: Install pinned APT repository tooling
+        if: ${{ steps.plan.outputs.release_needed == 'true' }}
+        uses: ./.github/actions/install-apt-tools
 
       - name: Build release artifacts
         if: ${{ steps.plan.outputs.release_needed == 'true' }}
@@ -164,18 +168,9 @@ jobs:
           path: .apt-repo-action
           persist-credentials: false
 
-      - name: Install pinned APT repository tooling
+      - name: Install nfpm for APT repository
         if: ${{ steps.publish.outputs.released == 'true' }}
-        run: |
-          REPREPRO_DEB=/tmp/reprepro_5.5.1-1_amd64.deb
-          wget --quiet --https-only \
-            --output-document="$REPREPRO_DEB" \
-            https://packaging.gitlab.io/reprepro-multiple-versions/pool/main/r/reprepro/reprepro_5.5.1-1_amd64.deb
-          echo "acabb921525769c19dfa1a43552a0fa756aa6c6e10d377c9dfb54bdb341ba0ad  $REPREPRO_DEB" | sha256sum --check -
-
-          sudo apt-get update
-          sudo apt-get install --yes apt-mirror apt-transport-https "$REPREPRO_DEB"
-          install -m 0755 "$(go env GOPATH)/bin/nfpm" /tmp/nfpm
+        run: install -m 0755 "$(go env GOPATH)/bin/nfpm" /tmp/nfpm
 
       - name: Import existing APT packages
         if: ${{ steps.publish.outputs.released == 'true' }}
