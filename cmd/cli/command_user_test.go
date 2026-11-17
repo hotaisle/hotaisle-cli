@@ -306,6 +306,8 @@ func TestUserAPIKeysListCommand_Success(t *testing.T) {
 	assert.Len(t, result, 2)
 	assert.Equal(t, "abc123", result[0].Prefix)
 	assert.Equal(t, "def456", result[1].Prefix)
+	assert.NotContains(t, output, `"token"`)
+	assert.NotContains(t, output, "ha_ak_")
 }
 
 func TestUserAPIKeysGetCommand_Success(t *testing.T) {
@@ -332,6 +334,8 @@ func TestUserAPIKeysGetCommand_Success(t *testing.T) {
 
 	assert.Equal(t, "abc123", result.Prefix)
 	assert.Equal(t, "Development key", result.Label)
+	assert.NotContains(t, output, `"token"`)
+	assert.NotContains(t, output, "ha_ak_")
 }
 
 func TestUserAPIKeysCreateCommand_Success(t *testing.T) {
@@ -342,7 +346,7 @@ func TestUserAPIKeysCreateCommand_Success(t *testing.T) {
 		Label:    "New key",
 		UserRole: "user",
 		Teams:    []client.APIKeyTeam{},
-		Token:    "abc123.full-token-here",
+		Token:    "ha_ak_abc123.full-token-here",
 	}
 
 	mockClient := test.NewMockHTTPClientWithAssertions(t, "/api/user/api_keys/", http.MethodPost, 200, mockKey)
@@ -361,7 +365,7 @@ func TestUserAPIKeysCreateCommand_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, "abc123", result.Prefix)
-	assert.Equal(t, "abc123.full-token-here", result.Token)
+	assert.Equal(t, "ha_ak_abc123.full-token-here", result.Token)
 }
 
 func TestUserAPIKeysUpdateCommand_Success(t *testing.T) {

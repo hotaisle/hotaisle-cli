@@ -89,7 +89,7 @@ func TestConfigOverridesSupplyCredentialsAndTeam(t *testing.T) {
 			}
 			args = append(args, "vm", "list")
 			code, stdout, stderr := execute(t, t.Context(), args, func(req *http.Request) (*http.Response, error) {
-				assert.Equal(t, expectedToken, req.Header.Get("Authorization"))
+				assert.Equal(t, "Bearer "+expectedToken, req.Header.Get("Authorization"))
 				assert.Equal(t, "/api/teams/"+expectedTeam+"/virtual_machines/", req.URL.Path)
 				return test.NewJSONResponse(t, 200, []client.VirtualMachineDetails{}), nil
 			})
@@ -310,18 +310,20 @@ func setupResponse(t *testing.T, req *http.Request, teams []client.UserTeam) (*h
 
 func TestSetupUsesEnvironmentAndSelectsOnlyTeam(t *testing.T) {
 	home := isolatedHome(t)
-	t.Setenv("HOTAISLE_API_TOKEN", "secret-token")
+	t.Setenv("HOTAISLE_API_TOKEN", "Token ha_ak_lookup.secret")
 	code, stdout, stderr := execute(t, t.Context(), []string{"--json", "setup", "--non-interactive"}, func(req *http.Request) (*http.Response, error) {
-		assert.Equal(t, "secret-token", req.Header.Get("Authorization"))
+		assert.Equal(t, "Bearer ha_ak_lookup.secret", req.Header.Get("Authorization"))
 		return setupResponse(t, req, []client.UserTeam{{Handle: "team"}})
 	})
 	require.Zero(t, code, stderr)
-	assert.NotContains(t, stdout+stderr, "secret-token")
+	assert.NotContains(t, stdout+stderr, "ha_ak_lookup.secret")
 	assert.Contains(t, stdout, `"team": "team"`)
 	assert.Contains(t, stdout, `"ssh_ready": false`)
 	data, err := os.ReadFile(filepath.Join(home, ".hotaisle/config.json"))
 	require.NoError(t, err)
-	assert.Contains(t, string(data), "secret-token")
+	var saved map[string]string
+	require.NoError(t, json.Unmarshal(data, &saved))
+	assert.Equal(t, "Token ha_ak_lookup.secret", saved["api_token"])
 }
 
 func TestSetupNeverGuessesBetweenTeams(t *testing.T) {
@@ -338,16 +340,21 @@ func TestSetupNeverGuessesBetweenTeams(t *testing.T) {
 }
 
 func TestSetupReadsTokenFromStdin(t *testing.T) {
-	isolatedHome(t)
+	home := isolatedHome(t)
 	var stdout, stderr bytes.Buffer
 	cmd := appcli.NewCommand(client.WithHTTPClient(test.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		assert.Equal(t, "stdin-secret", req.Header.Get("Authorization"))
+		assert.Equal(t, "Bearer ha_ak_stdin.secret", req.Header.Get("Authorization"))
 		return setupResponse(t, req, []client.UserTeam{{Handle: "team"}})
 	})))
-	cmd.Reader = strings.NewReader("stdin-secret\n")
+	cmd.Reader = strings.NewReader("ha_ak_stdin.secret\n")
 	cmd.Writer, cmd.ErrWriter = &stdout, &stderr
 	require.NoError(t, cmd.Run(t.Context(), []string{"hotaisle", "--json", "setup", "--token-stdin", "--non-interactive"}))
-	assert.NotContains(t, stdout.String()+stderr.String(), "stdin-secret")
+	assert.NotContains(t, stdout.String()+stderr.String(), "ha_ak_stdin.secret")
+	data, err := os.ReadFile(filepath.Join(home, ".hotaisle/config.json"))
+	require.NoError(t, err)
+	var saved map[string]string
+	require.NoError(t, json.Unmarshal(data, &saved))
+	assert.Equal(t, "ha_ak_stdin.secret", saved["api_token"])
 }
 
 func TestDoctorIsReadOnlyAndWarnsAboutMissingSSHKeys(t *testing.T) {

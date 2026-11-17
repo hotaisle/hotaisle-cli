@@ -40,10 +40,10 @@ func WithHTTPClient(client *http.Client) Option {
 	}
 }
 
-// WithToken sets the authentication token
+// WithToken sets an API key, optionally prefixed with Bearer or legacy Token.
 func WithToken(token string) Option {
 	return func(c *Client) {
-		c.token = token
+		c.SetToken(token)
 	}
 }
 
@@ -83,9 +83,21 @@ func NewClient(opts ...Option) *Client {
 	return c
 }
 
-// SetToken updates the authentication token
+// SetToken updates the API key, optionally prefixed with Bearer or legacy Token.
+// Normalization affects requests only; callers can retain their saved value.
 func (c *Client) SetToken(token string) {
-	c.token = token
+	token = strings.TrimSpace(token)
+	if separator := strings.IndexAny(token, " \t"); separator >= 0 {
+		scheme := token[:separator]
+		if strings.EqualFold(scheme, "Bearer") || strings.EqualFold(scheme, "Token") {
+			token = strings.TrimSpace(token[separator+1:])
+		}
+	}
+	if token == "" {
+		c.token = ""
+		return
+	}
+	c.token = "Bearer " + token
 }
 
 // doRequest executes an HTTP request
