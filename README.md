@@ -40,6 +40,14 @@ Setup automatically selects a team when exactly one is accessible. Multiple team
 
 Setup saves credentials and the default team to the selected configuration file. For ephemeral credentials without writing a file, set both `HOTAISLE_API_TOKEN` and `HOTAISLE_DEFAULT_TEAM`, and use resource commands directly.
 
+### API-key compatibility
+
+The CLI and Go client's `WithToken` / `SetToken` send `Authorization: Bearer <key>`. Both legacy raw `lookup.secret` keys and typed `ha_ak_lookup.secret` keys work. Existing values prefixed with `Token` or `Bearer` (case-insensitive) are accepted and sent with exactly one `Bearer` prefix; empty credentials send no Authorization header.
+
+No credential rotation or configuration rewrite is required: saved values, `HOTAISLE_API_TOKEN`, and `setup --token-stdin` continue to work. Normalization happens only in the HTTP client. If a proxy or request fixture expected a bare credential or the legacy `Token` scheme, update it to expect `Bearer`.
+
+API-key creation returns the full typed credential once; store it securely. Key-list metadata and management commands continue to use the raw lookup `prefix`, without `ha_ak_`. This CLI uses API keys, not browser access/refresh sessions.
+
 See the [agent guide](docs/agents.md), [GPU inference walkthrough](docs/inference.md), and distributable [agent skill](skills/hotaisle/SKILL.md).
 
 # Installation

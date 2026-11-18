@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Breaking changes: Authorization header
+
+- Resource requests now send `Authorization: Bearer <key>` instead of forwarding the configured value verbatim. Legacy raw keys and typed `ha_ak_` keys are supported; existing case-insensitive `Token` and `Bearer` prefixes are normalized without duplication. Empty credentials still send no Authorization header.
+- Migration: keep existing saved credentials, environment variables, and `--token-stdin` inputs unchanged; no key rotation is needed. Update proxies, integrations, or request fixtures that relied on bare Authorization values or the legacy `Token` scheme to expect `Bearer`.
+- API-key creation still exposes the full typed credential only at issuance. Listed metadata and management paths retain the raw lookup prefix, separate from the `ha_ak_` credential marker.
+
 ### Fixed
 
 - Download the pinned APT repository tooling from Debian's official archive after the previous GitLab package site disappeared. Verify the archive checksum, use compatible Ubuntu 26.04 runners, and test package version retention in CI. Install this tooling before publishing a release so download or installation failures are caught before the tag and artifacts are published.
