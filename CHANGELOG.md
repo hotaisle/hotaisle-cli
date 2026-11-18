@@ -14,6 +14,8 @@
 
 ### Dependencies
 
+- Require Go 1.27.4 or later, including the `net/http` security fix for GO-2026-6859.
+- Refresh terminal/system dependencies, pinned development tools, and GitHub Actions to their current stable releases. Include the CodeQL updates proposed by Dependabot.
 - Upgrade the YAML test dependency (`go.yaml.in/yaml/v3`) from 3.0.5 to 3.0.6.
 
 ## 1.0.0

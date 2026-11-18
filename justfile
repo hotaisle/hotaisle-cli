@@ -133,8 +133,8 @@ deps:
 		"github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0"
 		"golang.org/x/tools/gopls@v0.24.0"
 		"mvdan.cc/gofumpt@v0.12.0"
-		"golang.org/x/vuln/cmd/govulncheck@v1.9.0"
-		"github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.48.0"
+		"golang.org/x/vuln/cmd/govulncheck@v1.10.0"
+		"github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.49.0"
 		"github.com/rhysd/actionlint/cmd/actionlint@v1.7.12"
 	)
 
